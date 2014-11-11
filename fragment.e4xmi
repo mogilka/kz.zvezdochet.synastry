@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="ASCII"?>
+<fragment:ModelFragments xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:basic="http://www.eclipse.org/ui/2010/UIModel/application/ui/basic" xmlns:commands="http://www.eclipse.org/ui/2010/UIModel/application/commands" xmlns:fragment="http://www.eclipse.org/ui/2010/UIModel/fragment" xmlns:menu="http://www.eclipse.org/ui/2010/UIModel/application/ui/menu" xmi:id="_3UTscF2rEeSD29hHVcu7fw">
+  <fragments xsi:type="fragment:StringModelFragment" xmi:id="_YG5_0F2sEeSD29hHVcu7fw" featurename="children" parentElementId="kz.zvezdochet.runner.partstack.main">
+    <elements xsi:type="basic:Part" xmi:id="_cMPdgF2sEeSD29hHVcu7fw" elementId="kz.zvezdochet.synastry.part.list" visible="false" contributionURI="bundleclass://kz.zvezdochet.synastry/kz.zvezdochet.synastry.part.SynastryPart" label="&#x421;&#x438;&#x43d;&#x430;&#x441;&#x442;&#x440;&#x438;&#x44f;" iconURI="platform:/plugin/kz.zvezdochet.synastry/icons/heart.png" closeable="true">
+      <toolbar xmi:id="_WgLdIF2tEeSD29hHVcu7fw" elementId="kz.zvezdochet.synastry.toolbar.0">
+        <children xsi:type="menu:HandledToolItem" xmi:id="_gnRwgF3PEeSD29hHVcu7fw" elementId="kz.zvezdochet.synastry.handledtoolitem.calc" label="&#x420;&#x430;&#x441;&#x447;&#x451;&#x442;" iconURI="platform:/plugin/kz.zvezdochet/icons/calc.png" command="_WXdGgF3PEeSD29hHVcu7fw"/>
+        <children xsi:type="menu:HandledToolItem" xmi:id="_7qZNkGgMEeSSZffxnqlLeQ" elementId="kz.zvezdochet.synastry.handledtoolitem.switch" label="&#x41f;&#x435;&#x440;&#x435;&#x43a;&#x43b;&#x44e;&#x447;&#x435;&#x43d;&#x438;&#x435;" iconURI="platform:/plugin/kz.zvezdochet.core/icons/cp_order_obj.gif" command="_vD9RgGgMEeSSZffxnqlLeQ"/>
+      </toolbar>
+    </elements>
+  </fragments>
+  <fragments xsi:type="fragment:StringModelFragment" xmi:id="_6HJ6oF3DEeSD29hHVcu7fw" featurename="children" parentElementId="kz.zvezdochet.toolbar.event">
+    <elements xsi:type="menu:HandledToolItem" xmi:id="_8El3sF3DEeSD29hHVcu7fw" elementId="kz.zvezdochet.synastry.handledtoolitem.list" label="&#x421;&#x438;&#x43d;&#x430;&#x441;&#x442;&#x440;&#x438;&#x44f;" iconURI="platform:/plugin/kz.zvezdochet.synastry/icons/heart.png" command="_GQrRMF3EEeSD29hHVcu7fw"/>
+  </fragments>
+  <fragments xsi:type="fragment:StringModelFragment" xmi:id="_DnrOoF3EEeSD29hHVcu7fw" featurename="commands" parentElementId="org.eclipse.e4.ide.application">
+    <elements xsi:type="commands:Command" xmi:id="_GQrRMF3EEeSD29hHVcu7fw" elementId="kz.zvezdochet.synastry.command.list" commandName="listCommand"/>
+    <elements xsi:type="commands:Command" xmi:id="_WXdGgF3PEeSD29hHVcu7fw" elementId="kz.zvezdochet.synastry.command.calc" commandName="calcCommand"/>
+    <elements xsi:type="commands:Command" xmi:id="_vD9RgGgMEeSSZffxnqlLeQ" elementId="kz.zvezdochet.synastry.command.switch" commandName="switchCommand"/>
+  </fragments>
+  <fragments xsi:type="fragment:StringModelFragment" xmi:id="_ZewPoF3EEeSD29hHVcu7fw" featurename="handlers" parentElementId="org.eclipse.e4.ide.application">
+    <elements xsi:type="commands:Handler" xmi:id="_a_HPIF3EEeSD29hHVcu7fw" elementId="kz.zvezdochet.synastry.handler.list" contributionURI="bundleclass://kz.zvezdochet.synastry/kz.zvezdochet.synastry.handler.SynastryHandler" command="_GQrRMF3EEeSD29hHVcu7fw"/>
+    <elements xsi:type="commands:Handler" xmi:id="_Z78g8F3PEeSD29hHVcu7fw" elementId="kz.zvezdochet.synastry.handler.calc" contributionURI="bundleclass://kz.zvezdochet.synastry/kz.zvezdochet.synastry.handler.CalcHandler" command="_WXdGgF3PEeSD29hHVcu7fw"/>
+    <elements xsi:type="commands:Handler" xmi:id="_zOh0gGgMEeSSZffxnqlLeQ" elementId="kz.zvezdochet.synastry.handler.switch" contributionURI="bundleclass://kz.zvezdochet.synastry/kz.zvezdochet.synastry.handler.SwitchHandler" command="_vD9RgGgMEeSSZffxnqlLeQ"/>
+  </fragments>
+</fragment:ModelFragments>
