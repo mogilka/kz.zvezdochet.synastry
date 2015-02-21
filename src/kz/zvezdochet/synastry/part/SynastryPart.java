@@ -332,7 +332,7 @@ public class SynastryPart extends ModelListView implements ICalculable {
 		txSearch.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		txSearch.setFocus();
 
-		EventProposalProvider proposalProvider = new EventProposalProvider(true);
+		EventProposalProvider proposalProvider = new EventProposalProvider(1);
 	    ContentProposalAdapter adapter = new ContentProposalAdapter(
 	        txSearch, new TextContentAdapter(),
 	        proposalProvider, KeyStroke.getInstance(SWT.CTRL, 32), new char[] {' '});
