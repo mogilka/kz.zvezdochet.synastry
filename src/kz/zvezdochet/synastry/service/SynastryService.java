@@ -4,6 +4,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import kz.zvezdochet.bean.Event;
@@ -11,6 +12,7 @@ import kz.zvezdochet.core.bean.Model;
 import kz.zvezdochet.core.service.DataAccessException;
 import kz.zvezdochet.core.service.ModelService;
 import kz.zvezdochet.core.tool.Connector;
+import kz.zvezdochet.core.util.DateUtil;
 import kz.zvezdochet.service.EventService;
 import kz.zvezdochet.synastry.bean.Synastry;
 
@@ -32,17 +34,27 @@ public class SynastryService extends ModelService {
 		try {
 			String sql;
 			if (null == model.getId()) 
-				sql = "insert into " + tableName + " values(0,?,?)";
+				sql = "insert into " + tableName + " values(0,?,?,?,?,?,?,?)";
 			else
 				sql = "update " + tableName + " set " +
 					"eventid = ?, " +
-					"partnerid = ? " +
+					"partnerid = ?, " +
+					"description = ?, " +
+					"userid = ?, " +
+					"date = ?, " +
+					"calculated = ?, " +
+					"celebrity = ? " +
 					"where id = ?";
 			ps = Connector.getInstance().getConnection().prepareStatement(sql);
 			ps.setLong(1, synastry.getEventid());
 			ps.setLong(2, synastry.getPartnerid());
-			if (model.getId() != null) 
-				ps.setLong(3, model.getId());
+			ps.setString(3, synastry.getDescription());
+			ps.setLong(4, 2);
+			ps.setString(5, DateUtil.formatCustomDateTime(new Date(), "yyyy-MM-dd HH:mm:ss"));
+			ps.setInt(6, 0);
+			ps.setInt(7, 0); //TODO вычислять динамически
+			if (model.getId() != null)
+				ps.setLong(8, model.getId());
 
 			result = ps.executeUpdate();
 			if (1 == result) {

@@ -25,6 +25,17 @@ public class Synastry extends Model {
 	 * Идентификатор партнёра
 	 */
 	private long partnerid;
+	/**
+	 * Описание
+	 */
+	private String description;
+
+	public String getDescription() {
+		return description;
+	}
+	public void setDescription(String description) {
+		this.description = description;
+	}
 
 	public long getEventid() {
 		return eventid;
@@ -37,5 +48,48 @@ public class Synastry extends Model {
 	}
 	public void setPartnerid(long partnerid) {
 		this.partnerid = partnerid;
+	}
+
+	/**
+	 * Идентификатор пользователя
+	 */
+	private long userid;
+	/**
+	 * Дата создания
+	 */
+	private String date;
+	/**
+	 * Признак выполненного расчёта
+	 */
+	private boolean calculated;
+	/**
+	 * Признак того, что оба парнёра - знаменитости
+	 */
+	private boolean celebrity;
+
+	public long getUserid() {
+		return userid;
+	}
+	public void setUserid(long userid) {
+		this.userid = userid;
+	}
+
+	public String getDate() {
+		return date;
+	}
+	public void setDate(String date) {
+		this.date = date;
+	}
+	public boolean isCalculated() {
+		return calculated;
+	}
+	public void setCalculated(boolean calculated) {
+		this.calculated = calculated;
+	}
+	public boolean isCelebrity() {
+		return celebrity;
+	}
+	public void setCelebrity(boolean celebrity) {
+		this.celebrity = celebrity;
 	}
 }
