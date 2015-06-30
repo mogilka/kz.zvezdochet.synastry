@@ -5,6 +5,7 @@
       <toolbar xmi:id="_WgLdIF2tEeSD29hHVcu7fw" elementId="kz.zvezdochet.synastry.toolbar.0">
         <children xsi:type="menu:HandledToolItem" xmi:id="_gnRwgF3PEeSD29hHVcu7fw" elementId="kz.zvezdochet.synastry.handledtoolitem.calc" label="&#x420;&#x430;&#x441;&#x447;&#x451;&#x442;" iconURI="platform:/plugin/kz.zvezdochet/icons/calc.png" command="_WXdGgF3PEeSD29hHVcu7fw"/>
         <children xsi:type="menu:HandledToolItem" xmi:id="_7qZNkGgMEeSSZffxnqlLeQ" elementId="kz.zvezdochet.synastry.handledtoolitem.switch" label="&#x41f;&#x435;&#x440;&#x435;&#x43a;&#x43b;&#x44e;&#x447;&#x435;&#x43d;&#x438;&#x435;" iconURI="platform:/plugin/kz.zvezdochet.core/icons/cp_order_obj.gif" command="_vD9RgGgMEeSSZffxnqlLeQ"/>
+        <children xsi:type="menu:HandledToolItem" xmi:id="_eo7M0B8DEeWjF9B2A6DKXA" elementId="kz.zvezdochet.synastry.handledtoolitem.aspect" label="&#x410;&#x441;&#x43f;&#x435;&#x43a;&#x442;&#x44b;" iconURI="platform:/plugin/kz.zvezdochet/icons/aspect.gif" command="_StU9gB8DEeWjF9B2A6DKXA"/>
       </toolbar>
     </elements>
   </fragments>
@@ -15,10 +16,12 @@
     <elements xsi:type="commands:Command" xmi:id="_GQrRMF3EEeSD29hHVcu7fw" elementId="kz.zvezdochet.synastry.command.list" commandName="listCommand"/>
     <elements xsi:type="commands:Command" xmi:id="_WXdGgF3PEeSD29hHVcu7fw" elementId="kz.zvezdochet.synastry.command.calc" commandName="calcCommand"/>
     <elements xsi:type="commands:Command" xmi:id="_vD9RgGgMEeSSZffxnqlLeQ" elementId="kz.zvezdochet.synastry.command.switch" commandName="switchCommand"/>
+    <elements xsi:type="commands:Command" xmi:id="_StU9gB8DEeWjF9B2A6DKXA" elementId="kz.zvezdochet.synastry.command.aspect" commandName="aspectCommand"/>
   </fragments>
   <fragments xsi:type="fragment:StringModelFragment" xmi:id="_ZewPoF3EEeSD29hHVcu7fw" featurename="handlers" parentElementId="org.eclipse.e4.ide.application">
     <elements xsi:type="commands:Handler" xmi:id="_a_HPIF3EEeSD29hHVcu7fw" elementId="kz.zvezdochet.synastry.handler.list" contributionURI="bundleclass://kz.zvezdochet.synastry/kz.zvezdochet.synastry.handler.SynastryHandler" command="_GQrRMF3EEeSD29hHVcu7fw"/>
     <elements xsi:type="commands:Handler" xmi:id="_Z78g8F3PEeSD29hHVcu7fw" elementId="kz.zvezdochet.synastry.handler.calc" contributionURI="bundleclass://kz.zvezdochet.synastry/kz.zvezdochet.synastry.handler.CalcHandler" command="_WXdGgF3PEeSD29hHVcu7fw"/>
     <elements xsi:type="commands:Handler" xmi:id="_zOh0gGgMEeSSZffxnqlLeQ" elementId="kz.zvezdochet.synastry.handler.switch" contributionURI="bundleclass://kz.zvezdochet.synastry/kz.zvezdochet.synastry.handler.SwitchHandler" command="_vD9RgGgMEeSSZffxnqlLeQ"/>
+    <elements xsi:type="commands:Handler" xmi:id="_XcZ7wB8DEeWjF9B2A6DKXA" elementId="kz.zvezdochet.synastry.handler.aspect" contributionURI="bundleclass://kz.zvezdochet.synastry/kz.zvezdochet.synastry.handler.AspectHandler" command="_StU9gB8DEeWjF9B2A6DKXA"/>
   </fragments>
 </fragment:ModelFragments>

@@ -63,7 +63,19 @@ public class SynastryPart extends ModelListView implements ICalculable {
 	@Inject
 	public SynastryPart() {}
 
+	/**
+	 * Первый партнёр
+	 */
 	private Event synpartner;
+
+	/**
+	 * Поиск первого партнёра
+	 * @return человек
+	 */
+	public Event getPartner() {
+		return synpartner;
+	}
+
 	private CosmogramComposite cmpCosmogram;
 	private CTabFolder folder;
 	private Group grPlanets;
