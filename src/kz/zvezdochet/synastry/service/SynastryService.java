@@ -49,7 +49,7 @@ public class SynastryService extends ModelService {
 			ps.setLong(1, synastry.getEventid());
 			ps.setLong(2, synastry.getPartnerid());
 			ps.setString(3, synastry.getDescription());
-			ps.setLong(4, 2);
+			ps.setLong(4, 3);
 			ps.setString(5, DateUtil.formatCustomDateTime(new Date(), "yyyy-MM-dd HH:mm:ss"));
 			ps.setInt(6, 0);
 			ps.setInt(7, 0); //TODO вычислять динамически
