@@ -8,27 +8,6 @@ import java.util.Map;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
-import kz.zvezdochet.bean.AspectType;
-import kz.zvezdochet.bean.Event;
-import kz.zvezdochet.bean.House;
-import kz.zvezdochet.bean.Planet;
-import kz.zvezdochet.core.bean.Model;
-import kz.zvezdochet.core.service.DataAccessException;
-import kz.zvezdochet.core.ui.Tab;
-import kz.zvezdochet.core.ui.decoration.InfoDecoration;
-import kz.zvezdochet.core.ui.view.ModelLabelProvider;
-import kz.zvezdochet.core.ui.view.ModelListView;
-import kz.zvezdochet.core.ui.view.View;
-import kz.zvezdochet.core.util.DateUtil;
-import kz.zvezdochet.part.CosmogramComposite;
-import kz.zvezdochet.part.ICalculable;
-import kz.zvezdochet.provider.EventProposalProvider;
-import kz.zvezdochet.provider.EventProposalProvider.EventContentProposal;
-import kz.zvezdochet.service.AspectTypeService;
-import kz.zvezdochet.synastry.bean.Synastry;
-import kz.zvezdochet.synastry.service.SynastryService;
-import kz.zvezdochet.util.Configuration;
-
 import org.eclipse.jface.bindings.keys.KeyStroke;
 import org.eclipse.jface.fieldassist.ContentProposalAdapter;
 import org.eclipse.jface.fieldassist.IContentProposal;
@@ -53,6 +32,27 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
+
+import kz.zvezdochet.bean.AspectType;
+import kz.zvezdochet.bean.Event;
+import kz.zvezdochet.bean.House;
+import kz.zvezdochet.bean.Planet;
+import kz.zvezdochet.core.bean.Model;
+import kz.zvezdochet.core.service.DataAccessException;
+import kz.zvezdochet.core.ui.Tab;
+import kz.zvezdochet.core.ui.decoration.InfoDecoration;
+import kz.zvezdochet.core.ui.view.ModelLabelProvider;
+import kz.zvezdochet.core.ui.view.ModelListView;
+import kz.zvezdochet.core.ui.view.View;
+import kz.zvezdochet.core.util.DateUtil;
+import kz.zvezdochet.part.CosmogramComposite;
+import kz.zvezdochet.part.ICalculable;
+import kz.zvezdochet.provider.EventProposalProvider;
+import kz.zvezdochet.provider.EventProposalProvider.EventContentProposal;
+import kz.zvezdochet.service.AspectTypeService;
+import kz.zvezdochet.synastry.bean.Synastry;
+import kz.zvezdochet.synastry.service.SynastryService;
+import kz.zvezdochet.util.Configuration;
 
 /**
  * Представление синастрии
