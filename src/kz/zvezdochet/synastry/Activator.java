@@ -27,4 +27,6 @@ public class Activator implements BundleActivator {
 		Activator.context = null;
 	}
 
+	// The plug-in ID
+	public static final String PLUGIN_ID = "kz.zvezdochet.synastry"; //$NON-NLS-1$
 }
