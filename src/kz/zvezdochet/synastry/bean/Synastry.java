@@ -1,7 +1,17 @@
 package kz.zvezdochet.synastry.bean;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import kz.zvezdochet.bean.Aspect;
+import kz.zvezdochet.bean.Event;
+import kz.zvezdochet.bean.Planet;
+import kz.zvezdochet.bean.SkyPointAspect;
 import kz.zvezdochet.core.bean.Model;
+import kz.zvezdochet.core.service.DataAccessException;
 import kz.zvezdochet.core.service.ModelService;
+import kz.zvezdochet.core.util.CalcUtil;
+import kz.zvezdochet.service.AspectService;
 import kz.zvezdochet.synastry.service.SynastryService;
 
 /**
@@ -18,14 +28,6 @@ public class Synastry extends Model {
 	}
 	
 	/**
-	 * Идентификатор персоны
-	 */
-	private long eventid;
-	/**
-	 * Идентификатор партнёра
-	 */
-	private long partnerid;
-	/**
 	 * Описание
 	 */
 	private String description;
@@ -37,27 +39,6 @@ public class Synastry extends Model {
 		this.description = description;
 	}
 
-	public long getEventid() {
-		return eventid;
-	}
-	public void setEventid(long eventid) {
-		this.eventid = eventid;
-	}
-	public long getPartnerid() {
-		return partnerid;
-	}
-	public void setPartnerid(long partnerid) {
-		this.partnerid = partnerid;
-	}
-
-	/**
-	 * Идентификатор пользователя
-	 */
-	private long userid;
-	/**
-	 * Дата создания
-	 */
-	private String date;
 	/**
 	 * Признак выполненного расчёта
 	 */
@@ -67,19 +48,6 @@ public class Synastry extends Model {
 	 */
 	private boolean celebrity;
 
-	public long getUserid() {
-		return userid;
-	}
-	public void setUserid(long userid) {
-		this.userid = userid;
-	}
-
-	public String getDate() {
-		return date;
-	}
-	public void setDate(String date) {
-		this.date = date;
-	}
 	public boolean isCalculated() {
 		return calculated;
 	}
@@ -91,5 +59,71 @@ public class Synastry extends Model {
 	}
 	public void setCelebrity(boolean celebrity) {
 		this.celebrity = celebrity;
+	}
+
+	private Event event;
+	private Event partner;
+
+	public Event getEvent() {
+		return event;
+	}
+	public void setEvent(Event event) {
+		this.event = event;
+	}
+	public Event getPartner() {
+		return partner;
+	}
+	public void setPartner(Event partner) {
+		this.partner = partner;
+	}
+
+	/**
+	 * Аспекты синастрии
+	 */
+	private	List<SkyPointAspect> aspectList;
+
+	public List<SkyPointAspect> getAspects() {
+		return aspectList;
+	}
+
+	/**
+	 * Инициализация аспектов
+	 * @throws DataAccessException 
+	 */
+	public void initAspects() throws DataAccessException {
+		try {
+			if (aspectList != null && aspectList.size() > 0)
+				return;
+
+			aspectList = new ArrayList<>();
+			event.init(false);
+			partner.init(false);
+			List<Model> planets = event.getConfiguration().getPlanets();
+			List<Model> planets2 = partner.getConfiguration().getPlanets();
+			List<Model> aspects = new AspectService().getList();
+			for (Model model : planets) {
+				Planet planet = (Planet)model;
+				for (Model model2 : planets2) {
+					Planet planet2 = (Planet)model2;
+					double res = CalcUtil.getDifference(planet.getCoord(), planet2.getCoord());
+					SkyPointAspect aspect = new SkyPointAspect();
+					aspect.setSkyPoint1(planet);
+					aspect.setSkyPoint2(planet2);
+					aspect.setScore(CalcUtil.roundTo(res, 2));
+					for (Model realasp : aspects) {
+						Aspect a = (Aspect)realasp;
+						if (a.isAspect(res)) {
+							aspect.setAspect(a);
+							aspect.setExact(a.isExact(res));
+							aspect.setApplication(a.isApplication(res));
+							aspectList.add(aspect);
+							continue;
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }

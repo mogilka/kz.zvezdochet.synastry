@@ -366,7 +366,7 @@ public class SynastryPart extends ModelListView implements ICalculable {
 		System.out.println("onCalc" + MODE_CALC);
 		Event event = synpartner;
 		Event event2 = (Event)getModel();
-		event2.init();
+		event2.init(false);
 		if (mode.equals(0)) {
 			refreshCard(event, event2);
 			refreshTabs(event, event2);
@@ -381,8 +381,8 @@ public class SynastryPart extends ModelListView implements ICalculable {
 		super.addModel(model);
 		//сразу сохраняем партнёра в базу
 		Synastry synastry = new Synastry();
-		synastry.setEventid(synpartner.getId());
-		synastry.setPartnerid(model.getId());
+		synastry.setEvent(synpartner);
+		synastry.setPartner((Event)model);
 		try {
 			new SynastryService().save(synastry);
 		} catch (DataAccessException e) {

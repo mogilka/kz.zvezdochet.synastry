@@ -23,15 +23,15 @@ public class ExportHandler extends Handler {
 		try {
 			updateStatus("Экспорт синастрии", false);
 			SynastryPart synastryPart = (SynastryPart)activePart.getObject();
-			final Event partner = synastryPart.getPartner();
-			final Event partner2 = (Event)synastryPart.getModel();
+			final Event event = synastryPart.getPartner();
+			final Event partner = (Event)synastryPart.getModel();
 			updateStatus("Сохранение синастрии в файл", false);
 
 			final Display display = Display.getDefault();
     		BusyIndicator.showWhile(display, new Runnable() {
     			@Override
     			public void run() {
-    				new PDFExporter(display).generate(partner, partner2);
+    				new PDFExporter(display).generate(event, partner);
     			}
     		});
 			//TODO показывать диалог, что документ сформирован
