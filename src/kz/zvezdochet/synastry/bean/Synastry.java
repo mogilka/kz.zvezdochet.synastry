@@ -106,18 +106,20 @@ public class Synastry extends Model {
 				for (Model model2 : planets2) {
 					Planet planet2 = (Planet)model2;
 					double res = CalcUtil.getDifference(planet.getCoord(), planet2.getCoord());
-					SkyPointAspect aspect = new SkyPointAspect();
-					aspect.setSkyPoint1(planet);
-					aspect.setSkyPoint2(planet2);
-					aspect.setScore(CalcUtil.roundTo(res, 2));
 					for (Model realasp : aspects) {
 						Aspect a = (Aspect)realasp;
+						if (a.getPlanetid() > 0 &&
+								a.getPlanetid() != planet.getId() && a.getPlanetid() != planet2.getId())
+							continue;
 						if (a.isAspect(res)) {
+							SkyPointAspect aspect = new SkyPointAspect();
+							aspect.setSkyPoint1(planet);
+							aspect.setSkyPoint2(planet2);
+							aspect.setScore(CalcUtil.roundTo(res, 2));
 							aspect.setAspect(a);
 							aspect.setExact(a.isExact(res));
 							aspect.setApplication(a.isApplication(res));
 							aspectList.add(aspect);
-							continue;
 						}
 					}
 				}

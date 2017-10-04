@@ -242,43 +242,45 @@ public class SynastryService extends ModelService {
 			ps.close();
 
 			List<SkyPointAspect> aspects = synastry.getAspects();
-			for (SkyPointAspect aspect : aspects) {
-				SkyPoint point = aspect.getSkyPoint1();
-				SkyPoint point2 = aspect.getSkyPoint2();
-				if (point.getNumber() > point2.getNumber()) continue;
-				sql = "select id from " + table + 
-					" where synastryid = ?" +
-					" and planetid = ?" +
-					" and planet2id = ?";
-				ps = Connector.getInstance().getConnection().prepareStatement(sql);
-				ps.setLong(1, synastry.getId());
-				ps.setLong(2, point.getId());
-				ps.setLong(3, point2.getId());
-				rs = ps.executeQuery();
-				long id = (rs.next()) ? rs.getLong("id") : 0;
-				ps.close();
-				
-				if (0 == id)
-					sql = "insert into " + table + " values(0,?,?,?,?,?,?)";
-				else
-					sql = "update " + table + 
-						" set synastryid = ?,"
-						+ " planetid = ?,"
-						+ " aspectid = ?,"
-						+ " planet2id = ?,"
-						+ " exact = ?,"
-						+ " application = ?" +
-						" where id = ?";
-				ps = Connector.getInstance().getConnection().prepareStatement(sql);
-				ps.setLong(1, synastry.getId());
-				ps.setLong(2, point.getId());
-				ps.setLong(3, aspect.getAspect().getId());
-				ps.setLong(4, point2.getId());
-				ps.setInt(5, aspect.isExact() ? 1 : 0);
-				ps.setInt(6, aspect.isApplication() ? 1 : 0);
-				if (id != 0)
-					ps.setLong(7, id);
-				ps.executeUpdate();
+			if (aspects != null) {
+				for (SkyPointAspect aspect : aspects) {
+					SkyPoint point = aspect.getSkyPoint1();
+					SkyPoint point2 = aspect.getSkyPoint2();
+					if (point.getNumber() > point2.getNumber()) continue;
+					sql = "select id from " + table + 
+						" where synastryid = ?" +
+						" and planetid = ?" +
+						" and planet2id = ?";
+					ps = Connector.getInstance().getConnection().prepareStatement(sql);
+					ps.setLong(1, synastry.getId());
+					ps.setLong(2, point.getId());
+					ps.setLong(3, point2.getId());
+					rs = ps.executeQuery();
+					long id = (rs.next()) ? rs.getLong("id") : 0;
+					ps.close();
+					
+					if (0 == id)
+						sql = "insert into " + table + " values(0,?,?,?,?,?,?)";
+					else
+						sql = "update " + table + 
+							" set synastryid = ?,"
+							+ " planetid = ?,"
+							+ " aspectid = ?,"
+							+ " planet2id = ?,"
+							+ " exact = ?,"
+							+ " application = ?" +
+							" where id = ?";
+					ps = Connector.getInstance().getConnection().prepareStatement(sql);
+					ps.setLong(1, synastry.getId());
+					ps.setLong(2, point.getId());
+					ps.setLong(3, aspect.getAspect().getId());
+					ps.setLong(4, point2.getId());
+					ps.setInt(5, aspect.isExact() ? 1 : 0);
+					ps.setInt(6, aspect.isApplication() ? 1 : 0);
+					if (id != 0)
+						ps.setLong(7, id);
+					ps.executeUpdate();
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
