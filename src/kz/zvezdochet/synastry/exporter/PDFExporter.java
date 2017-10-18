@@ -151,6 +151,19 @@ public class PDFExporter {
 			PDFUtil.printHeader(p, "Гороскоп совместимости");
 			chapter.add(p);
 
+			//тип
+			Map<String, String> map = new HashMap<String, String>() {
+				private static final long serialVersionUID = 4739421822269120671L;
+				{
+			        put("love", "любовный");
+			        put("family", "семейный");
+			        put("deal", "деловой");
+			    }
+			};
+			p = new Paragraph("Тип гороскопа: " + map.get(doctype), font);
+	        p.setAlignment(Element.ALIGN_CENTER);
+			chapter.add(p);
+
 			//первый партнёр
 			String text = DateUtil.fulldtf.format(event.getBirth());
 			p = new Paragraph(text, font);
@@ -210,9 +223,6 @@ public class PDFExporter {
 			//космограмма
 			printCard(doc, chapter);
 			chapter.add(Chunk.NEXTPAGE);
-
-			//экспресс-тест
-//			printChart(writer, chapter, event, null);
 			doc.add(chapter);
 
 			chapter = new ChapterAutoNumber("Ваш типаж");
@@ -237,9 +247,7 @@ public class PDFExporter {
 			printPlanetSign(chapter, partner);
 			doc.add(chapter);
 
-			//совместимость характеров
-			//любовная совместимость
-			//сексуальная совместимость
+			//совместимость характеров, любовная, сексуальная, коммуникативная, эмоциональная совместимость
 			chapter = new ChapterAutoNumber("Общий типаж пары");
 			chapter.setNumberDepth(0);
 			p = new Paragraph();
@@ -259,10 +267,7 @@ public class PDFExporter {
 			printTemperament(chapter, event, partner);
 			doc.add(chapter);
 
-			//позитивные аспекты для вас
-			//для партнёра
-			//негативные для вас
-			//для партнёра
+			//аспекты
 			chapter = new ChapterAutoNumber("Совместимость");
 			chapter.setNumberDepth(0);
 			p = new Paragraph();
@@ -305,6 +310,7 @@ public class PDFExporter {
 			}
 			doc.add(chapter);
 
+			//дома
 			chapter = new ChapterAutoNumber("Влияние партнёра на вас");
 			chapter.setNumberDepth(0);
 			p = new Paragraph();
@@ -324,26 +330,19 @@ public class PDFExporter {
 			doc.add(chapter);
 
 			//рекомендации
-			chapter = new ChapterAutoNumber("Рекомендуемые партнёры");
-			chapter.setNumberDepth(0);
-			p = new Paragraph();
-			PDFUtil.printHeader(p, "Рекомендуемые партнёры");
-			chapter.add(p);
-			printHouseSign(chapter, event, false);
-			printHouseSign(chapter, partner, true);
-			//знаменитости
-			printAkin(chapter, event, false);
-			printAkin(chapter, partner, true);
-			doc.add(chapter);
-
-			//влияние партнёра на вашу жизнь
-			//ваше влияние на жизнь партнёра
-			
-			//координаты планет для обоих
-			//сравнение силы планет
-			//соотношение аспектов планет
-			//сравнение темпераменты + как в видео-курсе
-			//сравнение мужское и женское начало
+			if (doctype.equals("love")) {
+				chapter = new ChapterAutoNumber("Рекомендуемые партнёры");
+				chapter.setNumberDepth(0);
+				p = new Paragraph();
+				PDFUtil.printHeader(p, "Рекомендуемые партнёры");
+				chapter.add(p);
+				printHouseSign(chapter, event, false);
+				printHouseSign(chapter, partner, true);
+				//знаменитости
+				printAkin(chapter, event, false);
+				printAkin(chapter, partner, true);
+				doc.add(chapter);
+			}
 			
 			chapter = new ChapterAutoNumber("Диаграммы");
 			chapter.setNumberDepth(0);
@@ -358,7 +357,7 @@ public class PDFExporter {
 			printCoords(chapter, event, partner, true);
 			chapter.add(Chunk.NEXTPAGE);
 
-			//сила планет
+			//TODO сравнение силы планет
 //			printPlanetStrength(writer, chapter, event, partner);
 //			chapter.add(Chunk.NEXTPAGE);
 
@@ -486,7 +485,7 @@ public class PDFExporter {
 				    	if (list != null && list.size() > 0)
 				    		for (PlanetSignText object : list) {
 				    			Category category = object.getCategory();
-				    			if (!Arrays.asList(categories).contains(category.getCode()))
+				    			if (!categories.contains(category.getCode()))
 				    				continue;
 				    			Section section = PDFUtil.printSection(chapter, category.getName());
 				    			if (term) {
@@ -1040,7 +1039,7 @@ public class PDFExporter {
 			//фильтрация списка типов аспектов
 			List<Model> types = new AspectTypeService().getList();
 			String[] codes = {
-				"NEUTRAL", "NEGATIVE", "POSITIVE", "CREATIVE", "KARMIC", "SPIRITUAL", "PROGRESSIVE"
+					"NEUTRAL", "NEGATIVE", "NEGATIVE_HIDDEN", "POSITIVE", "POSITIVE_HIDDEN", "CREATIVE", "KARMIC", "SPIRITUAL", "PROGRESSIVE"
 			};
 
 			List<Bar> items = new ArrayList<Bar>();
@@ -1049,9 +1048,11 @@ public class PDFExporter {
 		    	AspectType type = (AspectType)tmodel;
 		    	if (Arrays.asList(codes).contains(type.getCode())) {
 		    		mtype = type;
-		    	} else if (type.getParentType() != null
-		    			&& Arrays.asList(codes).contains(type.getParentType().getCode()))
-		    		mtype = type.getParentType();
+		    	} else {
+		    		AspectType ptype = type.getParentType();
+		    		if (ptype != null && Arrays.asList(codes).contains(ptype.getCode()))
+		    			mtype = type.getParentType();
+		    	}
 		    	if (null == mtype)
 		    		continue;
 
@@ -1076,15 +1077,15 @@ public class PDFExporter {
 
 			com.itextpdf.text.List list = new com.itextpdf.text.List(false, false, 10);
 			ListItem li = new ListItem();
-	        li.add(new Chunk("Больше гармоничных аспектов — меньше препятствий", new Font(baseFont, 12, Font.NORMAL, BaseColor.RED)));
+	        li.add(new Chunk("Больше гармоничных аспектов — больше лёгкости", new Font(baseFont, 12, Font.NORMAL, BaseColor.RED)));
 	        list.add(li);
 
 			li = new ListItem();
-	        li.add(new Chunk("Больше творческих — меньше ограничений", new Font(baseFont, 12, Font.NORMAL, new BaseColor(0, 102, 51))));
+	        li.add(new Chunk("Больше творческих — больше свободы", new Font(baseFont, 12, Font.NORMAL, new BaseColor(0, 102, 51))));
 	        list.add(li);
 
 			li = new ListItem();
-	        li.add(new Chunk("Больше нейтральных — больше сфер жизни затрагивают изменения", new Font(baseFont, 12, Font.NORMAL, new BaseColor(255, 153, 51))));
+	        li.add(new Chunk("Больше нейтральных — больше сфер жизни, где вы действуете неразделимо", new Font(baseFont, 12, Font.NORMAL, new BaseColor(255, 153, 51))));
 	        list.add(li);
 
 			li = new ListItem();
@@ -1092,7 +1093,7 @@ public class PDFExporter {
 	        list.add(li);
 
 			li = new ListItem();
-	        li.add(new Chunk("Больше скрытых — больше событий происходит за кулисами жизни", new Font(baseFont, 12, Font.NORMAL, BaseColor.GRAY)));
+	        li.add(new Chunk("Больше скрытых — больше переживаний происходит за кулисами общения", new Font(baseFont, 12, Font.NORMAL, BaseColor.GRAY)));
 	        list.add(li);
 			
 			li = new ListItem();
@@ -1100,7 +1101,7 @@ public class PDFExporter {
 	        list.add(li);
 			
 			li = new ListItem();
-	        li.add(new Chunk("Больше прогрессивных — бо́льшим испытаниям вы подвергнуты", new Font(baseFont, 12, Font.NORMAL, new BaseColor(51, 153, 153))));
+	        li.add(new Chunk("Больше прогрессивных — больше испытаний", new Font(baseFont, 12, Font.NORMAL, new BaseColor(51, 153, 153))));
 	        list.add(li);
 			
 			li = new ListItem();
@@ -1419,7 +1420,7 @@ public class PDFExporter {
 						PlanetHouseText dict = (PlanetHouseText)service.find(planet, house, null);
 						if (dict != null) {
 							section.add(new Paragraph(StringUtil.removeTags(dict.getText()), font));
-							PDFUtil.printGender(section, dict, female, child, true);
+							printGender(section, dict);
 
 							Rule rule = EventRules.rulePlanetHouse(planet, house, female);
 							if (rule != null) {
@@ -1555,11 +1556,11 @@ public class PDFExporter {
 			Map<String, String[]> planets = new HashMap<String, String[]>() {
 				private static final long serialVersionUID = 4739420822269120672L;
 				{
-			        put("Sun", new String[] {"Характеры", "Семья"});
+			        put("Sun", new String[] {"Характеры"});
 			        put("Moon", new String[] {"Семья"});
 			        put("Rakhu", new String[] {"Характеры"});
 			        put("Kethu", new String[] {"Характеры"});
-			        put("Mercury", new String[] {"Общение", "Сотрудничество"});
+			        put("Mercury", new String[] {"Общение"});
 			        put("Venus", new String[] {"Любовь"});
 			        put("Mars", new String[] {"Секс", "Соперничество"});
 			        put("Selena", new String[] {"Характеры"});
@@ -1584,6 +1585,13 @@ public class PDFExporter {
 				Planet planet2 = (Planet)aspect.getSkyPoint2();
 				String pcode = planet1.getCode();
 				String pcode2 = planet2.getCode();
+
+				//оппозиция усиливает соперничество
+				if (aspect.getAspect().getCode().equals("OPPOSITION")) {
+					String cat = "Соперничество";
+					int value = map.get(cat);
+					map.put(cat, value - 1);
+				}
 
 				AspectType type = aspect.checkType(true);
 				int points = type.getPoints();
