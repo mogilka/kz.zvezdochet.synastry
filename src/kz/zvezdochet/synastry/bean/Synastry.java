@@ -128,4 +128,6 @@ public class Synastry extends Model {
 			e.printStackTrace();
 		}
 	}
+	@Override
+	public void init(boolean mode) {}
 }
