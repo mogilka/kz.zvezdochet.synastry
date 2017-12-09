@@ -261,7 +261,6 @@ public class PDFExporter {
 
 			//совместимость планет в знаках
 			printSign(chapter, event, partner);
-			chapter.add(Chunk.NEXTPAGE);
 
 			//совместимость темпераментов
 			printTemperament(chapter, event, partner);
@@ -566,6 +565,7 @@ public class PDFExporter {
 					}
 				}
 			}
+			chapter.add(Chunk.NEXTPAGE);
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
@@ -580,7 +580,7 @@ public class PDFExporter {
 		try {
 			Section section = PDFUtil.printSection(chapter, title);
 			if (aspectType.equals("NEGATIVE")) {
-				Paragraph p = new Paragraph("В данном разделе описаны ваши с партнёром качества, которые проявляются в критические моменты жизни.", font);
+				Paragraph p = new Paragraph("В данном разделе описаны ваши с партнёром качества, которые проявляются в конфликтных ситуациях.", font);
 				p.setSpacingAfter(10);
 				section.add(p);
 			}
@@ -1342,12 +1342,11 @@ public class PDFExporter {
 	 */
 	private void printZoroastr(Chapter chapter, Event event, Event partner) {
 		try {
-			Section section = PDFUtil.printSection(chapter, "Зороастрийский календарь");
-			int years = Math.abs(event.getBirthYear() - partner.getBirthYear());
-
 			NumerologyService service = new NumerologyService();
+			int years = Math.abs(event.getBirthYear() - partner.getBirthYear());
 			Numerology dict = (Numerology)service.find(years);
 			if (dict != null) {
+				Section section = PDFUtil.printSection(chapter, "Зороастрийский календарь");
 				section.add(new Paragraph("Разница в годах цикла: " + CoreUtil.getAgeString(years), fonth5));
 				section.add(new Paragraph(StringUtil.removeTags(dict.getZoroastrsyn()), font));
 			}
@@ -1369,7 +1368,6 @@ public class PDFExporter {
 		try {
 			SynastryHouseService service = new SynastryHouseService();
 			boolean female = partner.isFemale();
-			boolean child = partner.isChild();
 
 			for (Model hmodel : houses) {
 				House house = (House)hmodel;
