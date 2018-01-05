@@ -109,7 +109,11 @@ public class PDFExporter {
 	 * love|family|deal любовный|семейный|партнёрский
 	 * TODO задавать кнопками выбора в интерфейсе
 	 */
-	private String doctype = "family";
+	private String doctype = "love";
+	/**
+	 * Имена партнёров
+	 */
+	private String name1, name2;
 
 	public PDFExporter(Display display) {
 		this.display = display;
@@ -130,6 +134,9 @@ public class PDFExporter {
 	public void generate(Event event, Event partner) {
 		event.init(true);
 		partner.init(true);
+
+		name1 = event.getCallname();
+		name2 = partner.getCallname();
 
 		saveCard(event, partner);
 		Document doc = new Document();
@@ -165,7 +172,8 @@ public class PDFExporter {
 			chapter.add(p);
 
 			//первый партнёр
-			String text = DateUtil.fulldtf.format(event.getBirth());
+			String text = name1 + " - ";
+			text += DateUtil.fulldtf.format(event.getBirth());
 			p = new Paragraph(text, font);
 	        p.setAlignment(Element.ALIGN_CENTER);
 			chapter.add(p);
@@ -183,7 +191,8 @@ public class PDFExporter {
 			chapter.add(p);
 
 			//второй партнёр
-			text = DateUtil.fulldtf.format(partner.getBirth());
+			text = name2 + " - ";
+			text += DateUtil.fulldtf.format(partner.getBirth());
 			p = new Paragraph(text, font);
 	        p.setAlignment(Element.ALIGN_CENTER);
 			chapter.add(p);
@@ -225,22 +234,16 @@ public class PDFExporter {
 			chapter.add(Chunk.NEXTPAGE);
 			doc.add(chapter);
 
-			chapter = new ChapterAutoNumber("Ваш типаж");
+			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Ваш типаж (" + name1 + ")"));
 			chapter.setNumberDepth(0);
-			p = new Paragraph();
-			PDFUtil.printHeader(p, "Ваш типаж");
-			chapter.add(p);
 			chapter.add(new Paragraph("Типаж – это общая характеристика поколения людей, рождённых вблизи " + DateUtil.sdf.format(event.getBirth()), font));
 			printPlanetSign(chapter, event);
 			doc.add(chapter);
 
-			chapter = new ChapterAutoNumber("Типаж партнёра");
+			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Типаж партнёра (" + name2 + ")"));
 			chapter.setNumberDepth(0);
-			p = new Paragraph();
-			PDFUtil.printHeader(p, "Типаж партнёра");
-			chapter.add(p);
 			chapter.add(new Paragraph("Типаж – это общая характеристика поколения людей, рождённых вблизи " + DateUtil.sdf.format(partner.getBirth()), font));
-			p = new Paragraph("Толкования данного раздела следует воспринимать так, как будто они адресованы не вам, а партнёру:", PDFUtil.getWarningFont());
+			p = new Paragraph("Толкования данного раздела следует воспринимать так, как будто они адресованы не вам, а партнёру:", PDFUtil.getDangerFont());
 			p.setSpacingBefore(20);
 			p.setSpacingAfter(20);
 			chapter.add(p);
@@ -248,11 +251,8 @@ public class PDFExporter {
 			doc.add(chapter);
 
 			//совместимость характеров, любовная, сексуальная, коммуникативная, эмоциональная совместимость
-			chapter = new ChapterAutoNumber("Общий типаж пары");
+			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Общий типаж пары"));
 			chapter.setNumberDepth(0);
-			p = new Paragraph();
-			PDFUtil.printHeader(p, "Общий типаж пары");
-			chapter.add(p);
 			chapter.add(new Paragraph("Типаж пары – это общая характеристика совместимости двух людей вашего типа: "
 				+ "общая тенденция развития отношений такого человека, как вы, с таким человеком, как ваш партнёр", font));
 
@@ -267,11 +267,8 @@ public class PDFExporter {
 			doc.add(chapter);
 
 			//аспекты
-			chapter = new ChapterAutoNumber("Совместимость");
+			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Совместимость"));
 			chapter.setNumberDepth(0);
-			p = new Paragraph();
-			PDFUtil.printHeader(p, "Совместимость");
-			chapter.add(p);
 			chapter.add(new Paragraph("В предыдущих разделах была дана общая характеристика партнёров и примерная картина отношений между вами. "
 				+ "Теперь речь пойдёт о том, как вы в реальности ведёте себя друг с другом независимо от описанных выше характеристик:", font));
 			com.itextpdf.text.List ilist = new com.itextpdf.text.List(false, false, 10);
@@ -301,40 +298,34 @@ public class PDFExporter {
 				+ "Резкие выяснения отношений возможны только если негативные толкования указывают на высокий уровень критичности (далее по тексту это видно)", font));
 			Synastry synastry = (Synastry)new SynastryService().find(event.getId(), partner.getId());
 			if (synastry != null) {
-				printAspect(chapter, synastry, "Позитив для вас", "POSITIVE", false);
-				printAspect(chapter, synastry, "Негатив для вас", "NEGATIVE", false);
+				printAspect(chapter, synastry, "Позитив для вас (" + name1 + ")", "POSITIVE", false);
+				printAspect(chapter, synastry, "Негатив для вас (" + name1 + ")", "NEGATIVE", false);
 				chapter.add(Chunk.NEXTPAGE);
-				printAspect(chapter, synastry, "Позитив для партнёра", "POSITIVE", true);
-				printAspect(chapter, synastry, "Негатив для партнёра", "NEGATIVE", true);
+				printAspect(chapter, synastry, "Позитив для партнёра (" + name2 + ")", "POSITIVE", true);
+				printAspect(chapter, synastry, "Негатив для партнёра (" + name2 + ")", "NEGATIVE", true);
 			}
 			doc.add(chapter);
 
 			//дома
-			chapter = new ChapterAutoNumber("Влияние партнёра на вас");
+			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Влияние партнёра на вас (" + name1 + ")"));
 			chapter.setNumberDepth(0);
-			p = new Paragraph();
-			PDFUtil.printHeader(p, "Влияние партнёра на вас");
-			chapter.add(p);
 			printPlanetHouses(chapter, event, partner);
 			doc.add(chapter);
 
-			chapter = new ChapterAutoNumber("Ваше влияние на партнёра");
+			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Ваше влияние на партнёра (" + name2 + ")"));
 			chapter.setNumberDepth(0);
-			p = new Paragraph();
-			PDFUtil.printHeader(p, "Ваше влияние на партнёра");
-			chapter.add(p);
-			p = new Paragraph("Толкования данного раздела следует воспринимать так, как будто они адресованы не вам, а партнёру:", PDFUtil.getWarningFont());
+			p = new Paragraph("Толкования данного раздела следует воспринимать так, как будто они адресованы не вам, а партнёру:", PDFUtil.getDangerFont());
 			chapter.add(p);
 			printPlanetHouses(chapter, partner, event);
 			doc.add(chapter);
 
 			//рекомендации
 			if (doctype.equals("love")) {
-				chapter = new ChapterAutoNumber("Рекомендуемые партнёры");
+				chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Рекомендуемые партнёры"));
 				chapter.setNumberDepth(0);
-				p = new Paragraph();
-				PDFUtil.printHeader(p, "Рекомендуемые партнёры");
-				chapter.add(p);
+				chapter.add(new Paragraph("Судьба всегда даёт нам в качестве партнёра человека, который является нашей противоположностью и способен нас дополнять, учить новому и помогать исполнять нашу жизненную миссию. Поэтому вас ждёт встреча с человеком, образ которого описан ниже:", font));
+				chapter.add(Chunk.NEWLINE);
+
 				printHouseSign(chapter, event, false);
 				printHouseSign(chapter, partner, true);
 				//знаменитости
@@ -343,12 +334,8 @@ public class PDFExporter {
 				doc.add(chapter);
 			}
 			
-			chapter = new ChapterAutoNumber("Диаграммы");
+			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Диаграммы"));
 			chapter.setNumberDepth(0);
-
-			p = new Paragraph();
-			PDFUtil.printHeader(p, "Диаграммы");
-			chapter.add(p);
 
 			//координаты планет
 			printCoords(chapter, event, partner, false);
@@ -380,11 +367,8 @@ public class PDFExporter {
 			printYinYang(writer, chapter, statistics, statistics2);
 			doc.add(chapter);
 
-			chapter = new ChapterAutoNumber("Сокращения");
+			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Сокращения"));
 			chapter.setNumberDepth(0);
-			p = new Paragraph();
-			PDFUtil.printHeader(p, "Сокращения");
-			chapter.add(p);
 			printAbbreviation(chapter);
 			doc.add(chapter);
 			doc.add(Chunk.NEWLINE);
@@ -551,8 +535,8 @@ public class PDFExporter {
 				    	SynastryText object = service.find(planet1, planet1.getSign(), planet2.getSign());
 				    	if (object != null) {
 					    	Section section = PDFUtil.printSection(chapter, planet1.getSynastry());
-					    	section.add(new Chunk("Мужчина-" + planet1.getSign().getShortname() +
-					    		" + Женщина-" + planet2.getSign().getShortname(), fonth5));
+					    	section.add(new Chunk(man.getCallname() + "-" + planet1.getSign().getShortname() +
+					    		" + " + woman.getCallname() + "-" + planet2.getSign().getShortname(), fonth5));
 //			    			if (term) {
 //			    				section.add(new Chunk(planet.getMark("sign"), fonth5));
 //			    				section.add(new Chunk(planet.getSymbol(), PDFUtil.getHeaderAstroFont()));
@@ -580,13 +564,13 @@ public class PDFExporter {
 		try {
 			Section section = PDFUtil.printSection(chapter, title);
 			if (aspectType.equals("NEGATIVE")) {
-				Paragraph p = new Paragraph("В данном разделе описаны ваши с партнёром качества, которые проявляются в конфликтных ситуациях.", font);
+				Paragraph p = new Paragraph("В данном разделе описаны ваши с партнёром качества, которые проявляются в конфликтных и критичных ситуациях.", font);
 				p.setSpacingAfter(10);
 				section.add(p);
 			}
 			if (reverse) {
 				Paragraph p = new Paragraph("Толкования данного раздела следует воспринимать так, как будто они адресованы не вам, а партнёру. "
-					+ "Если в тексте упомянута ролевая пара типа «учитель — ученик», то первая роль обозначает партнёра, а вторая – вас (не наоборот)", PDFUtil.getWarningFont());
+					+ "Если в тексте упомянута ролевая пара типа «учитель — ученик», то первая роль обозначает партнёра, а вторая – вас (не наоборот)", PDFUtil.getDangerFont());
 				p.setSpacingAfter(20);
 				section.add(p);
 			}
@@ -622,9 +606,9 @@ public class PDFExporter {
 //    				Planet aspl2 = (Planet)planets2.get(pindex);
 //
 //    				section.add(new Chunk(dict.getMark(aspl1, aspl2), fonth5));
-					section.add(new Chunk(planet1.getShortName() + "-" + (reverse ? "Партнёр" : "Вы") + " " + 
+					section.add(new Chunk((reverse ? name2 : name1) + "-" + planet1.getShortName() + " " + 
 						type.getSymbol() + " " + 
-						planet2.getShortName() + "-" + (reverse ? "Вы" : "Партнёр"), fonth5));
+						(reverse ? name1 : name2) + "-" + planet2.getShortName(), fonth5));
 
 					String code = aspect.getAspect().getCode();
 					if (term) {
@@ -646,7 +630,7 @@ public class PDFExporter {
 								section.add(new Paragraph("Роли: «" + StringUtil.removeTags(dict.getRoles()) + "»", bold));
 
 							if (code.equals("QUADRATURE"))
-								section.add(new Paragraph("Уровень критичности: высокий", PDFUtil.getWarningFont()));
+								section.add(new Paragraph("Уровень критичности: высокий", PDFUtil.getDangerFont()));
 							else if (code.equals("OPPOSITION"))
 								section.add(new Paragraph("Уровень критичности: средний", PDFUtil.getWarningFont()));
 
@@ -676,7 +660,7 @@ public class PDFExporter {
 	 */
 	private void printCoords(Chapter chapter, Event event, Event partner, boolean reverse) {
 		try {
-			Section section = PDFUtil.printSection(chapter, reverse ? "Координаты планет партнёра" : "Координаты ваших планет");
+			Section section = PDFUtil.printSection(chapter, reverse ? "Координаты планет партнёра (" + name2 + ")" : "Координаты ваших планет (" + name1 + ")");
 			float fontsize = 10;
 			Font font = new Font(baseFont, fontsize, Font.NORMAL, BaseColor.BLACK);
 			section.add(new Paragraph("Планеты в знаках Зодиака и астрологических домах:", this.font));
@@ -855,7 +839,7 @@ public class PDFExporter {
 		    	bar.setName(element.getDiaName());
 		    	bar.setValue(entry.getValue() * (-1));
 		    	bar.setColor(element.getColor());
-		    	bar.setCategory("Вы");
+		    	bar.setCategory(name1);
 		    	bars[++i] = bar;
 		    	//определяем наиболее выраженный элемент
 		    	if (entry.getValue() > score) {
@@ -875,7 +859,7 @@ public class PDFExporter {
 		    	bar.setName(element.getDiaName());
 		    	bar.setValue(entry.getValue());
 		    	bar.setColor(element.getColor());
-		    	bar.setCategory("Партнёр");
+		    	bar.setCategory(name2);
 		    	bars[++i] = bar;
 		    	//определяем наиболее выраженный элемент
 		    	if (entry.getValue() > score) {
@@ -928,7 +912,7 @@ public class PDFExporter {
 		    	bar.setName(element.getDiaName());
 		    	bar.setValue(entry.getValue() * (-1));
 		    	bar.setColor(element.getColor());
-		    	bar.setCategory("Ваш темперамент");
+		    	bar.setCategory(name1);
 		    	bars[i] = bar;
 		    }
 		    
@@ -944,7 +928,7 @@ public class PDFExporter {
 		    	bar.setName(element.getDiaName());
 		    	bar.setValue(entry.getValue());
 		    	bar.setColor(element.getColor());
-		    	bar.setCategory("Темперамент партнёра");
+		    	bar.setCategory(name2);
 		    	bars[i] = bar;
 		    }
 
@@ -1156,10 +1140,10 @@ public class PDFExporter {
 			PdfPCell cell = new PdfPCell(new Phrase(term ? "Планета" : "Сфера", font));
 			table.addCell(cell);
 
-			cell = new PdfPCell(new Phrase("Вы", font));
+			cell = new PdfPCell(new Phrase(name1, font));
 			table.addCell(cell);
 
-			cell = new PdfPCell(new Phrase("Партнёр", font));
+			cell = new PdfPCell(new Phrase(name2, font));
 			table.addCell(cell);
 
 			for (int j = 0; j < PLNUM; j++) {
@@ -1176,15 +1160,15 @@ public class PDFExporter {
 			section.add(Chunk.NEXTPAGE);
 
 			//совместимость стихий
-			section = PDFUtil.printSection(chapter, "Совместимость темпераментов для вас");
+			section = PDFUtil.printSection(chapter, "Совместимость темпераментов для вас (" + name1 + ")");
 			for (int j = 0; j < PLNUM; j++) {
 				Planet planet = items[j];
 				Planet planet2 = items2[j];
 				printTemperamentDescr(planet, planet2, font, section, false);
 			}
 
-			section = PDFUtil.printSection(chapter, "Совместимость темпераментов для партнёра");
-			Paragraph p = new Paragraph("Толкования данного раздела следует воспринимать так, как будто они адресованы не вам, а партнёру", PDFUtil.getWarningFont());
+			section = PDFUtil.printSection(chapter, "Совместимость темпераментов для партнёра (" + name2 + ")");
+			Paragraph p = new Paragraph("Толкования данного раздела следует воспринимать так, как будто они адресованы не вам, а партнёру", PDFUtil.getDangerFont());
 			p.setSpacingAfter(20);
 			section.add(p);
 			for (int j = 0; j < PLNUM; j++) {
@@ -1269,7 +1253,7 @@ public class PDFExporter {
 			Section section = PDFUtil.printSection(chapter, reverse ? "Потенциальный партнёр для вашего партнёра" : "Потенциальный партнёр для вас");
 			if (reverse) {
 				section.add(new Paragraph("Ниже приведён типаж человека, которого ваш партнёр притягивает к себе.", font));
-				section.add(new Paragraph("Толкования данного раздела следует воспринимать так, как будто они адресованы не вам, а партнёру", PDFUtil.getWarningFont()));
+				section.add(new Paragraph("Толкования данного раздела следует воспринимать так, как будто они адресованы не вам, а партнёру", PDFUtil.getDangerFont()));
 			} else
 				section.add(new Paragraph("Ниже приведён типаж человека, которого вы притягиваете к себе:", font));
 
@@ -1413,7 +1397,7 @@ public class PDFExporter {
 		    				section.add(new Chunk(" " + planet.getName() + " в " + house.getDesignation() + " доме", fonth5));
 		    				section.add(Chunk.NEWLINE);
 		    			} else
-		    				section.add(new Chunk(planet.getShortName() + " " + sign + " " + house.getName(), fonth5));
+		    				section.add(new Chunk(partner.getCallname() + "-" + planet.getShortName() + " " + sign + " " + event.getCallname() + "-" + house.getName(), fonth5));
 
 						PlanetHouseText dict = (PlanetHouseText)service.find(planet, house, null);
 						if (dict != null) {
