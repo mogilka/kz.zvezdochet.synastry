@@ -1250,7 +1250,7 @@ public class PDFExporter {
 		if (null == houses)
 			return;
 		try {
-			Section section = PDFUtil.printSection(chapter, reverse ? "Потенциальный партнёр для вашего партнёра" : "Потенциальный партнёр для вас");
+			Section section = PDFUtil.printSection(chapter, reverse ? "Потенциальная пара для партнёра (" + name2 + ")" : "Потенциальный партнёр для вас (" + name1 + ")");
 			if (reverse) {
 				section.add(new Paragraph("Ниже приведён типаж человека, которого ваш партнёр притягивает к себе.", font));
 				section.add(new Paragraph("Толкования данного раздела следует воспринимать так, как будто они адресованы не вам, а партнёру", PDFUtil.getDangerFont()));
