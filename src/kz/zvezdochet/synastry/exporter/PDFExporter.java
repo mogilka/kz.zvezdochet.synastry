@@ -209,7 +209,7 @@ public class PDFExporter {
 	        p.setAlignment(Element.ALIGN_CENTER);
 			chapter.add(p);
 
-			Font fontgray = new Font(baseFont, 10, Font.NORMAL, PDFUtil.FONTCOLORGRAY);
+			Font fontgray = PDFUtil.getAnnotationFont(false);
 			text = "Дата составления: " + DateUtil.fulldtf.format(new Date());
 			p = new Paragraph(text, fontgray);
 	        p.setAlignment(Element.ALIGN_CENTER);
@@ -434,9 +434,7 @@ public class PDFExporter {
 	        list.add(li);
 			section.add(list);
 			section.add(new Paragraph("Подробности в разделе «Координаты планет»", font));
-
-			Font fontgray = new Font(baseFont, 12, Font.NORMAL, PDFUtil.FONTCOLORGRAY);
-			section.add(new Paragraph("Сокращения и символы, использованные в тексте, описаны в конце документа", fontgray));
+			section.add(new Paragraph("Сокращения и символы, использованные в тексте, описаны в конце документа", PDFUtil.getAnnotationFont(false)));
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
