@@ -25,5 +25,6 @@ Import-Package: javax.inject;version="1.0.0",
  kz.zvezdochet.core.ui.view,
  org.eclipse.e4.core.contexts,
  org.eclipse.e4.ui.workbench.modeling,
+ org.eclipse.ui.internal.forms.widgets,
  org.osgi.framework;version="1.3.0"
 Bundle-ActivationPolicy: lazy
