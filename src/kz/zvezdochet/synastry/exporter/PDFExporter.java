@@ -156,7 +156,7 @@ public class PDFExporter {
 
 			//шапка
 			Paragraph p = new Paragraph();
-			PDFUtil.printHeader(p, "Гороскоп совместимости");
+			PDFUtil.printHeader(p, "Гороскоп совместимости", null);
 			chapter.add(p);
 
 			//тип
@@ -235,7 +235,7 @@ public class PDFExporter {
 			chapter.add(Chunk.NEXTPAGE);
 			doc.add(chapter);
 
-			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Сравнение типажей"));
+			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Сравнение типажей", null));
 			chapter.setNumberDepth(0);
 			chapter.add(new Paragraph("Типажи – это общая характеристика поколения людей, рождённых вблизи " + 
 				DateUtil.sdf.format(event.getBirth()) + " и " + DateUtil.sdf.format(partner.getBirth()), font));
@@ -243,7 +243,7 @@ public class PDFExporter {
 			doc.add(chapter);
 
 			//совместимость характеров, любовная, сексуальная, коммуникативная, эмоциональная совместимость
-			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Общий типаж пары"));
+			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Общий типаж пары", null));
 			chapter.setNumberDepth(0);
 			chapter.add(new Paragraph("Типаж пары – это общая характеристика совместимости двух людей ваших типов: "
 				+ "общая тенденция развития отношений такого человека, как вы, с таким человеком, как ваш партнёр", font));
@@ -259,7 +259,7 @@ public class PDFExporter {
 			doc.add(chapter);
 
 			//аспекты
-			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Совместимость"));
+			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Совместимость", null));
 			chapter.setNumberDepth(0);
 			chapter.add(new Paragraph("В предыдущих разделах была дана общая характеристика партнёров и примерная картина отношений между вами. "
 				+ "Теперь речь пойдёт о том, как вы в реальности ведёте себя друг с другом независимо от описанных выше характеристик:", font));
@@ -299,7 +299,7 @@ public class PDFExporter {
 			doc.add(chapter);
 
 			//дома
-			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Влияние партнёра на вас (" + name1 + ")"));
+			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Влияние партнёра на вас (" + name1 + ")", null));
 			chapter.setNumberDepth(0);
 		    p = new Paragraph("Этот раздел в меньшей степени рассказывает о том, как вы друг к другу относитесь, и в большей степени говорит о том, "
 		    	+ "что произойдёт между вами в реальности, и как вы измените жизнь друг друга. "
@@ -309,7 +309,7 @@ public class PDFExporter {
 			printPlanetHouses(chapter, event, partner);
 			doc.add(chapter);
 
-			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Ваше влияние на партнёра (" + name2 + ")"));
+			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Ваше влияние на партнёра (" + name2 + ")", null));
 			chapter.setNumberDepth(0);
 			p = new Paragraph("Толкования данного раздела следует воспринимать так, как будто они адресованы не вам, а партнёру:", PDFUtil.getDangerFont());
 			chapter.add(p);
@@ -318,7 +318,7 @@ public class PDFExporter {
 
 			//рекомендации
 			if (doctype.equals("love")) {
-				chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Рекомендуемые партнёры"));
+				chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Рекомендуемые партнёры", null));
 				chapter.setNumberDepth(0);
 				chapter.add(new Paragraph("Обычно в натальной карте чётко обозначен образ человека, с которым вам суждено связать свою судьбу. "
 					+ "Если вы в сомнениях, нашлась уже ваша половинка или нет, то ниже можете почитать, "
@@ -333,7 +333,7 @@ public class PDFExporter {
 				doc.add(chapter);
 			}
 			
-			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Диаграммы"));
+			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Диаграммы", null));
 			chapter.setNumberDepth(0);
 
 			//координаты планет
@@ -366,7 +366,7 @@ public class PDFExporter {
 			printYinYang(writer, chapter, statistics, statistics2);
 			doc.add(chapter);
 
-			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Сокращения"));
+			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Сокращения", null));
 			chapter.setNumberDepth(0);
 			printAbbreviation(chapter);
 			doc.add(chapter);
