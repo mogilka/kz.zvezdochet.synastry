@@ -70,7 +70,6 @@ import kz.zvezdochet.core.util.CalcUtil;
 import kz.zvezdochet.core.util.CoreUtil;
 import kz.zvezdochet.core.util.DateUtil;
 import kz.zvezdochet.core.util.PlatformUtil;
-import kz.zvezdochet.core.util.StringUtil;
 import kz.zvezdochet.export.bean.Bar;
 import kz.zvezdochet.export.handler.PageEventHandler;
 import kz.zvezdochet.export.util.PDFUtil;
@@ -511,7 +510,7 @@ public class PDFExporter {
 //				    				section.add(Chunk.NEWLINE);
 				    			}
 				    			if (!category.getCode().equals("personality"))
-				    				section.add(new Paragraph(StringUtil.removeTags(text.getText()), font));
+				    				section.add(new Paragraph(PDFUtil.removeTags(text.getText(), font)));
 				    			PDFUtil.printGender(section, text, e.isFemale(), e.isChild(), false);
 				    		}
     					}
@@ -577,7 +576,7 @@ public class PDFExporter {
 //			    				section.add(new Chunk(planet.getSign().getSymbol(), PDFUtil.getHeaderAstroFont()));
 //			    				section.add(Chunk.NEWLINE);
 //			    			}
-		    				section.add(new Paragraph(StringUtil.removeTags(object.getText()), font));
+		    				section.add(new Paragraph(PDFUtil.removeTags(object.getText(), font)));
 					    }
 					}
 				}
@@ -660,20 +659,20 @@ public class PDFExporter {
 						SynastryAspectText dict = (SynastryAspectText)model;
 						if (dict != null) {
 							if (dict.getRoles() != null)
-								section.add(new Paragraph("Роли: «" + StringUtil.removeTags(dict.getRoles()) + "»", bold));
+								section.add(new Paragraph("Роли: «" + PDFUtil.removeTags(dict.getRoles(), bold) + "»"));
 
 							if (code.equals("QUADRATURE"))
 								section.add(new Paragraph("Уровень критичности: высокий", PDFUtil.getDangerFont()));
 							else if (code.equals("OPPOSITION"))
 								section.add(new Paragraph("Уровень критичности: средний", PDFUtil.getWarningFont()));
 
-							section.add(new Paragraph(StringUtil.removeTags(dict.getText()), font));
+							section.add(new Paragraph(PDFUtil.removeTags(dict.getText(), font)));
 							printGender(section, dict);
 
 							Rule rule = EventRules.ruleSynastryAspect(aspect, synastry.getPartner());
 							if (rule != null) {
 			    				section.add(Chunk.NEWLINE);
-								section.add(new Paragraph(StringUtil.removeTags(rule.getText()), font));
+								section.add(new Paragraph(PDFUtil.removeTags(rule.getText(), font)));
 							}
 							section.add(Chunk.NEWLINE);
 						}
@@ -905,7 +904,7 @@ public class PDFExporter {
 		    	YinYang y = (YinYang)service.find(yinyang.getCode() + "-" + yinyang2.getCode());
 		    	if (term)
 		    		section.add(new Paragraph(y.getDescription(), fonth5));
-		    	section.add(new Paragraph(StringUtil.removeTags(y.getText()), font));
+		    	section.add(new Paragraph(PDFUtil.removeTags(y.getText(), font)));
 		    }
 		    section.add(Chunk.NEWLINE);
 	        section.add(new Paragraph("Диаграмма показывает, насколько вы оба активны", font));
@@ -985,7 +984,7 @@ public class PDFExporter {
 		    if (element != null) {
 		    	if (term)
 		    		section.add(new Paragraph(element.getName(), fonth5));
-		    	section.add(new Paragraph(PDFUtil.html2pdf(element.getSynastry())));
+		    	section.add(new Paragraph(PDFUtil.html2pdf(element.getSynastry(), font)));
 		    	section.add(Chunk.NEWLINE);
 		    }
 
@@ -1270,7 +1269,7 @@ public class PDFExporter {
 			    		? planet.getName() + " (" + element.getName() + ")"
 			    		: planet.getSynastry();
 		    		section.add(new Paragraph(text, fonth5));
-	    			section.add(new Paragraph(PDFUtil.html2pdf(element.getSynastry())));
+	    			section.add(new Paragraph(PDFUtil.html2pdf(element.getSynastry(), font)));
 	    		}
 		    	section.add(Chunk.NEWLINE);
 			}
@@ -1314,7 +1313,7 @@ public class PDFExporter {
 						section.add(new Paragraph(house.getDesignation() + " в созвездии " + sign.getName(), fonth5));
 					else
 						section.add(new Paragraph(house.getName() + " + " + sign.getShortname(), fonth5));
-					section.add(new Paragraph(StringUtil.removeTags(dict.getText()), font));
+					section.add(new Paragraph(PDFUtil.removeTags(dict.getText(), font)));
 				}
 			}
 		} catch(Exception e) {
@@ -1374,7 +1373,7 @@ public class PDFExporter {
 			if (dict != null) {
 				Section section = PDFUtil.printSection(chapter, "Зороастрийский календарь");
 				section.add(new Paragraph("Разница в годах цикла: " + CoreUtil.getAgeString(years), fonth5));
-				section.add(new Paragraph(StringUtil.removeTags(dict.getZoroastrsyn()), font));
+				section.add(new Paragraph(PDFUtil.removeTags(dict.getZoroastrsyn(), font)));
 			}
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -1443,12 +1442,12 @@ public class PDFExporter {
 
 						PlanetHouseText dict = (PlanetHouseText)service.find(planet, house, null);
 						if (dict != null) {
-							section.add(new Paragraph(StringUtil.removeTags(dict.getText()), font));
+							section.add(new Paragraph(PDFUtil.removeTags(dict.getText(), font)));
 							printGender(section, dict);
 
 							Rule rule = EventRules.rulePlanetHouse(planet, house, female);
 							if (rule != null) {
-								section.add(new Paragraph(StringUtil.removeTags(rule.getText()), font));
+								section.add(new Paragraph(PDFUtil.removeTags(rule.getText(), font)));
 								section.add(Chunk.NEWLINE);
 							}
 						}
@@ -1547,7 +1546,7 @@ public class PDFExporter {
 				Paragraph p = new Paragraph(PDFUtil.getGenderHeader(gender.getType()), PDFUtil.getSubheaderFont());
 				p.setSpacingBefore(10);
 				section.add(p);
-				section.add(new Paragraph(StringUtil.removeTags(gender.getText()), font));
+				section.add(new Paragraph(PDFUtil.removeTags(gender.getText(), font)));
 			};
 			section.add(Chunk.NEWLINE);
 		}
