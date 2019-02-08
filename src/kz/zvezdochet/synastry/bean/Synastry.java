@@ -1,6 +1,7 @@
 package kz.zvezdochet.synastry.bean;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import kz.zvezdochet.bean.Aspect;
@@ -98,13 +99,11 @@ public class Synastry extends Model {
 			aspectList = new ArrayList<>();
 			event.init(false);
 			partner.init(false);
-			List<Model> planets = event.getConfiguration().getPlanets();
-			List<Model> planets2 = partner.getConfiguration().getPlanets();
+			Collection<Planet> planets = event.getConfiguration().getPlanets().values();
+			Collection<Planet> planets2 = partner.getConfiguration().getPlanets().values();
 			List<Model> aspects = new AspectService().getList();
-			for (Model model : planets) {
-				Planet planet = (Planet)model;
-				for (Model model2 : planets2) {
-					Planet planet2 = (Planet)model2;
+			for (Planet planet : planets) {
+				for (Planet planet2 : planets2) {
 					double res = CalcUtil.getDifference(planet.getCoord(), planet2.getCoord());
 					for (Model realasp : aspects) {
 						Aspect a = (Aspect)realasp;

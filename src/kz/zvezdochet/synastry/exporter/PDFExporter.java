@@ -4,6 +4,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -480,11 +481,9 @@ public class PDFExporter {
 				int i = -1;
     			for (Event e : events) {
     				++i;
-    				for (Model model : e.getConfiguration().getPlanets()) {
-    					if (category.getObjectId() != model.getId())
+    				for (Planet planet : e.getConfiguration().getPlanets().values()) {
+    					if (category.getObjectId() != planet.getId())
     						continue;
-
-    					Planet planet = (Planet)model;
 
     					if (0 == i)
     						sign1 = planet.getSign();
@@ -549,15 +548,13 @@ public class PDFExporter {
 				for (String code : planets) {
 					Planet planet1 = null;
 					Planet planet2 = null;
-					for (Model model : man.getConfiguration().getPlanets()) {
-						Planet planet = (Planet)model;
+					for (Planet planet : man.getConfiguration().getPlanets().values()) {
 		    			if (planet.getCode().equals(code)) {
 		    				planet1 = planet;
 		    				break;
 		    			}
 					}
-					for (Model model : woman.getConfiguration().getPlanets()) {
-						Planet planet = (Planet)model;
+					for (Planet planet : woman.getConfiguration().getPlanets().values()) {
 		    			if (planet.getCode().equals(code)) {
 		    				planet2 = planet;
 		    				break;
@@ -721,10 +718,9 @@ public class PDFExporter {
 			table.addCell(cell);
 
 			int i = -1;
-			List<Model> planets = reverse ? partner.getConfiguration().getPlanets() : event.getConfiguration().getPlanets();
-			for (Model model : planets) {
+			Collection<Planet> planets = reverse ? partner.getConfiguration().getPlanets().values() : event.getConfiguration().getPlanets().values();
+			for (Planet planet : planets) {
 				BaseColor color = (++i % 2 > 0) ? new BaseColor(255, 255, 255) : new BaseColor(230, 230, 250);
-				Planet planet = (Planet)model;
 
 				cell = new PdfPCell(new Phrase(CalcUtil.roundTo(planet.getCoord(), 2) + "°", font));
 		        cell.setBorder(PdfPCell.NO_BORDER);
@@ -1009,13 +1005,12 @@ public class PDFExporter {
 		    text = term ? "Чем выше значение, тем легче и активнее планета выражает свои качества" : "Чем выше значение, тем легче и активнее проявляются качества";
 	    	section.add(new Paragraph(text, font));
 
-			List<Model> planets = event.getConfiguration().getPlanets();
-			List<Model> planets2 = partner.getConfiguration().getPlanets();
+			Collection<Planet> planets = event.getConfiguration().getPlanets().values();
+			Collection<Planet> planets2 = partner.getConfiguration().getPlanets().values();
 
 		    Bar[] bars = new Bar[planets.size() + planets2.size()];
 		    int i = -1;
-		    for (Model model : planets) {
-	    		Planet planet = (Planet)model;
+		    for (Planet planet : planets) {
 		    	Bar bar = new Bar();
 		    	bar.setName(term ? planet.getName() : planet.getShortName());
 		    	bar.setValue(planet.getPoints());
@@ -1025,8 +1020,7 @@ public class PDFExporter {
 		    }
 
 		    i = planets.size() - 1;
-		    for (Model model : planets2) {
-	    		Planet planet = (Planet)model;
+		    for (Planet planet : planets2) {
 		    	Bar bar = new Bar();
 		    	bar.setName(term ? planet.getName() : planet.getShortName());
 		    	bar.setValue(planet.getPoints() * (-1));
@@ -1146,21 +1140,19 @@ public class PDFExporter {
 			Font font = new Font(baseFont, fontsize, Font.NORMAL);
 			Font bold = new Font(baseFont, fontsize, Font.BOLD);
 
-			List<Model> planets = event.getConfiguration().getPlanets();
-			List<Model> planets2 = partner.getConfiguration().getPlanets();
+			Collection<Planet> planets = event.getConfiguration().getPlanets().values();
+			Collection<Planet> planets2 = partner.getConfiguration().getPlanets().values();
 			int PLNUM = 5;
 			Planet[] items = new Planet[PLNUM];
 			Planet[] items2 = new Planet[PLNUM];
 
 			int i = -1;
-			for (Model model : planets) {
-				Planet planet = (Planet)model;
+			for (Planet planet : planets) {
 				if (planet.isMain())
 					items[++i] = planet;
 			}
 			i = -1;
-			for (Model model : planets2) {
-				Planet planet = (Planet)model;
+			for (Planet planet : planets2) {
 				if (planet.isMain())
 					items2[++i] = planet;
 			}
@@ -1389,7 +1381,7 @@ public class PDFExporter {
 		List<Model> houses = event.getConfiguration().getHouses();
 		if (null == houses)
 			return;
-		List<Model> cplanets = partner.getConfiguration().getPlanets();
+		Collection<Planet> cplanets = partner.getConfiguration().getPlanets().values();
 		try {
 			SynastryHouseService service = new SynastryHouseService();
 			boolean female = partner.isFemale();
@@ -1399,8 +1391,7 @@ public class PDFExporter {
 
 				//Определяем количество планет в доме
 				List<Planet> planets = new ArrayList<Planet>();
-				for (Model pmodel : cplanets) {
-					Planet planet = (Planet)pmodel;
+				for (Planet planet : cplanets) {
 					House phouse = null;
 					for (int j = 0; j < houses.size(); j++) {
 						House ehouse = (House)houses.get(j);

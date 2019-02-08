@@ -292,16 +292,13 @@ public class SynastryPart extends ModelListView implements ICalculable {
 		Configuration conf2 = partner2.getConfiguration();
 		if (conf != null) {
 			folder.setSelection(1);
-			int j = -1;
-			for (Model base : conf.getPlanets()) {
-				++j;
-				Planet planet = (Planet)base;
+			for (Planet planet : conf.getPlanets().values()) {
 				TableItem item = new TableItem(table, SWT.NONE);
 				item.setText(0, planet.getName());
 				item.setText(1, String.valueOf(planet.getCoord()));
 				//планеты партнёра
 				if (conf2 != null) {
-					planet = (Planet)conf2.getPlanets().get(j);
+					planet = (Planet)conf2.getPlanets().get(planet.getId());
 					item.setText(2, String.valueOf(planet.getCoord()));
 				}
 			}
