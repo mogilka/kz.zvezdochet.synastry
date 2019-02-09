@@ -545,16 +545,18 @@ public class PDFExporter {
 					String love[] = {"Venus", "Mars"};
 					planets.addAll(Arrays.asList(love));
 				}
+				Collection<Planet> mplanets = man.getConfiguration().getPlanets().values();
+				Collection<Planet> wplanets = woman.getConfiguration().getPlanets().values();
 				for (String code : planets) {
 					Planet planet1 = null;
 					Planet planet2 = null;
-					for (Planet planet : man.getConfiguration().getPlanets().values()) {
+					for (Planet planet : mplanets) {
 		    			if (planet.getCode().equals(code)) {
 		    				planet1 = planet;
 		    				break;
 		    			}
 					}
-					for (Planet planet : woman.getConfiguration().getPlanets().values()) {
+					for (Planet planet : wplanets) {
 		    			if (planet.getCode().equals(code)) {
 		    				planet2 = planet;
 		    				break;
