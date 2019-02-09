@@ -2,6 +2,7 @@ package kz.zvezdochet.synastry.part;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -292,7 +293,8 @@ public class SynastryPart extends ModelListView implements ICalculable {
 		Configuration conf2 = partner2.getConfiguration();
 		if (conf != null) {
 			folder.setSelection(1);
-			for (Planet planet : conf.getPlanets().values()) {
+			Collection<Planet> planets = conf.getPlanets().values();
+			for (Planet planet : planets) {
 				TableItem item = new TableItem(table, SWT.NONE);
 				item.setText(0, planet.getName());
 				item.setText(1, String.valueOf(planet.getCoord()));
