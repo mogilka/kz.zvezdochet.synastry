@@ -31,6 +31,7 @@ import com.itextpdf.text.Font;
 import com.itextpdf.text.ListItem;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.Phrase;
+import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.Section;
 import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfPCell;
@@ -137,7 +138,7 @@ public class PDFExporter {
 		partner.init(true);
 
 		name1 = event.getCallname();
-		name2 = partner.getCallname();
+		name2 = "Партнёр"; //partner.getCallname(); TODO
 
 		saveCard(event, partner);
 		Document doc = new Document();
@@ -148,7 +149,7 @@ public class PDFExporter {
 	        doc.open();
 
 	        //metadata
-	        PDFUtil.getMetaData(doc, "Гороскоп совместимости");
+	        PDFUtil.getMetaData(doc, "Парный гороскоп");
 
 	        //раздел
 			Chapter chapter = new ChapterAutoNumber("Общая информация");
@@ -156,7 +157,7 @@ public class PDFExporter {
 
 			//шапка
 			Paragraph p = new Paragraph();
-			PDFUtil.printHeader(p, "Гороскоп совместимости", null);
+			PDFUtil.printHeader(p, "Парный гороскоп", null);
 			chapter.add(p);
 
 			//тип
@@ -226,20 +227,18 @@ public class PDFExporter {
 	        chapter.add(p);
 
 			chapter.add(new Paragraph("Прогноз содержит как позитивные, так и негативные аспекты отношений. "
-				+ "Негатив - признак того, что вам необходимо переосмысление отношений с партнёром и мобилизация ресурсов для решения проблемы. "
+				+ "Негатив – признак того, что вам необходимо переосмысление отношений с партнёром и мобилизация ресурсов для решения проблемы. "
 				+ "А также это возможность смягчить напряжение, ведь вы будете знать о нём заранее. "
-				+ "Не зацикливайтесь на негативе, используйте свои сильные стороны для достижения конструктивного партнёрства.", font));
+				+ "Не зацикливайтесь на негативе, используйте свои сильные стороны для достижения конструктивного партнёрства", font));
 
 			//космограмма
 			printCard(doc, chapter);
 			chapter.add(Chunk.NEXTPAGE);
 			doc.add(chapter);
 
-			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Сравнение типажей", null));
+			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Общее сравнение партнёров", null));
 			chapter.setNumberDepth(0);
-			chapter.add(new Paragraph("Типажи – это общая характеристика поколения людей, рождённых вблизи " + 
-				DateUtil.sdf.format(event.getBirth()) + " и " + DateUtil.sdf.format(partner.getBirth()), font));
-			printPlanetSign(chapter, event, partner);
+			printPlanetSign(doc, chapter, event, partner);
 			doc.add(chapter);
 
 			//совместимость характеров, любовная, сексуальная, коммуникативная, эмоциональная совместимость
@@ -261,7 +260,7 @@ public class PDFExporter {
 			//аспекты
 			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Совместимость", null));
 			chapter.setNumberDepth(0);
-			chapter.add(new Paragraph("В предыдущих разделах была дана общая характеристика партнёров и примерная картина отношений между вами. "
+			chapter.add(new Paragraph("В предыдущих разделах была дана общая характеристика каждого из вас и примерная картина отношений. "
 				+ "Теперь речь пойдёт о том, как вы в реальности ведёте себя друг с другом независимо от описанных выше характеристик:", font));
 			com.itextpdf.text.List ilist = new com.itextpdf.text.List(false, false, 10);
 			ListItem li = new ListItem();
@@ -273,21 +272,21 @@ public class PDFExporter {
 	        ilist.add(li);
 
 			li = new ListItem();
-	        li.add(new Chunk("как вы влияете на изменение поведения друг друга", font));
+	        li.add(new Chunk("как влияете на изменение поведения друг друга", font));
 	        ilist.add(li);
 
 			li = new ListItem();
-	        li.add(new Chunk("с какими конкретно ситуациями вы сталкиваетесь", font));
+	        li.add(new Chunk("с какими конкретно ситуациями сталкиваетесь", font));
 	        ilist.add(li);
 
 			li = new ListItem();
-	        li.add(new Chunk("чем общение партнёра с вами отличается от его общения с другими людьми", font));
+	        li.add(new Chunk("чем ваше общение между собой отличается от общения с другими людьми", font));
 	        ilist.add(li);
 	        chapter.add(ilist);
 
 			chapter.add(new Paragraph("Ниже приведены положительные и отрицательные факторы ваших отношений. "
 				+ "Не преувеличивайте описанный негатив, он имеет место в любых парах. "
-				+ "Резкие выяснения отношений возможны только если негативные толкования указывают на высокий уровень критичности (далее по тексту это видно)", font));
+				+ "Резкие выяснения отношений возможны только в толкованиях с высоким уровнем критичности (далее по тексту это видно)", font));
 			Synastry synastry = (Synastry)new SynastryService().find(event.getId(), partner.getId());
 			if (synastry != null) {
 				printAspect(chapter, synastry, "Позитив для вас (" + name1 + ")", "POSITIVE", false);
@@ -445,18 +444,16 @@ public class PDFExporter {
 	 * @param event партнёр 1
 	 * @param event партнёр 2
 	 */
-	private void printPlanetSign(Chapter chapter, Event event, Event partner) {
+	private void printPlanetSign(Document doc, Chapter chapter, Event event, Event partner) {
 		try {
-			List<Event> events = new ArrayList<>();
-			if (event.getConfiguration().getPlanets() != null) {
+			if (event.getConfiguration().getPlanets() != null)
 				event.getConfiguration().initPlanetSigns(true);
-				events.add(event);
-			}
-			if (partner.getConfiguration().getPlanets() != null) {
+			else
+				return;
+
+			if (partner.getConfiguration().getPlanets() != null)
 				partner.getConfiguration().initPlanetSigns(true);
-				events.add(partner);
-			}
-			if (events.isEmpty())
+			else
 				return;
 
 			PlanetSignService service = new PlanetSignService();
@@ -470,6 +467,9 @@ public class PDFExporter {
 				categories.addAll(Arrays.asList(deal));
 			}
 
+//			float fontsize = 9;
+//			Font font = new Font(baseFont, fontsize, Font.NORMAL, BaseColor.BLACK);
+
 			List<Model> cats = new CategoryService().getList();
 			for (Model m : cats) {
     			Category category = (Category)m;
@@ -477,44 +477,77 @@ public class PDFExporter {
     				continue;
 
 				Section section = PDFUtil.printSection(chapter, category.getName());
-				Sign sign1 = null, sign2 = null;
-				int i = -1;
+
+   				Planet planet = event.getConfiguration().getPlanets().get(category.getObjectId());
+   				Planet planet2 = partner.getConfiguration().getPlanets().get(category.getObjectId());
+				Sign sign1 = planet.getSign();
+				Sign sign2 = planet2.getSign();
+
+				if (sign1.getId().equals(sign2.getId()))
+   					section.add(new Paragraph("По критерию «" + category.getName() + "» вы с партнёром очень похожи", PDFUtil.getSuccessFont()));
+
+		        PdfPTable table = new PdfPTable(2);
+		        table.setTotalWidth(doc.getPageSize().getWidth() - PDFUtil.PAGEBORDERWIDTH * 2);
+		        table.setLockedWidth(true);
+		        table.setWidths(new float[] { 50, 50 });
+		        table.setSpacingBefore(20);
+
+				PdfPCell cell = null;
+				Event[] events = new Event[] {event, partner};
+
     			for (Event e : events) {
-    				++i;
-    				for (Planet planet : e.getConfiguration().getPlanets().values()) {
-    					if (category.getObjectId() != planet.getId())
-    						continue;
+    				cell = new PdfPCell(new Phrase(e.getCallname(), font));
+    				PDFUtil.setCellBorderWidths(cell, 0, 0, .5F, 0);
+    				cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+    				table.addCell(cell);
+    			}
 
-    					if (0 == i)
-    						sign1 = planet.getSign();
-    					else
-    						sign2 = planet.getSign();
+//    			if (i > 0)
+//    				section.add(new Paragraph("Толкования данного раздела следует воспринимать так, как будто они адресованы не вам, а партнёру:", PDFUtil.getDangerFont()));
 
-    					if (i > 0 && sign1.getId() == sign2.getId()) {
-    						section.add(new Paragraph("В этом плане вы с партнёром одинаковые: "
-    							+ "в разделе «" + category.getName() + "» у него те же самые характеристики", PDFUtil.getSuccessFont()));
-    						continue;
-    					} else {
-    	    				section.add(new Chunk(e.getCallname(), fonth5));
-    	    				if (i > 0)
-    	    					section.add(new Paragraph("Толкования данного раздела следует воспринимать так, как будто они адресованы не вам, а партнёру:", PDFUtil.getDangerFont()));
-
-    						PlanetSignText text = service.find(category, planet.getSign());
-    						if (text != null) {
-				    			if (term) {
-				    				section.add(new Chunk(planet.getMark("sign"), fonth5));
-				    				section.add(new Chunk(planet.getSymbol(), PDFUtil.getHeaderAstroFont()));
-				    				section.add(new Chunk(" " + planet.getName() + " в созвездии " + planet.getSign().getName() + " ", fonth5));
-				    				section.add(new Chunk(planet.getSign().getSymbol(), PDFUtil.getHeaderAstroFont()));
-//				    				section.add(Chunk.NEWLINE);
-				    			}
-				    			if (!category.getCode().equals("personality"))
-				    				section.add(new Paragraph(PDFUtil.removeTags(text.getText(), font)));
-				    			PDFUtil.printGender(section, text, e.isFemale(), e.isChild(), false);
-				    		}
-    					}
+				Planet[] planets = new Planet[] {planet, planet2};
+				for (int i = 0; i < planets.length; i++) {
+					Planet p = planets[i];
+					PlanetSignText text = service.find(category, p.getSign());
+					if (text != null) {
+						Phrase phrase = new Phrase();
+//						if (term) {
+//				   			section.add(new Chunk(planet.getMark("sign"), fonth5));
+//				   			section.add(new Chunk(planet.getSymbol(), PDFUtil.getHeaderAstroFont()));
+//				   			section.add(new Chunk(" " + planet.getName() + " в созвездии " + planet.getSign().getName() + " ", fonth5));
+//				   			section.add(new Chunk(planet.getSign().getSymbol(), PDFUtil.getHeaderAstroFont()));
+////			    		section.add(Chunk.NEWLINE);
+//				   		}
+		    			if (!category.getCode().equals("personality")) {
+		    				phrase = PDFUtil.removeTags(text.getText(), font);
+		    				if (0 == i && sign1.getId().equals(sign2.getId())) {
+		    					Phrase ph = new Phrase("Данная характеристика подходит вам обоим:", font);
+		    					ph.add(Chunk.NEWLINE);
+		    					ph.add(Chunk.NEWLINE);
+		    					ph.add(phrase);
+		       					cell = new PdfPCell(ph);
+	       						cell.setBorder(Rectangle.NO_BORDER);
+		       					cell.setColspan(2);
+		       					table.addCell(cell);
+		       					phrase = new Phrase();
+		    				}
+		    				if (1 == i && sign1.getId().equals(sign2.getId()))
+		    					phrase = new Phrase();
+		    			}
+		    			Event e = events[i];
+		    			Phrase ph = PDFUtil.printGenderCell(text, e.isFemale(), e.isChild(), false);
+		    			if (ph != null)
+		    				phrase.add(ph);
+	    				cell = new PdfPCell(phrase);
+       					if (0 == i)
+       						PDFUtil.setCellBorderWidths(cell, 0, .5F, 0, 0);
+       					else
+       						cell.setBorder(Rectangle.NO_BORDER);
+	    				table.addCell(cell);
 				    }
 				}
+				section.add(table);
+				chapter.add(Chunk.NEXTPAGE);
 			}
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -575,7 +608,8 @@ public class PDFExporter {
 //			    				section.add(new Chunk(planet.getSign().getSymbol(), PDFUtil.getHeaderAstroFont()));
 //			    				section.add(Chunk.NEWLINE);
 //			    			}
-		    				section.add(new Paragraph(PDFUtil.removeTags(object.getText(), font)));
+					    	if (object.getText() != null)
+					    		section.add(new Paragraph(PDFUtil.removeTags(object.getText(), font)));
 					    }
 					}
 				}
