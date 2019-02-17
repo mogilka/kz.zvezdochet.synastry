@@ -138,7 +138,7 @@ public class PDFExporter {
 		partner.init(true);
 
 		name1 = event.getCallname();
-		name2 = "Партнёр"; //partner.getCallname(); TODO
+		name2 = partner.getCallname();
 
 		saveCard(event, partner);
 		Document doc = new Document();
@@ -244,17 +244,18 @@ public class PDFExporter {
 			//совместимость характеров, любовная, сексуальная, коммуникативная, эмоциональная совместимость
 			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Общий типаж пары", null));
 			chapter.setNumberDepth(0);
-			chapter.add(new Paragraph("Типаж пары – это общая характеристика совместимости двух людей ваших типов: "
-				+ "общая тенденция развития отношений такого человека, как вы, с таким человеком, как ваш партнёр", font));
+			chapter.add(new Paragraph("Типаж пары – это общая характеристика совместимости двух людей вашего типа: "
+				+ "общая тенденция развития отношений такого человека, как вы, с таким человеком, как ваш партнёр", PDFUtil.getWarningFont()));
 
 			//совместимость по Зороастрийскому календарю
 			printZoroastr(chapter, event, partner);
+			chapter.add(Chunk.NEXTPAGE);
 
 			//совместимость планет в знаках
 			printSign(chapter, event, partner);
 
 			//совместимость темпераментов
-			printTemperament(chapter, event, partner);
+			printTemperament(doc, chapter, event, partner);
 			doc.add(chapter);
 
 			//аспекты
@@ -440,6 +441,7 @@ public class PDFExporter {
 
 	/**
 	 * Генерация планет в знаках
+	 * @param doc документ
 	 * @param chapter раздел
 	 * @param event партнёр 1
 	 * @param event партнёр 2
@@ -466,9 +468,6 @@ public class PDFExporter {
 				String deal[] = {"thinking", "work", "profession", "activity"};
 				categories.addAll(Arrays.asList(deal));
 			}
-
-//			float fontsize = 9;
-//			Font font = new Font(baseFont, fontsize, Font.NORMAL, BaseColor.BLACK);
 
 			List<Model> cats = new CategoryService().getList();
 			for (Model m : cats) {
@@ -502,50 +501,76 @@ public class PDFExporter {
     				table.addCell(cell);
     			}
 
-//    			if (i > 0)
-//    				section.add(new Paragraph("Толкования данного раздела следует воспринимать так, как будто они адресованы не вам, а партнёру:", PDFUtil.getDangerFont()));
-
-				Planet[] planets = new Planet[] {planet, planet2};
-				for (int i = 0; i < planets.length; i++) {
-					Planet p = planets[i];
-					PlanetSignText text = service.find(category, p.getSign());
-					if (text != null) {
-						Phrase phrase = new Phrase();
-//						if (term) {
-//				   			section.add(new Chunk(planet.getMark("sign"), fonth5));
-//				   			section.add(new Chunk(planet.getSymbol(), PDFUtil.getHeaderAstroFont()));
-//				   			section.add(new Chunk(" " + planet.getName() + " в созвездии " + planet.getSign().getName() + " ", fonth5));
-//				   			section.add(new Chunk(planet.getSign().getSymbol(), PDFUtil.getHeaderAstroFont()));
-////			    		section.add(Chunk.NEWLINE);
-//				   		}
-		    			if (!category.getCode().equals("personality")) {
-		    				phrase = PDFUtil.removeTags(text.getText(), font);
-		    				if (0 == i && sign1.getId().equals(sign2.getId())) {
-		    					Phrase ph = new Phrase("Данная характеристика подходит вам обоим:", font);
-		    					ph.add(Chunk.NEWLINE);
-		    					ph.add(Chunk.NEWLINE);
-		    					ph.add(phrase);
-		       					cell = new PdfPCell(ph);
-	       						cell.setBorder(Rectangle.NO_BORDER);
-		       					cell.setColspan(2);
-		       					table.addCell(cell);
-		       					phrase = new Phrase();
-		    				}
-		    				if (1 == i && sign1.getId().equals(sign2.getId()))
-		    					phrase = new Phrase();
-		    			}
-		    			Event e = events[i];
-		    			Phrase ph = PDFUtil.printGenderCell(text, e.isFemale(), e.isChild(), false);
-		    			if (ph != null)
-		    				phrase.add(ph);
-	    				cell = new PdfPCell(phrase);
-       					if (0 == i)
-       						PDFUtil.setCellBorderWidths(cell, 0, .5F, 0, 0);
-       					else
-       						cell.setBorder(Rectangle.NO_BORDER);
-	    				table.addCell(cell);
-				    }
+				Phrase phrase = new Phrase();
+				List<String> texts1 = new ArrayList<>();
+				List<String> texts2 = new ArrayList<>();
+				PlanetSignText text = service.find(category, sign1);
+				if (text != null) {
+//					if (term) {
+//						section.add(new Chunk(planet.getMark("sign"), fonth5));
+//						section.add(new Chunk(planet.getSymbol(), PDFUtil.getHeaderAstroFont()));
+//						section.add(new Chunk(" " + planet.getName() + " в созвездии " + planet.getSign().getName() + " ", fonth5));
+//						section.add(new Chunk(planet.getSign().getSymbol(), PDFUtil.getHeaderAstroFont()));
+////			 		section.add(Chunk.NEWLINE);
+//					}
+		    		if (!category.getCode().equals("personality")) {
+		    			String t = text.getText();
+	    				if (sign1.getId().equals(sign2.getId())) {
+	    					phrase = PDFUtil.removeTags(t, font);
+		    				Phrase ph = new Phrase("Данная характеристика подходит вам обоим:", font);
+		    				ph.add(Chunk.NEWLINE);
+		    				ph.add(Chunk.NEWLINE);
+		    				ph.add(phrase);
+		       				cell = new PdfPCell(ph);
+	       					cell.setBorder(Rectangle.NO_BORDER);
+		       				cell.setColspan(2);
+		       				table.addCell(cell);
+		    			} else
+		    				texts1 = PDFUtil.splitHtml(t);
+		    		}
 				}
+
+				//если основные толкования планет в знаках у партнёров разные,
+				//выводим их поочерёдно - порциями, которые вмещаются в ячейки
+				PlanetSignText text2 = service.find(category, sign2);
+				if (text2 != null) {
+		    		if (!category.getCode().equals("personality")) {
+	    				if (!sign1.getId().equals(sign2.getId()))
+	    					texts2 = PDFUtil.splitHtml(text2.getText());
+		    		}
+				}
+				int tcount = texts1.size() + texts2.size();
+				if (tcount > 0) {
+					for (int i = 0; i < tcount; i++) {
+						phrase = new Phrase();
+						if (texts1.size() > i)
+							phrase = PDFUtil.removeTags(texts1.get(i), font);
+						cell = new PdfPCell(phrase);
+						PDFUtil.setCellBorderWidths(cell, 0, .5F, 0, 0);
+						table.addCell(cell);
+
+						phrase = new Phrase();
+						if (texts2.size() > i)
+							phrase = PDFUtil.removeTags(texts2.get(i), font);
+						cell = new PdfPCell(phrase);
+						cell.setBorder(Rectangle.NO_BORDER);
+						table.addCell(cell);
+					}
+				}
+
+				//гендерные толкования
+				if (text != null) {
+	    			phrase = PDFUtil.printGenderCell(text, event.isFemale(), event.isChild(), false);
+	   				cell = new PdfPCell(phrase);
+					PDFUtil.setCellBorderWidths(cell, 0, .5F, 0, 0);
+					table.addCell(cell);
+				}				
+				if (text2 != null) {
+	    			phrase = PDFUtil.printGenderCell(text2, partner.isFemale(), partner.isChild(), false);
+	   				cell = new PdfPCell(phrase);
+	   				cell.setBorder(Rectangle.NO_BORDER);
+	   				table.addCell(cell);
+				}				
 				section.add(table);
 				chapter.add(Chunk.NEXTPAGE);
 			}
@@ -1161,11 +1186,12 @@ public class PDFExporter {
 
 	/**
 	 * Генерация таблицы темпераментов
+	 * @param doc документ
 	 * @param chapter раздел
 	 * @param event первый партнёр
 	 * @param event второй партнёр
 	 */
-	private void printTemperament(Chapter chapter, Event event, Event partner) {
+	private void printTemperament(Document doc, Chapter chapter, Event event, Event partner) {
 		try {
 			Section section = PDFUtil.printSection(chapter, "Сравнение темпераментов");
 			section.add(new Paragraph("Если цвет ваших темпераментов совпадает, значит в указанной сфере вы совместимы от природы "
@@ -1220,29 +1246,84 @@ public class PDFExporter {
 			section.add(Chunk.NEXTPAGE);
 
 			//совместимость стихий
-			section = PDFUtil.printSection(chapter, "Совместимость темпераментов для вас (" + name1 + ")");
-			Map<Long, Long> map = new HashMap<>();
-			for (int j = 0; j < PLNUM; j++) {
-				Planet planet = items[j];
-				Planet planet2 = items2[j];
-				long s = 0;
-				if (map.containsKey(planet.getSign().getId()))
-					s = map.get(planet.getSign().getId());
-				if (s == planet2.getSign().getId())
-					continue;
-				else
-					map.put(planet.getSign().getId(), planet2.getSign().getId());
-				printTemperamentDescr(planet, planet2, font, section, false);
+			section = PDFUtil.printSection(chapter, "Совместимость темпераментов");
+			table = new PdfPTable(2);
+	        table.setTotalWidth(doc.getPageSize().getWidth() - PDFUtil.PAGEBORDERWIDTH * 2);
+	        table.setLockedWidth(true);
+	        table.setWidths(new float[] { 50, 50 });
+	        table.setSpacingBefore(20);
+
+			cell = null;
+			Event[] events = new Event[] {event, partner};
+
+			for (Event e : events) {
+				cell = new PdfPCell(new Phrase(e.getCallname(), font));
+				PDFUtil.setCellBorderWidths(cell, 0, 0, .5F, 0);
+				cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+				table.addCell(cell);
 			}
 
-			section = PDFUtil.printSection(chapter, "Совместимость темпераментов для партнёра (" + name2 + ")");
-			Paragraph p = new Paragraph("Толкования данного раздела следует воспринимать так, как будто они адресованы не вам, а партнёру", PDFUtil.getDangerFont());
-			section.add(p);
-			for (int j = 0; j < PLNUM; j++) {
-				Planet planet = items[j];
-				Planet planet2 = items2[j];
-				printTemperamentDescr(planet2, planet, font, section, true);
-			}			
+			ElementService service = new ElementService();
+			long[] pids = new long[] {19L, 20L, 24L, 25L};
+			for (long pid : pids) {
+   				Planet planet = event.getConfiguration().getPlanets().get(pid);
+   				Planet planet2 = partner.getConfiguration().getPlanets().get(pid);
+   				kz.zvezdochet.bean.Element element1 = planet.getSign().getElement();
+   				kz.zvezdochet.bean.Element element2 = planet2.getSign().getElement();
+
+				String code = element1.getCode() + "_" + element2.getCode();
+				kz.zvezdochet.bean.Element element = (kz.zvezdochet.bean.Element)service.find(code);
+			    if (element != null) {
+		    		if (element.getSynastry() != null) {
+				    	String text = term
+				    		? planet.getName() + " (" + element.getName() + ")"
+				    		: planet.getSynastry();
+
+						Phrase phrase = new Phrase();
+						phrase.add(new Chunk(text, fonth5));
+						phrase.add(Chunk.NEWLINE);
+	    				phrase.add(Chunk.NEWLINE);
+		    			phrase.add(PDFUtil.removeTags(element.getSynastry(), font));
+
+	    				if (element1.getId().equals(element2.getId())) {
+		    				cell = new PdfPCell(phrase);
+	       					cell.setBorder(Rectangle.NO_BORDER);
+		       				cell.setColspan(2);
+		       				table.addCell(cell);
+		    			} else {
+		    				cell = new PdfPCell(phrase);
+       						PDFUtil.setCellBorderWidths(cell, 0, .5F, 0, 0);
+    	       				table.addCell(cell);
+		    			}
+		    		}
+				}
+
+				if (element1.getId().equals(element2.getId()))
+					continue;
+				else {
+					code = element2.getCode() + "_" + element1.getCode();
+					element = (kz.zvezdochet.bean.Element)service.find(code);
+				    if (element != null) {
+			    		if (element.getSynastry() != null) {
+					    	String text = term
+					    		? planet.getName() + " (" + element.getName() + ")"
+					    		: planet.getSynastry();
+
+							Phrase phrase = new Phrase();
+							phrase.add(new Chunk(text, fonth5));
+							phrase.add(Chunk.NEWLINE);
+		    				phrase.add(Chunk.NEWLINE);
+			    			phrase.add(PDFUtil.removeTags(element.getSynastry(), font));
+
+		    				cell = new PdfPCell(phrase);
+		    				cell.setBorder(Rectangle.NO_BORDER);
+    	       				table.addCell(cell);
+			    		}
+					}
+				}
+			}
+			section.add(table);
+			chapter.add(Chunk.NEXTPAGE);
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
