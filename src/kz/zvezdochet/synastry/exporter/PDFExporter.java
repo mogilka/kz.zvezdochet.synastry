@@ -67,7 +67,6 @@ import kz.zvezdochet.bean.YinYang;
 import kz.zvezdochet.core.bean.ITextGender;
 import kz.zvezdochet.core.bean.Model;
 import kz.zvezdochet.core.bean.TextGender;
-import kz.zvezdochet.core.service.DataAccessException;
 import kz.zvezdochet.core.util.CalcUtil;
 import kz.zvezdochet.core.util.CoreUtil;
 import kz.zvezdochet.core.util.DateUtil;
@@ -262,14 +261,14 @@ public class PDFExporter {
 			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Совместимость", null));
 			chapter.setNumberDepth(0);
 			chapter.add(new Paragraph("В предыдущих разделах была дана общая характеристика каждого из вас и примерная картина отношений. "
-				+ "Теперь речь пойдёт о том, как вы в реальности ведёте себя друг с другом независимо от описанных выше характеристик:", font));
+				+ "Теперь речь пойдёт о том, как вы в реальности поведёте себя друг с другом независимо от описанных выше характеристик:", font));
 			com.itextpdf.text.List ilist = new com.itextpdf.text.List(false, false, 10);
 			ListItem li = new ListItem();
-	        li.add(new Chunk("как вы оба реагируете друг на друга", font));
+	        li.add(new Chunk("как вы реагируете друг на друга", font));
 	        ilist.add(li);
 
 			li = new ListItem();
-	        li.add(new Chunk("какие эмоции и чувства вы вызываете друг в друге своим поведением", font));
+	        li.add(new Chunk("какие эмоции и чувства вызываете друг в друге", font));
 	        ilist.add(li);
 
 			li = new ListItem();
@@ -289,13 +288,8 @@ public class PDFExporter {
 				+ "Не преувеличивайте описанный негатив, он имеет место в любых парах. "
 				+ "Резкие выяснения отношений возможны только в толкованиях с высоким уровнем критичности (далее по тексту это видно)", font));
 			Synastry synastry = (Synastry)new SynastryService().find(event.getId(), partner.getId());
-			if (synastry != null) {
-				printAspect(chapter, synastry, "Позитив для вас (" + name1 + ")", "POSITIVE", false);
-				printAspect(chapter, synastry, "Негатив для вас (" + name1 + ")", "NEGATIVE", false);
-				chapter.add(Chunk.NEXTPAGE);
-				printAspect(chapter, synastry, "Позитив для партнёра (" + name2 + ")", "POSITIVE", true);
-				printAspect(chapter, synastry, "Негатив для партнёра (" + name2 + ")", "NEGATIVE", true);
-			}
+			if (synastry != null)
+				printAspects(doc, chapter, synastry);
 			doc.add(chapter);
 
 			//дома
@@ -647,47 +641,119 @@ public class PDFExporter {
 
 	/**
 	 * Генерация аспектов
+	 * @param doc документ
 	 * @param chapter раздел
-	 * @param event партнёр
+	 * @param synastry синастрия
 	 */
-	private void printAspect(Chapter chapter, Synastry synastry, String title, String aspectType, boolean reverse) {
+	private void printAspects(Document doc, Chapter chapter, Synastry synastry) {
 		try {
-			Section section = PDFUtil.printSection(chapter, title);
-			if (aspectType.equals("NEGATIVE")) {
-				Paragraph p = new Paragraph("В данном разделе описаны ваши с партнёром качества, которые проявляются в конфликтных и критичных ситуациях.", font);
-				p.setSpacingAfter(10);
-				section.add(p);
-			}
-			if (reverse) {
-				Paragraph p = new Paragraph("Толкования данного раздела следует воспринимать так, как будто они адресованы не вам, а партнёру. "
-					+ "Если в тексте упомянута ролевая пара типа «учитель — ученик», то первая роль обозначает партнёра, а вторая – вас (не наоборот)", PDFUtil.getDangerFont());
-				p.setSpacingAfter(20);
-				section.add(p);
-			}
-			Font bold = new Font(baseFont, 12, Font.BOLD);
-
-			SynastryAspectService service = new SynastryAspectService();
+			List<SkyPointAspect> relative = new ArrayList<>();
+			List<SkyPointAspect> positive1 = new ArrayList<>();
+			List<SkyPointAspect> negative1 = new ArrayList<>();
+			List<SkyPointAspect> positive2 = new ArrayList<>();
+			List<SkyPointAspect> negative2 = new ArrayList<>();
 			List<SkyPointAspect> aspects = synastry.getAspects();
-//			Event event = reverse ? synastry.getPartner() : synastry.getEvent();
 
 			for (SkyPointAspect aspect : aspects) {
-				Planet planet1 = reverse ? (Planet)aspect.getSkyPoint2() : (Planet)aspect.getSkyPoint1();
+				Planet planet1 = (Planet)aspect.getSkyPoint1();
 				if (!planet1.isMain())
 					continue;
 				long asplanetid = aspect.getAspect().getPlanetid();
 				if (asplanetid > 0 && asplanetid != planet1.getId())
 					continue;
-				Planet planet2 = reverse ? (Planet)aspect.getSkyPoint1() : (Planet)aspect.getSkyPoint2();
+				Planet planet2 = (Planet)aspect.getSkyPoint2();
 				if (planet1.getNumber() >= planet2.getNumber())
 					continue;
 
 				AspectType type = aspect.checkType(true);
-				boolean match = false;
-				//аспект соответствует заявленному (негативному или позитивному)
-				if (type.getCode().equals(aspectType))
-					match = true;
+				if (type.getCode().equals("NEGATIVE"))
+					negative1.add(aspect);
+				else if (type.getCode().equals("POSITIVE"))
+					positive1.add(aspect);
+			}
 
-				if (match) {
+			for (SkyPointAspect aspect : aspects) {
+				Planet planet1 = (Planet)aspect.getSkyPoint2();
+				if (!planet1.isMain())
+					continue;
+				long asplanetid = aspect.getAspect().getPlanetid();
+				if (asplanetid > 0 && asplanetid != planet1.getId())
+					continue;
+				Planet planet2 = (Planet)aspect.getSkyPoint1();
+				if (planet1.getNumber() >= planet2.getNumber())
+					continue;
+
+				AspectType type = aspect.checkType(true);
+				if (type.getCode().equals("NEGATIVE")) {
+					boolean rel = false;
+					for (SkyPointAspect a : negative1) {
+						if (a.getSkyPoint1().getId().equals(planet1.getId())
+								&& a.getSkyPoint2().getId().equals(planet2.getId())) {
+							relative.add(a);
+							negative1.remove(a);
+							rel = true;
+							break;
+						}
+					}
+					if (!rel)
+						negative2.add(aspect);
+				} else if (type.getCode().equals("POSITIVE")) {
+					boolean rel = false;
+					for (SkyPointAspect a : positive1) {
+						if (a.getSkyPoint1().getId().equals(planet1.getId())
+								&& a.getSkyPoint2().getId().equals(planet2.getId())) {
+							relative.add(a);
+							positive1.remove(a);
+							rel = true;
+							break;
+						}
+					}
+					if (!rel)
+						positive2.add(aspect);
+				}
+			}
+			printAspectSection(doc, chapter, synastry, "POSITIVE", positive1, positive2);
+			printAspectSection(doc, chapter, synastry, "NEGATIVE", negative1, negative2);
+			printAspectSection(doc, chapter, synastry, "RELATIVE", relative, null);
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Генерация раздела аспектов
+	 * @param doc документ
+	 * @param chapter раздел
+	 * @param synastry синастрия
+	 * @param aspectType тип раздела
+	 * @param list1 первый массив аспектов
+	 * @param list2 второй массив аспектов
+	 */
+	private void printAspectSection(Document doc, Chapter chapter, Synastry synastry, String aspectType,
+			List<SkyPointAspect> list1, List<SkyPointAspect> list2) {
+		try {
+			String title = "";
+			if (aspectType.equals("POSITIVE"))
+				title = "Позитив отношений";
+			else if (aspectType.equals("NEGATIVE"))
+				title = "Риски отношений";
+			else if (aspectType.equals("RELATIVE")) {
+				if (list1.isEmpty())
+					return;
+				title = "Взаимные аспекты отношений";
+				//TODO объяснить, что такое общие аспекты
+			}
+			Section section = PDFUtil.printSection(chapter, title);
+			SynastryAspectService service = new SynastryAspectService();
+			Font bold = new Font(baseFont, 12, Font.BOLD);
+
+			if (aspectType.equals("RELATIVE")) {
+				section.add(new Paragraph("Здесь перечислены толкования, которые относятся и к вам, и к партнёру", PDFUtil.getWarningFont()));
+				for (SkyPointAspect aspect : list1) {
+					AspectType type = aspect.checkType(true);
+					Planet planet1 = (Planet)aspect.getSkyPoint1();
+					Planet planet2 = (Planet)aspect.getSkyPoint2();
+
 //    				List<Model> planets = event.getConfiguration().getPlanets();
 //    				int pindex = planets.indexOf(planet1);
 //    				Planet aspl1 = (Planet)planets.get(pindex);
@@ -696,50 +762,177 @@ public class PDFExporter {
 //    				Planet aspl2 = (Planet)planets2.get(pindex);
 //
 //    				section.add(new Chunk(dict.getMark(aspl1, aspl2), fonth5));
-					section.add(new Chunk((reverse ? name2 : name1) + "-" + planet1.getShortName() + " " + 
+					section.add(new Chunk(planet1.getShortName() + " " + 
 						type.getSymbol() + " " + 
-						(reverse ? name1 : name2) + "-" + planet2.getShortName(), fonth5));
-
+						planet2.getShortName(), fonth5));
+	
 					String code = aspect.getAspect().getCode();
 					if (term) {
 						section.add(new Chunk(" " + planet1.getSymbol(), PDFUtil.getHeaderAstroFont()));
-
+	
 	    				if (code.equals("CONJUNCTION") || code.equals("OPPOSITION"))
 	    					section.add(new Chunk(aspect.getAspect().getSymbol(), PDFUtil.getHeaderAstroFont()));
 	    				else
 	    					section.add(new Chunk(type.getSymbol(), fonth5));
-
+	
 	    				section.add(new Chunk(planet2.getSymbol(), PDFUtil.getHeaderAstroFont()));
 					}
-
+	
 					List<Model> dicts = service.finds(aspect);
-					for (Model model : dicts) {
-						SynastryAspectText dict = (SynastryAspectText)model;
-						if (dict != null) {
-							if (dict.getRoles() != null)
-								section.add(new Paragraph("Роли: «" + PDFUtil.removeTags(dict.getRoles(), bold) + "»"));
-
-							if (code.equals("QUADRATURE"))
-								section.add(new Paragraph("Уровень критичности: высокий", PDFUtil.getDangerFont()));
-							else if (code.equals("OPPOSITION"))
-								section.add(new Paragraph("Уровень критичности: средний", PDFUtil.getWarningFont()));
-
-							section.add(new Paragraph(PDFUtil.removeTags(dict.getText(), font)));
-							printGender(section, dict);
-
-							Rule rule = EventRules.ruleSynastryAspect(aspect, synastry.getPartner());
-							if (rule != null) {
-			    				section.add(Chunk.NEWLINE);
-								section.add(new Paragraph(PDFUtil.removeTags(rule.getText(), font)));
+						for (Model model : dicts) {
+							SynastryAspectText dict = (SynastryAspectText)model;
+							if (dict != null) {
+								if (dict.getRoles() != null)
+									section.add(new Paragraph("Роли: «" + PDFUtil.removeTags(dict.getRoles(), bold) + "»"));
+	
+								if (code.equals("OPPOSITION"))
+									if (planet1.isMain() && planet2.isMain())
+										section.add(new Paragraph("Уровень критичности: средний", PDFUtil.getDangerFont()));
+	
+								section.add(new Paragraph(PDFUtil.removeTags(dict.getText(), font)));
+								printGender(section, dict);
+	
+								Rule rule = EventRules.ruleSynastryAspect(aspect, synastry.getPartner());
+								if (rule != null) {
+				    				section.add(Chunk.NEWLINE);
+									section.add(new Paragraph(PDFUtil.removeTags(rule.getText(), font)));
+								}
+								section.add(Chunk.NEWLINE);
 							}
-							section.add(Chunk.NEWLINE);
 						}
 					}
+				} else {
+					if (aspectType.equals("NEGATIVE"))
+						section.add(new Paragraph("В данном разделе описаны ваши с партнёром качества, которые проявятся в конфликтных и критичных ситуациях", PDFUtil.getWarningFont()));
+					else
+						section.add(new Paragraph("Толкования в левой колонке адресованы вам, толкования в правой колонке – вашему партнёру", PDFUtil.getSuccessFont()));
+
+		//			if (reverse) {
+		//				Paragraph p = new Paragraph("Толкования данного раздела следует воспринимать так, как будто они адресованы не вам, а партнёру. "
+		//					+ "Если в тексте упомянута ролевая пара типа «учитель — ученик», то первая роль обозначает партнёра, а вторая – вас (не наоборот)", PDFUtil.getDangerFont());
+		//				p.setSpacingAfter(20);
+		//				section.add(p);
+		//			}
+
+			        PdfPTable table = new PdfPTable(2);
+			        table.setTotalWidth(doc.getPageSize().getWidth() - PDFUtil.PAGEBORDERWIDTH * 2);
+			        table.setLockedWidth(true);
+			        table.setWidths(new float[] { 50, 50 });
+			        table.setSpacingBefore(20);
+		
+					PdfPCell cell = null;
+					Event[] events = new Event[] {synastry.getEvent(), synastry.getPartner()};
+		
+					for (Event e : events) {
+						cell = new PdfPCell(new Phrase(e.getCallname(), font));
+						PDFUtil.setCellBorderWidths(cell, 0, 0, .5F, 0);
+						cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+						table.addCell(cell);
+					}
+
+					int tcount = list1.size() + list2.size();
+					if (tcount > 0) {
+						Iterator<SkyPointAspect> iter = list1.iterator();
+						Iterator<SkyPointAspect> iter2 = list2.iterator();
+						for (int i = 0; i < tcount; i++) {
+							if (iter.hasNext()) {
+								Phrase phrase = printAspect(synastry, iter.next(), service, false);
+			       				cell = new PdfPCell(phrase);
+								PDFUtil.setCellBorderWidths(cell, 0, .5F, 0, 0);
+			       				table.addCell(cell);
+							} else if (iter2.hasNext()) {
+			       				cell = new PdfPCell();
+								PDFUtil.setCellBorderWidths(cell, 0, .5F, 0, 0);
+			       				table.addCell(cell);
+							}
+
+							if (iter2.hasNext()) {
+								Phrase phrase = printAspect(synastry, iter2.next(), service, true);
+			       				cell = new PdfPCell(phrase);
+			       				cell.setBorder(Rectangle.NO_BORDER);
+			       				table.addCell(cell);
+							} else if (iter.hasNext()) {
+			       				cell = new PdfPCell();
+			       				cell.setBorder(Rectangle.NO_BORDER);
+			       				table.addCell(cell);
+							}
+						}
+					}
+					section.add(table);
 				}
-			}
+			chapter.add(Chunk.NEXTPAGE);
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * Генерация аспекта
+	 * @param synastry синастрия
+	 * @param aspect аспект
+	 * @param service сервис толкований
+	 * @param reverse true - толкование предназначено для партнёра
+	 * @return толкование
+	 */
+	private Phrase printAspect(Synastry synastry, SkyPointAspect aspect, SynastryAspectService service, boolean reverse) {
+		Phrase phrase = new Phrase();
+		try {
+			AspectType type = aspect.checkType(true);
+			Planet planet1 = (Planet)(reverse ? aspect.getSkyPoint2() : aspect.getSkyPoint1());
+			Planet planet2 = (Planet)(reverse ? aspect.getSkyPoint1() : aspect.getSkyPoint2());
+			Font bold = new Font(baseFont, 12, Font.BOLD);
+	
+			phrase.add(new Chunk((reverse ? name2 : name1) + "-" + planet1.getShortName() + " " + 
+				type.getSymbol() + " " + 
+				(reverse ? name1 : name2) + "-" + planet2.getShortName(), fonth5));
+			phrase.add(Chunk.NEWLINE);
+			phrase.add(Chunk.NEWLINE);
+	
+			String code = aspect.getAspect().getCode();
+			if (term) {
+				phrase.add(new Chunk(" " + planet1.getSymbol(), PDFUtil.getHeaderAstroFont()));
+	
+				if (code.equals("CONJUNCTION") || code.equals("OPPOSITION"))
+					phrase.add(new Chunk(aspect.getAspect().getSymbol(), PDFUtil.getHeaderAstroFont()));
+				else
+					phrase.add(new Chunk(type.getSymbol(), fonth5));
+	
+				phrase.add(new Chunk(planet2.getSymbol(), PDFUtil.getHeaderAstroFont()));
+			}
+	
+			List<Model> dicts = service.finds(aspect);
+			Event event = reverse ? synastry.getEvent() : synastry.getPartner();
+			for (Model model : dicts) {
+				SynastryAspectText dict = (SynastryAspectText)model;
+				if (dict != null) {
+					if (dict.getRoles() != null) {
+						phrase.add(new Paragraph("Роли: «" + dict.getRoles() + "»", bold));
+						phrase.add(Chunk.NEWLINE);
+						phrase.add(Chunk.NEWLINE);
+					}
+					if (code.equals("OPPOSITION")) {
+						if (planet1.isMain() && planet2.isMain()) {
+							phrase.add(new Paragraph("Уровень критичности: высокий", PDFUtil.getDangerFont()));
+							phrase.add(Chunk.NEWLINE);
+							phrase.add(Chunk.NEWLINE);
+						}
+					}
+					phrase.add(new Paragraph(PDFUtil.removeTags(dict.getText(), font)));
+					Phrase ph = PDFUtil.printGenderCell(dict, event.isFemale(), event.isChild(), false);
+					phrase.add(ph);
+	
+					Rule rule = EventRules.ruleSynastryAspect(aspect, event);
+					if (rule != null) {
+						phrase.add(Chunk.NEWLINE);
+						phrase.add(new Paragraph(PDFUtil.removeTags(rule.getText(), font)));
+					}
+					phrase.add(Chunk.NEWLINE);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return phrase;
 	}
 
 	/**
@@ -1355,36 +1548,6 @@ public class PDFExporter {
 	    descr += " (" + planet.getSign().getElement().getShortName() + ")";
 		cell.addElement(new Phrase(descr, font));
 		return cell;
-	}
-
-	/**
-	 * Генерация совместимости темпераментов
-	 * @param planet планета первого партнёра
-	 * @param planet2 планета второго партнёра
-	 * @param font шрифт
-	 * @param section раздел
-	 */
-	private void printTemperamentDescr(Planet planet, Planet planet2, Font font, Section section, boolean reverse) {
-		try {
-			if (reverse && planet.getSign().getElement().getCode().equals(planet2.getSign().getElement().getCode()))
-				return;
-
-			String code = planet.getSign().getElement().getCode() + "_" + planet2.getSign().getElement().getCode();
-			ElementService service = new ElementService();
-			kz.zvezdochet.bean.Element element = (kz.zvezdochet.bean.Element)service.find(code);
-		    if (element != null) {
-	    		if (element.getSynastry() != null) {
-			    	String text = term
-			    		? planet.getName() + " (" + element.getName() + ")"
-			    		: planet.getSynastry();
-		    		section.add(new Paragraph(text, fonth5));
-	    			section.add(new Paragraph(PDFUtil.html2pdf(element.getSynastry(), font)));
-	    		}
-		    	section.add(Chunk.NEWLINE);
-			}
-		} catch (DataAccessException e) {
-			e.printStackTrace();
-		}
 	}
 
 	/**
