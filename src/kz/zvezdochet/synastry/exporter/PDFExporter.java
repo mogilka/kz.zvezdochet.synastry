@@ -234,6 +234,11 @@ public class PDFExporter {
 			//космограмма
 			printCard(doc, chapter);
 			chapter.add(Chunk.NEXTPAGE);
+
+			//общая диаграмма
+			Synastry synastry = (Synastry)new SynastryService().find(event.getId(), partner.getId());
+			printChart(writer, chapter, synastry);
+			chapter.add(Chunk.NEXTPAGE);
 			doc.add(chapter);
 
 			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Общее сравнение партнёров", null));
@@ -301,7 +306,6 @@ public class PDFExporter {
 			chapter.add(new Paragraph("Ниже приведены положительные и отрицательные факторы ваших отношений. "
 				+ "Не преувеличивайте описанный негатив, он имеет место в любых парах. "
 				+ "Резкие выяснения отношений возможны только в толкованиях с высоким уровнем критичности (далее по тексту это видно)", font));
-			Synastry synastry = (Synastry)new SynastryService().find(event.getId(), partner.getId());
 			if (synastry != null)
 				printAspects(doc, chapter, synastry);
 			doc.add(chapter);
@@ -326,14 +330,12 @@ public class PDFExporter {
 //			printPlanetStrength(writer, chapter, event, partner);
 //			chapter.add(Chunk.NEXTPAGE);
 
-			//аспекты
-			printChart(writer, chapter, synastry);
-			chapter.add(Chunk.NEXTPAGE);
-			printAspectTypes(writer, chapter, synastry);
-			chapter.add(Chunk.NEXTPAGE);
-
 			//инь-ян
 			printYinYang(writer, chapter, statistics, statistics2);
+			chapter.add(Chunk.NEXTPAGE);
+
+			//аспекты
+			printAspectTypes(writer, chapter, synastry);
 			chapter.add(Chunk.NEXTPAGE);
 
 			//координаты планет
@@ -921,7 +923,7 @@ public class PDFExporter {
 	private void printCoords(Chapter chapter, Event event, Event partner, boolean reverse) {
 		try {
 			Section section = PDFUtil.printSection(chapter, reverse ? "Координаты планет партнёра (" + name2 + ")" : "Координаты ваших планет (" + name1 + ")");
-			float fontsize = 10;
+			float fontsize = 9;
 			Font font = new Font(baseFont, fontsize, Font.NORMAL, BaseColor.BLACK);
 			section.add(new Paragraph("Планеты в знаках Зодиака и астрологических домах:", this.font));
 
@@ -1545,9 +1547,9 @@ public class PDFExporter {
 			return phrase;
 		try {
 			if (reverse)
-				phrase.add(new Paragraph("Типаж человека, которого ваш партнёр притягивает к себе:", font));
+				phrase.add(new Paragraph("Типаж человека, которого ваш партнёр притягивает к себе:", PDFUtil.getSuccessFont()));
 			else
-				phrase.add(new Paragraph("Типаж человека, которого вы притягиваете к себе:", font));
+				phrase.add(new Paragraph("Типаж человека, которого вы притягиваете к себе:", PDFUtil.getSuccessFont()));
 			phrase.add(Chunk.NEWLINE);
 			phrase.add(Chunk.NEWLINE);
 
@@ -1565,7 +1567,7 @@ public class PDFExporter {
 					if (term)
 						phrase.add(new Paragraph(house.getDesignation() + " в созвездии " + sign.getName(), fonth5));
 					else
-						phrase.add(new Paragraph(house.getName() + " + " + sign.getShortname(), fonth5));
+						phrase.add(new Paragraph("Партнёр-" + sign.getShortname(), fonth5));
 					phrase.add(Chunk.NEWLINE);
 					phrase.add(Chunk.NEWLINE);
 					phrase.add(new Paragraph(PDFUtil.removeTags(dict.getText(), font)));
