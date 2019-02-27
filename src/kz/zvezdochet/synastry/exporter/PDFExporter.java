@@ -769,12 +769,15 @@ public class PDFExporter {
 							SynastryAspectText dict = (SynastryAspectText)model;
 							if (dict != null) {
 								if (dict.getRoles() != null)
-									section.add(new Paragraph("Роли: «" + PDFUtil.removeTags(dict.getRoles(), bold) + "»"));
+									section.add(new Paragraph("Роли: «" + dict.getRoles() + "»", bold));
 	
 								if (code.equals("OPPOSITION"))
 									if (planet1.isMain() && planet2.isMain())
 										section.add(new Paragraph("Уровень критичности: средний", PDFUtil.getDangerFont()));
-	
+								else if (code.equals("QUADRATURE"))
+									if (planet1.isMain() && planet2.isMain())
+										section.add(new Paragraph("Уровень критичности: средний", PDFUtil.getWarningFont()));
+
 								section.add(new Paragraph(PDFUtil.removeTags(dict.getText(), font)));
 								printGender(section, dict);
 	
@@ -895,6 +898,12 @@ public class PDFExporter {
 							phrase.add(Chunk.NEWLINE);
 							phrase.add(Chunk.NEWLINE);
 						}
+					} else if (code.equals("QUADRATURE")) {
+						if (planet1.isMain() && planet2.isMain()) {
+							phrase.add(new Paragraph("Уровень критичности: средний", PDFUtil.getWarningFont()));
+							phrase.add(Chunk.NEWLINE);
+							phrase.add(Chunk.NEWLINE);
+						}
 					}
 					phrase.add(new Paragraph(PDFUtil.removeTags(dict.getText(), font)));
 					Phrase ph = PDFUtil.printGenderCell(dict, event.isFemale(), event.isChild(), false);
@@ -922,7 +931,7 @@ public class PDFExporter {
 	 */
 	private void printCoords(Chapter chapter, Event event, Event partner, boolean reverse) {
 		try {
-			Section section = PDFUtil.printSection(chapter, reverse ? "Координаты планет партнёра (" + name2 + ")" : "Координаты ваших планет (" + name1 + ")");
+			Section section = PDFUtil.printSection(chapter, reverse ? "Координаты планет партнёра в вашем гороскопе" : "Координаты ваших планет в гороскопе партнёра");
 			float fontsize = 9;
 			Font font = new Font(baseFont, fontsize, Font.NORMAL, BaseColor.BLACK);
 			section.add(new Paragraph("Планеты в знаках Зодиака и астрологических домах:", this.font));
@@ -1746,12 +1755,12 @@ public class PDFExporter {
 				House house = (House)hmodel;
 				for (Planet planet : planets) {
 					House phouse = null;
-					for (int j = 0; j < houses.size(); j++) {
-						House ehouse = (House)houses.get(j);
+					for (int j = 0; j < houses2.size(); j++) {
+						House ehouse = (House)houses2.get(j);
 						double pcoord = planet.getCoord();
-						Double hmargin = (j == houses.size() - 1) ?
-							((House)houses.get(0)).getCoord() : 
-							((House)houses.get(j + 1)).getCoord();
+						Double hmargin = (j == houses2.size() - 1) ?
+							((House)houses2.get(0)).getCoord() : 
+							((House)houses2.get(j + 1)).getCoord();
 						double[] res = CalcUtil.checkMarginalValues(ehouse.getCoord(), hmargin, pcoord);
 						hmargin = res[0];
 						pcoord = res[1];
