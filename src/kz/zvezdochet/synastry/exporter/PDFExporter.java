@@ -303,10 +303,6 @@ public class PDFExporter {
 	        ilist.add(li);
 	        chapter.add(ilist);
 
-			chapter.add(new Paragraph("Ниже приведены положительные и отрицательные факторы ваших отношений. "
-				+ "Не преувеличивайте описанный негатив, он имеет место в любых парах. "
-				+ "Резкие выяснения отношений возможны только в толкованиях с высоким уровнем критичности (далее по тексту это видно – выделено красным цветом). "
-				+ "Если же красные пометки отсутствуют, то поздравляю, – союз обещает быть долгим и счастливым", font));
 			if (synastry != null)
 				printAspects(doc, chapter, synastry);
 			doc.add(chapter);
@@ -480,6 +476,7 @@ public class PDFExporter {
     				cell.setHorizontalAlignment(Element.ALIGN_CENTER);
     				table.addCell(cell);
     			}
+    			table.setHeaderRows(1);
 
 				Phrase phrase = new Phrase();
 				List<String> texts1 = new ArrayList<>();
@@ -735,7 +732,7 @@ public class PDFExporter {
 			Font bold = new Font(baseFont, 12, Font.BOLD);
 
 			if (aspectType.equals("RELATIVE")) {
-				section.add(new Paragraph("Здесь перечислены толкования, которые одновременно адресованы и к вам, и к партнёру", PDFUtil.getAnnotationFont(false)));
+				section.add(new Paragraph("Здесь перечислены толкования, которые показывают, в чём вы относитесь к партнёру так же, как он к вам", PDFUtil.getAnnotationFont(false)));
 				for (SkyPointAspect aspect : list1) {
 					AspectType type = aspect.checkType(true);
 					Planet planet1 = (Planet)aspect.getSkyPoint1();
@@ -749,7 +746,7 @@ public class PDFExporter {
 //    				Planet aspl2 = (Planet)planets2.get(pindex);
 //
 //    				section.add(new Chunk(dict.getMark(aspl1, aspl2), fonth5));
-					section.add(new Chunk(planet1.getShortName() + " " + 
+					section.addSection(new Paragraph(planet1.getShortName() + " " + 
 						type.getSymbol() + " " + 
 						planet2.getShortName(), fonth5));
 	
@@ -793,7 +790,10 @@ public class PDFExporter {
 					}
 				} else {
 					if (aspectType.equals("NEGATIVE"))
-						section.add(new Paragraph("В данном разделе описаны ваши с партнёром качества, которые проявятся в конфликтных и критичных ситуациях", PDFUtil.getAnnotationFont(false)));
+						section.add(new Paragraph("Ниже приведены отрицательные факторы ваших отношений. "
+							+ "Не преувеличивайте описанный негатив, он имеет место в любых парах. "
+							+ "Резкие выяснения отношений возможны только в толкованиях с высоким уровнем критичности (далее по тексту это видно – выделено красным цветом). "
+							+ "Если красные пометки отсутствуют, поздравляю, – союз обещает быть долгим и счастливым", font));
 					else
 						section.add(new Paragraph("Толкования в левой колонке адресованы вам, толкования в правой колонке – вашему партнёру", PDFUtil.getAnnotationFont(false)));
 
@@ -812,6 +812,7 @@ public class PDFExporter {
 						cell.setHorizontalAlignment(Element.ALIGN_CENTER);
 						table.addCell(cell);
 					}
+					table.setHeaderRows(1);
 
 					int tcount = list1.size() + list2.size();
 					if (tcount > 0) {
@@ -1472,6 +1473,10 @@ public class PDFExporter {
 						phrase.add(new Chunk(text, fonth5));
 						phrase.add(Chunk.NEWLINE);
 	    				phrase.add(Chunk.NEWLINE);
+//						System.out.println("chapter depth " + chapter.getDepth());
+//						System.out.println("chapter number depth " + chapter.getNumberDepth());
+//						System.out.println("chapter number style " + chapter.getNumberStyle());
+//						System.out.println("chapter indentation " + chapter.getIndentation());
 		    			phrase.add(PDFUtil.printTextCell(element.getSynastry()));
 
 	    				if (element1.getId().equals(element2.getId())) {
@@ -1559,9 +1564,9 @@ public class PDFExporter {
 			return phrase;
 		try {
 			if (reverse)
-				phrase.add(new Paragraph("Типаж человека, которого ваш партнёр притягивает к себе:", PDFUtil.getSuccessFont()));
+				phrase.add(new Paragraph("Типаж человека, которого ваш партнёр притягивает к себе:", PDFUtil.getAnnotationFont(false)));
 			else
-				phrase.add(new Paragraph("Типаж человека, которого вы притягиваете к себе:", PDFUtil.getSuccessFont()));
+				phrase.add(new Paragraph("Типаж человека, которого вы притягиваете к себе:", PDFUtil.getAnnotationFont(false)));
 			phrase.add(Chunk.NEWLINE);
 			phrase.add(Chunk.NEWLINE);
 
@@ -1811,15 +1816,17 @@ public class PDFExporter {
 					House house = planet.getHouse();
 
 					String mark = planet.getMark("house");
+					Paragraph p = new Paragraph();
 					if (mark.length() > 0) {
-	    				section.add(new Chunk(mark, fonth5));
-	    				section.add(new Chunk(planet.getSymbol() + " ", PDFUtil.getHeaderAstroFont()));
+	    				p.add(new Chunk(mark, fonth5));
+	    				p.add(new Chunk(planet.getSymbol() + " ", PDFUtil.getHeaderAstroFont()));
 					}
 	    			if (term) {
-	    				section.add(new Chunk(" " + planet.getName() + " в " + house.getDesignation() + " доме", fonth5));
-	    				section.add(Chunk.NEWLINE);
+	    				p.add(new Chunk(" " + planet.getName() + " в " + house.getDesignation() + " доме", fonth5));
+	    				p.add(Chunk.NEWLINE);
 	    			} else
-	    				section.add(new Chunk(planet.getShortName() + " " + sign + " " + house.getSynastry(), fonth5));
+	    				p.add(new Chunk(house.getSynastry() + " " + sign + " " + planet.getShortName(), fonth5));
+	    			section.addSection(p);
 
 					PlanetHouseText dict = (PlanetHouseText)service.find(planet, house, null);
 					if (dict != null) {
@@ -1860,6 +1867,7 @@ public class PDFExporter {
 				cell.setHorizontalAlignment(Element.ALIGN_CENTER);
 				table.addCell(cell);
 			}
+			table.setHeaderRows(1);
 
 			Iterator<Planet> iter = hplanets.iterator();
 			Iterator<Planet> iter2 = hplanets2.iterator();
