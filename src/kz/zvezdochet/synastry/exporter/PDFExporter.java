@@ -226,7 +226,7 @@ public class PDFExporter {
 	        p.add(chunk);
 	        chapter.add(p);
 
-			chapter.add(new Paragraph("Прогноз содержит как позитивные, так и негативные аспекты отношений. "
+			chapter.add(new Paragraph("Гороскоп содержит как позитивные, так и негативные аспекты отношений. "
 				+ "Негатив – признак того, что вам необходимо переосмысление отношений с партнёром и мобилизация ресурсов для решения проблемы. "
 				+ "А также это возможность смягчить напряжение, ведь вы будете знать о нём заранее. "
 				+ "Не зацикливайтесь на негативе, используйте свои сильные стороны для достижения конструктивного партнёрства", font));
@@ -249,8 +249,7 @@ public class PDFExporter {
 			//совместимость характеров, любовная, сексуальная, коммуникативная, эмоциональная совместимость
 			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Общий типаж пары", null));
 			chapter.setNumberDepth(0);
-			chapter.add(new Paragraph("Типаж пары – это общая характеристика совместимости двух людей вашего типа: "
-				+ "общая тенденция развития отношений такого человека, как вы, с таким человеком, как ваш партнёр", PDFUtil.getWarningFont()));
+			chapter.add(new Paragraph("Типаж пары – это общая тенденция развития отношений такого человека, как вы, с таким человеком, как ваш партнёр", PDFUtil.getWarningFont()));
 
 			//совместимость по Зороастрийскому календарю
 			printZoroastr(chapter, event, partner);
@@ -308,18 +307,20 @@ public class PDFExporter {
 			doc.add(chapter);
 
 			//дома
-			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Влияние друг на друга", null));
-			chapter.setNumberDepth(0);
-			chapter.add(new Paragraph("Этот раздел в меньшей степени рассказывает о том, как вы относитесь друг к другу, "
-		    	+ "и в большей степени – о том, что произойдёт в реальности, как вы измените жизнь и восприятие друг друга. "
-		    	+ "Для каждого описаны сферы жизни, в которых будет явно ощущаться влияние партнёра", font));
-			printPlanetHouses(doc, chapter, synastry);
-			doc.add(chapter);
+			if (synastry.getEvent().isHousable() || synastry.getPartner().isHousable()) {
+				chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Влияние друг на друга", null));
+				chapter.setNumberDepth(0);
+				chapter.add(new Paragraph("Этот раздел в меньшей степени рассказывает о том, как вы относитесь друг к другу, "
+			    	+ "и в большей степени – о том, что произойдёт в реальности, как вы измените жизнь и восприятие друг друга. "
+			    	+ "Для каждого описаны сферы жизни, в которых будет явно ощущаться влияние партнёра", font));
+				printPlanetHouses(doc, chapter, synastry);
+				doc.add(chapter);
 
-			//рекомендации
-			if (doctype.equals("love"))
-				printAkins(doc, synastry);
-			
+				//рекомендации
+				if (doctype.equals("love"))
+					printAkins(doc, synastry);
+			}
+
 			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Диаграммы", null));
 			chapter.setNumberDepth(0);
 
@@ -640,12 +641,18 @@ public class PDFExporter {
 
 			for (SkyPointAspect aspect : aspects) {
 				Planet planet1 = (Planet)aspect.getSkyPoint1();
+				if (!synastry.getEvent().isHousable() && planet1.getCode().equals("Moon"))
+					continue;
+
 				if (!planet1.isMain())
 					continue;
 				long asplanetid = aspect.getAspect().getPlanetid();
 				if (asplanetid > 0 && asplanetid != planet1.getId())
 					continue;
 				Planet planet2 = (Planet)aspect.getSkyPoint2();
+				if (!synastry.getPartner().isHousable() && planet2.getCode().equals("Moon"))
+					continue;
+
 				if (planet1.getNumber() >= planet2.getNumber())
 					continue;
 
@@ -658,12 +665,18 @@ public class PDFExporter {
 
 			for (SkyPointAspect aspect : aspects) {
 				Planet planet1 = (Planet)aspect.getSkyPoint2();
+				if (!synastry.getEvent().isHousable() && planet1.getCode().equals("Moon"))
+					continue;
+
 				if (!planet1.isMain())
 					continue;
 				long asplanetid = aspect.getAspect().getPlanetid();
 				if (asplanetid > 0 && asplanetid != planet1.getId())
 					continue;
 				Planet planet2 = (Planet)aspect.getSkyPoint1();
+				if (!synastry.getPartner().isHousable() && planet2.getCode().equals("Moon"))
+					continue;
+
 				if (planet1.getNumber() >= planet2.getNumber())
 					continue;
 
@@ -1181,7 +1194,7 @@ public class PDFExporter {
 		    		elements.add(entry.getKey());
 		    	Bar bar = new Bar();
 		    	kz.zvezdochet.bean.Element element = (kz.zvezdochet.bean.Element)service.find(entry.getKey());
-		    	bar.setName(element.getDiaName());
+		    	bar.setName(element.getTemperament());
 		    	bar.setValue(entry.getValue() * (-1));
 		    	bar.setColor(element.getColor());
 		    	bar.setCategory(name1);
@@ -1197,7 +1210,7 @@ public class PDFExporter {
 		    		elements.add(entry.getKey());
 		    	Bar bar = new Bar();
 		    	kz.zvezdochet.bean.Element element = (kz.zvezdochet.bean.Element)service.find(entry.getKey());
-		    	bar.setName(element.getDiaName());
+		    	bar.setName(element.getTemperament());
 		    	bar.setValue(entry.getValue());
 		    	bar.setColor(element.getColor());
 		    	bar.setCategory(name2);
@@ -1229,9 +1242,27 @@ public class PDFExporter {
 		    }
 
 	        section.add(new Paragraph("Диаграмма показывает, на чём вы оба сконцентрированы, "
-		        + "какие проявления для вас важны, необходимы и естественны", font));
+		        + "какие проявления для вас важны, необходимы и естественны:", font));
 		    com.itextpdf.text.Image image = PDFUtil.printStackChart(writer, "Темпераменты", "Аспекты", "Баллы", bars, 500, 0, true);
 			section.add(image);
+
+			com.itextpdf.text.List list = new com.itextpdf.text.List(false, false, 10);
+			ListItem li = new ListItem();
+	        li.add(new Chunk("Холерик – быстрый, порывистый, страстный, способный преодолевать значительные трудности, но неуравновешенный, склонный к бурным эмоциям и резким сменам настроения. Чувства возникают быстро и ярко отражаются в речи, жестах и мимике", PDFUtil.getDangerFont()));
+	        list.add(li);
+
+			li = new ListItem();
+	        li.add(new Chunk("Флегматик – медлительный, спокойный, с устойчивыми стремлениями и более или менее постоянным настроением (внешне слабо выражает своё душевное состояние). Тип нервной системы: сильный, уравновешенный, инертный. Хорошая память, высокий интеллект, склонность к продуманным, взвешенным решениям, без риска", PDFUtil.getSuccessFont()));
+	        list.add(li);
+
+			li = new ListItem();
+	        li.add(new Chunk("Сангвиник – живой, подвижный, сравнительно легко переживающий неудачи и неприятности. Мимика разнообразна и богата, темп речи быстрый. Эмоции преимущественно положительные, – быстро возникают и меняются", PDFUtil.getWarningFont()));
+	        list.add(li);
+
+			li = new ListItem();
+	        li.add(new Chunk("Меланхолик – легкоранимый, глубоко переживает даже незначительные неудачи, внешне вяло реагирует на происходящее. Тип нервной системы: высокочувствительный. Тонкая реакция на малейшие оттенки чувств. Переживания глубоки, эмоциональны и очень устойчивы", PDFUtil.getNeutralFont()));
+	        list.add(li);
+	        section.add(list);
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
@@ -1408,6 +1439,8 @@ public class PDFExporter {
 			}
 
 	        PdfPTable table = new PdfPTable(3);
+	        table.setTotalWidth(doc.getPageSize().getWidth() - PDFUtil.PAGEBORDERWIDTH * 2);
+	        table.setLockedWidth(true);
 	        table.setWidths(new float[] { 16, 42, 42 });
 	        table.setSpacingBefore(20);
 
@@ -1486,7 +1519,7 @@ public class PDFExporter {
 		       				table.addCell(cell);
 		    			} else {
 		    				cell = new PdfPCell(phrase);
-       						PDFUtil.setCellBorderWidths(cell, 0, .5F, 0, 0);
+       						PDFUtil.setCellBorderWidths(cell, 0, 0, 0, .5F);
     	       				table.addCell(cell);
 		    			}
 		    		}
@@ -1707,7 +1740,7 @@ public class PDFExporter {
 
 			NumerologyService service = new NumerologyService();
 //			int years = Math.abs(event.getBirthYear() - partner.getBirthYear()); TODO определять с учётом весеннего равноденствия
-			int years = 1;
+			int years = 4;
 			Numerology dict = (Numerology)service.find(years);
 			if (dict != null) {
 				section.add(new Paragraph("Разница в годах цикла: " + CoreUtil.getAgeString(years), fonth5));
@@ -2107,10 +2140,16 @@ public class PDFExporter {
 				if (aspect.getAspect().getPoints() < 2)
 					continue;
 				Planet planet1 = (Planet)aspect.getSkyPoint1();
+				if (!synastry.getEvent().isHousable() && planet1.getCode().equals("Moon"))
+					continue;
+
 				long asplanetid = aspect.getAspect().getPlanetid();
 				if (asplanetid > 0 && asplanetid != planet1.getId())
 					continue;
 				Planet planet2 = (Planet)aspect.getSkyPoint2();
+				if (!synastry.getPartner().isHousable() && planet2.getCode().equals("Moon"))
+					continue;
+
 				String pcode = planet1.getCode();
 				String pcode2 = planet2.getCode();
 

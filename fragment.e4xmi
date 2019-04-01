@@ -7,6 +7,12 @@
         <children xsi:type="menu:HandledToolItem" xmi:id="_7qZNkGgMEeSSZffxnqlLeQ" elementId="kz.zvezdochet.synastry.handledtoolitem.switch" label="&#x41f;&#x435;&#x440;&#x435;&#x43a;&#x43b;&#x44e;&#x447;&#x438;&#x442;&#x44c;" iconURI="platform:/plugin/kz.zvezdochet.core/icons/cp_order_obj.gif" tooltip="&#x41f;&#x43b;&#x430;&#x43d;&#x435;&#x442;&#x44b; &#x43f;&#x435;&#x440;&#x441;&#x43e;&#x43d;&#x44b; &#x432; &#x43a;&#x430;&#x440;&#x442;&#x435; &#x43f;&#x430;&#x440;&#x442;&#x43d;&#x451;&#x440;&#x430; &#x43b;&#x438;&#x431;&#x43e; &#x43f;&#x43b;&#x430;&#x43d;&#x435;&#x442;&#x44b; &#x43f;&#x430;&#x440;&#x442;&#x43d;&#x451;&#x440;&#x430; &#x432; &#x43a;&#x430;&#x440;&#x442;&#x435; &#x43f;&#x435;&#x440;&#x441;&#x43e;&#x43d;&#x44b;" command="_vD9RgGgMEeSSZffxnqlLeQ"/>
         <children xsi:type="menu:HandledToolItem" xmi:id="_eo7M0B8DEeWjF9B2A6DKXA" elementId="kz.zvezdochet.synastry.handledtoolitem.aspect" label="&#x410;&#x441;&#x43f;&#x435;&#x43a;&#x442;&#x44b;" iconURI="platform:/plugin/kz.zvezdochet/icons/aspect.gif" tooltip="&#x410;&#x441;&#x43f;&#x435;&#x43a;&#x442;&#x44b;" command="_StU9gB8DEeWjF9B2A6DKXA"/>
         <children xsi:type="menu:HandledToolItem" xmi:id="_jKAGYINBEeeRKp81sVZhJg" elementId="kz.zvezdochet.synastry.handledtoolitem.export" label="&#x42d;&#x43a;&#x441;&#x43f;&#x43e;&#x440;&#x442;" iconURI="platform:/plugin/kz.zvezdochet.export/icons/export.gif" tooltip="&#x42d;&#x43a;&#x441;&#x43f;&#x43e;&#x440;&#x442;" command="_WDe8EINBEeeRKp81sVZhJg"/>
+        <children xsi:type="menu:HandledToolItem" xmi:id="_R9Qm4FR6Eemp8tBRMhF_Pg" elementId="kz.zvezdochet.synastry.handledtoolitem.age" label="&#x414;&#x438;&#x440;&#x435;&#x43a;&#x446;&#x438;&#x438; &#x441;&#x438;&#x43d;&#x430;&#x441;&#x442;&#x440;&#x438;&#x438;" iconURI="platform:/plugin/kz.zvezdochet.direction/icons/direction.gif" tooltip="&#x414;&#x438;&#x440;&#x435;&#x43a;&#x446;&#x438;&#x438; &#x441;&#x438;&#x43d;&#x430;&#x441;&#x442;&#x440;&#x438;&#x438;" command="_GoYZUFR6Eemp8tBRMhF_Pg"/>
+      </toolbar>
+    </elements>
+    <elements xsi:type="basic:Part" xmi:id="_fT9XsFR5Eemp8tBRMhF_Pg" elementId="kz.zvezdochet.synastry.part.age" visible="false" contributionURI="bundleclass://kz.zvezdochet.synastry/kz.zvezdochet.synastry.part.AgePart" label="&#x414;&#x438;&#x440;&#x435;&#x43a;&#x446;&#x438;&#x438; &#x441;&#x438;&#x43d;&#x430;&#x441;&#x442;&#x440;&#x438;&#x438;" iconURI="platform:/plugin/kz.zvezdochet.direction/icons/direction.gif" closeable="true">
+      <toolbar xmi:id="_lVmKAFR5Eemp8tBRMhF_Pg" elementId="kz.zvezdochet.synastry.toolbar.1">
+        <children xsi:type="menu:HandledToolItem" xmi:id="_mjTd0FR6Eemp8tBRMhF_Pg" elementId="kz.zvezdochet.synastry.handledtoolitem.agecalc" label="&#x420;&#x430;&#x441;&#x447;&#x451;&#x442;" iconURI="platform:/plugin/kz.zvezdochet/icons/calc.png" tooltip="&#x420;&#x430;&#x441;&#x447;&#x451;&#x442;" command="_et3yoFR6Eemp8tBRMhF_Pg"/>
       </toolbar>
     </elements>
   </fragments>
@@ -19,6 +25,8 @@
     <elements xsi:type="commands:Command" xmi:id="_vD9RgGgMEeSSZffxnqlLeQ" elementId="kz.zvezdochet.synastry.command.switch" commandName="switchCommand"/>
     <elements xsi:type="commands:Command" xmi:id="_StU9gB8DEeWjF9B2A6DKXA" elementId="kz.zvezdochet.synastry.command.aspect" commandName="aspectCommand"/>
     <elements xsi:type="commands:Command" xmi:id="_WDe8EINBEeeRKp81sVZhJg" elementId="kz.zvezdochet.synastry.command.export" commandName="exportCommand"/>
+    <elements xsi:type="commands:Command" xmi:id="_GoYZUFR6Eemp8tBRMhF_Pg" elementId="kz.zvezdochet.synastry.command.age" commandName="ageCommand"/>
+    <elements xsi:type="commands:Command" xmi:id="_et3yoFR6Eemp8tBRMhF_Pg" elementId="kz.zvezdochet.synastry.command.agecalc" commandName="agecalcCommand"/>
   </fragments>
   <fragments xsi:type="fragment:StringModelFragment" xmi:id="_ZewPoF3EEeSD29hHVcu7fw" featurename="handlers" parentElementId="org.eclipse.e4.ide.application">
     <elements xsi:type="commands:Handler" xmi:id="_a_HPIF3EEeSD29hHVcu7fw" elementId="kz.zvezdochet.synastry.handler.list" contributionURI="bundleclass://kz.zvezdochet.synastry/kz.zvezdochet.synastry.handler.SynastryHandler" command="_GQrRMF3EEeSD29hHVcu7fw"/>
@@ -26,5 +34,7 @@
     <elements xsi:type="commands:Handler" xmi:id="_zOh0gGgMEeSSZffxnqlLeQ" elementId="kz.zvezdochet.synastry.handler.switch" contributionURI="bundleclass://kz.zvezdochet.synastry/kz.zvezdochet.synastry.handler.SwitchHandler" command="_vD9RgGgMEeSSZffxnqlLeQ"/>
     <elements xsi:type="commands:Handler" xmi:id="_XcZ7wB8DEeWjF9B2A6DKXA" elementId="kz.zvezdochet.synastry.handler.aspect" contributionURI="bundleclass://kz.zvezdochet.synastry/kz.zvezdochet.synastry.handler.AspectHandler" command="_StU9gB8DEeWjF9B2A6DKXA"/>
     <elements xsi:type="commands:Handler" xmi:id="_bQ5cIINBEeeRKp81sVZhJg" elementId="kz.zvezdochet.synastry.handler.export" contributionURI="bundleclass://kz.zvezdochet.synastry/kz.zvezdochet.synastry.handler.ExportHandler" command="_WDe8EINBEeeRKp81sVZhJg"/>
+    <elements xsi:type="commands:Handler" xmi:id="_LR7XUFR6Eemp8tBRMhF_Pg" elementId="kz.zvezdochet.synastry.handler.age" contributionURI="bundleclass://kz.zvezdochet.synastry/kz.zvezdochet.synastry.handler.AgeHandler" command="_GoYZUFR6Eemp8tBRMhF_Pg"/>
+    <elements xsi:type="commands:Handler" xmi:id="_iQchgFR6Eemp8tBRMhF_Pg" elementId="kz.zvezdochet.synastry.handler.agecalc" contributionURI="bundleclass://kz.zvezdochet.synastry/kz.zvezdochet.synastry.handler.AgeCalcHandler" command="_et3yoFR6Eemp8tBRMhF_Pg"/>
   </fragments>
 </fragment:ModelFragments>
