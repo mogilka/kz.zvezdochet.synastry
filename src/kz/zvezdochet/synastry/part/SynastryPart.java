@@ -3,6 +3,7 @@ package kz.zvezdochet.synastry.part;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -57,7 +58,7 @@ import kz.zvezdochet.util.Configuration;
 
 /**
  * Представление синастрии
- * @author Nataly Didenko
+ * @author Natalie Didenko
  *
  */
 public class SynastryPart extends ModelListView implements ICalculable {
@@ -158,15 +159,15 @@ public class SynastryPart extends ModelListView implements ICalculable {
 	 * @param partner2 второй партнёр
 	 */
 	private void refreshCard(Event partner, Event partner2) {
-		List<String> params = new ArrayList<String>();
+		Map<String, Object> params = new HashMap<>();
+		List<String> aparams = new ArrayList<String>();
 		Map<String, String[]> types = AspectType.getHierarchy();
 		for (Control control : grAspectType.getChildren()) {
 			Button button = (Button)control;
 			if (button.getSelection())
-				params.addAll(Arrays.asList(types.get(button.getData("type"))));
+				aparams.addAll(Arrays.asList(types.get(button.getData("type"))));
 		}
-		if (params.size() < 1) return;
-
+		params.put("aspects", aparams);
 		Configuration conf = (null == partner2) ? null : partner2.getConfiguration();
 		cmpCosmogram.paint(partner.getConfiguration(), conf, params);
 	}
