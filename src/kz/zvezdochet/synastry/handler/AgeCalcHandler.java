@@ -75,18 +75,16 @@ public class AgeCalcHandler extends Handler {
 			for (int age = initage; age < finage; age++) {
 				for (Planet selp : reverse ? planets2 : planets1) {
 					//дирекции планеты к другим планетам
-					if (selplanet != null && !selplanet.getId().equals(selp.getId()))
-						continue;
-					for (Planet selp2 : reverse ? planets1 : planets2) {
-						if (selplanet != null && !selplanet.getId().equals(selp2.getId()))
+					if (null == selhouse) {
+						if (selplanet != null && !selplanet.getId().equals(selp.getId()))
 							continue;
-						calc(selp, selp2, age, reverse);
+						for (Planet selp2 : reverse ? planets1 : planets2)
+							calc(selp, selp2, age, reverse);
 					}
-
 					//дирекции планеты к куспидам домов
 					boolean housable = reverse ? partner.isHousable() : event.isHousable();
 					if (housable) {
-						for (Model model2 : reverse ? houses2 : houses1) {
+						for (Model model2 : reverse ? houses1 : houses2) {
 							if (selhouse != null && !selhouse.getId().equals(model2.getId()))
 								continue;
 							House selp2 = (House)model2;
