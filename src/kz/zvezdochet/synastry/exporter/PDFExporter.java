@@ -241,7 +241,7 @@ public class PDFExporter {
 			chapter.add(Chunk.NEXTPAGE);
 			doc.add(chapter);
 
-			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Общее сравнение партнёров", null));
+			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Сравнение партнёров", null));
 			chapter.setNumberDepth(0);
 			printPlanetSign(doc, chapter, event, partner);
 			doc.add(chapter);
@@ -745,7 +745,7 @@ public class PDFExporter {
 			Font bold = new Font(baseFont, 12, Font.BOLD);
 
 			if (aspectType.equals("RELATIVE")) {
-				section.add(new Paragraph("Здесь перечислены толкования, которые показывают, в чём вы относитесь к партнёру так же, как он к вам", PDFUtil.getAnnotationFont(false)));
+				section.add(new Paragraph("Здесь перечислены толкования, которые показывают, в чём вы относитесь к партнёру так же, как он к вам:", PDFUtil.getAnnotationFont(false)));
 				for (SkyPointAspect aspect : list1) {
 					AspectType type = aspect.checkType(true);
 					Planet planet1 = (Planet)aspect.getSkyPoint1();
@@ -806,7 +806,7 @@ public class PDFExporter {
 						section.add(new Paragraph("Ниже приведены отрицательные факторы ваших отношений. "
 							+ "Не преувеличивайте описанный негатив, он имеет место в любых парах. "
 							+ "Резкие выяснения отношений возможны только в толкованиях с высоким уровнем критичности (далее по тексту это видно – выделено красным цветом). "
-							+ "Если красные пометки отсутствуют, поздравляю, – союз обещает быть долгим и счастливым", font));
+							+ "Если красные пометки отсутствуют, значит проблемы отношений будут связаны не с совместимостью, а с жизненными обстоятельствами (об этом расскажет долгосрочный прогноз отношений)", font));
 					else
 						section.add(new Paragraph("Толкования в левой колонке адресованы вам, толкования в правой колонке – вашему партнёру", PDFUtil.getAnnotationFont(false)));
 
@@ -1324,17 +1324,26 @@ public class PDFExporter {
 			//создаем карту статистики аспектов
 			List<Model> aspectTypes = new AspectTypeService().getList();
 			Map<String, Integer> aspcountmap = new HashMap<String, Integer>();
-			for (Model asptype : aspectTypes)
+			Map<String, Integer> aspcountmap2 = new HashMap<String, Integer>();
+			for (Model asptype : aspectTypes) {
 				aspcountmap.put(((AspectType)asptype).getCode(), 0);
+				aspcountmap2.put(((AspectType)asptype).getCode(), 0);
+			}
 
+			List<Long> pids = Arrays.asList(new Long[] {19L,20L,23L,24L,25L});
 			for (SkyPointAspect spa : aspects) {
 				Aspect a = spa.getAspect();
 				String aspectTypeCode = a.getType().getCode();
+				long pid = spa.getSkyPoint1().getId().longValue();
 
-				//суммируем аспекты каждого типа для планеты
-				int score = aspcountmap.get(aspectTypeCode);
-				//для людей считаем только аспекты главных планет
-				aspcountmap.put(aspectTypeCode, ++score);
+				if (pids.contains(pid)) {
+					//суммируем аспекты каждого типа главных планет
+					int score = aspcountmap.get(aspectTypeCode);
+					aspcountmap.put(aspectTypeCode, ++score);
+				} else {
+					int score = aspcountmap2.get(aspectTypeCode);
+					aspcountmap2.put(aspectTypeCode, ++score);
+				}
 			}
 
 			//фильтрация списка типов аспектов
@@ -1344,6 +1353,7 @@ public class PDFExporter {
 			};
 
 			List<Bar> items = new ArrayList<Bar>();
+			List<Bar> items2 = new ArrayList<Bar>();
 		    for (Model tmodel : types) {
 		    	AspectType mtype = null; 
 		    	AspectType type = (AspectType)tmodel;
@@ -1357,43 +1367,66 @@ public class PDFExporter {
 		    	if (null == mtype)
 		    		continue;
 
-		    	int value = aspcountmap.get(type.getCode());
-		    	if (0 == value)
-		    		continue;
-
-		    	boolean exists = false;
 		    	String name = term ? mtype.getName() : mtype.getKeyword();
-		    	for (Bar b : items) {
-		    		if (b.getName().equals(name)) {
-		    			exists = true;
-				    	b.setValue(b.getValue() + value);
-		    			break;
-		    		}
+
+		    	//первый партнёр
+		    	int value = aspcountmap.get(type.getCode());
+		    	if (value > 0) {
+			    	boolean exists = false;
+			    	for (Bar b : items) {
+			    		if (b.getName().equals(name)) {
+			    			exists = true;
+					    	b.setValue(b.getValue() + value);
+			    			break;
+			    		}
+			    	}
+			    	if (!exists) {
+				    	Bar bar = new Bar();
+				    	bar.setName(mtype.getKeyword());
+				    	bar.setValue(value);
+						bar.setCategory(synastry.getEvent().getCallname());
+						items.add(bar);
+			    	}
 		    	}
-		    	if (!exists) {
-			    	Bar bar = new Bar();
-			    	bar.setName(mtype.getKeyword()/*.substring(0, 4)*/);
-			    	bar.setValue(value);
-					bar.setColor(mtype.getColor());
-					bar.setCategory("Аспекты");
-					items.add(bar);
+
+		    	//второй партнёр
+		    	value = aspcountmap2.get(type.getCode());
+		    	if (value > 0) {
+			    	boolean exists = false;
+			    	for (Bar b : items2) {
+			    		if (b.getName().equals(name)) {
+			    			exists = true;
+					    	b.setValue(b.getValue() + value);
+			    			break;
+			    		}
+			    	}
+			    	if (!exists) {
+				    	Bar bar = new Bar();
+				    	bar.setName(mtype.getKeyword());
+				    	bar.setValue(value * (-1));
+						bar.setCategory(synastry.getPartner().getCallname());
+						items2.add(bar);
+			    	}
 		    	}
 		    }
+		    items.addAll(items2);
 		    Bar[] bars = items.toArray(new Bar[items.size()]);
-		    com.itextpdf.text.Image image = PDFUtil.printBars(writer, "Аспекты отношений", "Аспекты", "Баллы", bars, 500, 300, false, false, true);
+		    com.itextpdf.text.Image image = PDFUtil.printStackChart(writer, "Аспекты отношений", "Аспекты", "Баллы", bars, 500, 300, true);
 			Section section = PDFUtil.printSection(chapter, "Аспекты отношений");
+			section.add(new Paragraph("Диаграмма сравнивает, что вы с партнёром испытываете от ваших отношений.", font));
 
+			section.add(new Paragraph("Если у вас:", font));
 			com.itextpdf.text.List list = new com.itextpdf.text.List(false, false, 10);
 			ListItem li = new ListItem();
-	        li.add(new Chunk("Если переживаний больше, чем стресса, значит вам нужно искать разрядку своим негативным эмоциям, рассказывать о своих проблемах и больше доверять друг другу. Не держите обиды и напряжение в себе", font));
+	        li.add(new Chunk("переживаний больше, чем стресса, — значит нужно искать разрядку своим негативным эмоциям, рассказывать партнёру о своих проблемах и больше доверять ему. Не держите обиды и напряжение в себе", font));
 	        list.add(li);
 
 			li = new ListItem();
-	        li.add(new Chunk("Если скрытого позитива больше, чем лёгкости, значит вам нужно выражать больше эмоций, не сдерживать радость, делиться своими успехами с партнёром", new Font(baseFont, 12, Font.NORMAL, BaseColor.RED)));
+	        li.add(new Chunk("скрытого позитива больше, чем лёгкости, — значит нужно выражать больше эмоций, не сдерживать радость, делиться своими успехами с партнёром", font));
 	        list.add(li);
 
 			li = new ListItem();
-	        li.add(new Chunk("Если воздаяния за ошибки больше, чем стресса, значит нужно обратить взгляд в прошлое и найти причины, которые привели к текущим последствиям. Скорей всего они кроются в вашем прошлом поведении и мышлении", new Font(baseFont, 12, Font.NORMAL, BaseColor.BLUE)));
+	        li.add(new Chunk("воздаяния за ошибки больше, чем стресса, — значит нужно обратить взгляд в прошлое и найти причины, которые привели к текущим последствиям. Скорей всего они кроются в вашем прошлом поведении и мышлении", font));
 	        list.add(li);
 
 			section.add(list);
@@ -1608,8 +1641,6 @@ public class PDFExporter {
 				House house = (House)hmodel;
 				if (!house.getCode().equals("VII"))
 					continue;
-				if (!house.isExportOnSign())
-					continue;
 
 				Sign sign = SkyPoint.getSign(house.getCoord(), event.getBirthYear());
 				HouseSignText dict = (HouseSignText)hservice.find(house, sign);
@@ -1631,7 +1662,7 @@ public class PDFExporter {
 	}
 
 	/**
-	 * Генерация похожих по характеру знаменитостей
+	 * Генерация подходящих партнёров
 	 * @param doc документ
 	 * @param synastry синастрия
 	 */
@@ -1648,7 +1679,7 @@ public class PDFExporter {
 	        table.setTotalWidth(doc.getPageSize().getWidth() - PDFUtil.PAGEBORDERWIDTH * 2);
 	        table.setLockedWidth(true);
 	        table.setWidths(new float[] { 50, 50 });
-	        table.setSpacingBefore(20);
+//	        table.setSpacingBefore(20);
 
 			PdfPCell cell = null;
 			Event[] events = new Event[] {synastry.getEvent(), synastry.getPartner()};
@@ -1740,7 +1771,7 @@ public class PDFExporter {
 
 			NumerologyService service = new NumerologyService();
 //			int years = Math.abs(event.getBirthYear() - partner.getBirthYear()); TODO определять с учётом весеннего равноденствия
-			int years = 4;
+			int years = 3;
 			Numerology dict = (Numerology)service.find(years);
 			if (dict != null) {
 				section.add(new Paragraph("Разница в годах цикла: " + CoreUtil.getAgeString(years), fonth5));
@@ -1849,7 +1880,7 @@ public class PDFExporter {
 					House house = planet.getHouse();
 
 					String mark = planet.getMark("house");
-					Paragraph p = new Paragraph();
+					Paragraph p = new Paragraph("", fonth5);
 					if (mark.length() > 0) {
 	    				p.add(new Chunk(mark, fonth5));
 	    				p.add(new Chunk(planet.getSymbol() + " ", PDFUtil.getHeaderAstroFont()));
@@ -1975,8 +2006,11 @@ public class PDFExporter {
 			if (dict != null) {
 				phrase.add(new Paragraph(PDFUtil.removeTags(dict.getText(), font)));
 				Phrase ph = PDFUtil.printGenderCell(dict, event.isFemale(), event.isChild(), false);
-				phrase.add(ph);
-
+				if (ph != null) {
+					phrase.add(Chunk.NEWLINE);
+					phrase.add(Chunk.NEWLINE);
+					phrase.add(ph);
+				}
 				List<Rule> rules = EventRules.ruleSynastryPlanetHouse(planet, house, event.isFemale());
 				for (Rule rule : rules) {
 					phrase.add(new Paragraph(PDFUtil.removeTags(rule.getText(), font)));
