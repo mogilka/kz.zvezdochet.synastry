@@ -82,7 +82,7 @@ public class AgeCalcHandler extends Handler {
 							calc(selp, selp2, age, reverse);
 					}
 					//дирекции планеты к куспидам домов
-					boolean housable = reverse ? partner.isHousable() : event.isHousable();
+					boolean housable = reverse ? event.isHousable() : partner.isHousable();
 					if (housable) {
 						for (Model model2 : reverse ? houses1 : houses2) {
 							if (selhouse != null && !selhouse.getId().equals(model2.getId()))

@@ -1040,18 +1040,9 @@ public class PDFExporter {
 				if (houses != null && houses.size() > 0) {
 					for (int j = 0; j < houses.size(); j++) {
 						House house = (House)houses.get(j);
-						double pcoord = planet.getCoord();
-						Double hmargin = (j == houses.size() - 1) ?
-							((House)houses.get(0)).getCoord() : 
-							((House)houses.get(j + 1)).getCoord();
-						double[] res = CalcUtil.checkMarginalValues(house.getCoord(), hmargin, pcoord);
-						hmargin = res[0];
-						pcoord = res[1];
-						//если градус планеты находится в пределах куспидов
-						//текущей и предыдущей трети домов,
-						//запоминаем, в каком доме находится планета
-						if (Math.abs(pcoord) < hmargin & 
-								Math.abs(pcoord) >= house.getCoord())
+						int h = (j == houses.size() - 1) ? 0 : j + 1;
+						House house2 = (House)houses.get(h);
+						if (SkyPoint.getHouse(house.getCoord(), house2.getCoord(), planet.getCoord()))
 							planet.setHouse(house);
 					}
 				}
@@ -1806,18 +1797,9 @@ public class PDFExporter {
 					House phouse = null;
 					for (int j = 0; j < houses.size(); j++) {
 						House ehouse = (House)houses.get(j);
-						double pcoord = planet.getCoord();
-						Double hmargin = (j == houses.size() - 1) ?
-							((House)houses.get(0)).getCoord() : 
-							((House)houses.get(j + 1)).getCoord();
-						double[] res = CalcUtil.checkMarginalValues(ehouse.getCoord(), hmargin, pcoord);
-						hmargin = res[0];
-						pcoord = res[1];
-						//если градус планеты находится в пределах куспидов
-						//текущей и предыдущей трети домов,
-						//запоминаем, в каком доме находится планета
-						if (Math.abs(pcoord) < hmargin & 
-								Math.abs(pcoord) >= ehouse.getCoord())
+						int h = (j == houses.size() - 1) ? 0 : j + 1;
+						House house2 = (House)houses.get(h);
+						if (SkyPoint.getHouse(ehouse.getCoord(), house2.getCoord(), planet.getCoord()))
 							phouse = ehouse;
 					}
 					if (phouse != null && phouse.getId().equals(house.getId())) {
@@ -1833,18 +1815,9 @@ public class PDFExporter {
 					House phouse = null;
 					for (int j = 0; j < houses2.size(); j++) {
 						House ehouse = (House)houses2.get(j);
-						double pcoord = planet.getCoord();
-						Double hmargin = (j == houses2.size() - 1) ?
-							((House)houses2.get(0)).getCoord() : 
-							((House)houses2.get(j + 1)).getCoord();
-						double[] res = CalcUtil.checkMarginalValues(ehouse.getCoord(), hmargin, pcoord);
-						hmargin = res[0];
-						pcoord = res[1];
-						//если градус планеты находится в пределах куспидов
-						//текущей и предыдущей трети домов,
-						//запоминаем, в каком доме находится планета
-						if (Math.abs(pcoord) < hmargin & 
-								Math.abs(pcoord) >= ehouse.getCoord())
+						int h = (j == houses.size() - 1) ? 0 : j + 1;
+						House house2 = (House)houses.get(h);
+						if (SkyPoint.getHouse(ehouse.getCoord(), house2.getCoord(), planet.getCoord()))
 							phouse = ehouse;
 					}
 					if (phouse != null && phouse.getId().equals(house.getId())) {
