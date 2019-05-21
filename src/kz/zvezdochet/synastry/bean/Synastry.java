@@ -104,7 +104,7 @@ public class Synastry extends Model {
 			List<Model> aspects = new AspectService().getList();
 			for (Planet planet : planets) {
 				for (Planet planet2 : planets2) {
-					double res = CalcUtil.getDifference(planet.getCoord(), planet2.getCoord());
+					double res = CalcUtil.getDifference(planet.getLongitude(), planet2.getLongitude());
 					for (Model realasp : aspects) {
 						Aspect a = (Aspect)realasp;
 						if (a.getPlanetid() > 0 &&

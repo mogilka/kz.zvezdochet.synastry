@@ -995,7 +995,7 @@ public class PDFExporter {
 			for (Planet planet : planets) {
 				BaseColor color = (++i % 2 > 0) ? new BaseColor(255, 255, 255) : new BaseColor(230, 230, 250);
 
-				cell = new PdfPCell(new Phrase(CalcUtil.roundTo(planet.getCoord(), 2) + "°", font));
+				cell = new PdfPCell(new Phrase(CalcUtil.roundTo(planet.getLongitude(), 2) + "°", font));
 		        cell.setBorder(PdfPCell.NO_BORDER);
 		        cell.setBackgroundColor(color);
 				table.addCell(cell);
@@ -1059,7 +1059,7 @@ public class PDFExporter {
 						House house = (House)houses.get(j);
 						int h = (j == houses.size() - 1) ? 0 : j + 1;
 						House house2 = (House)houses.get(h);
-						if (SkyPoint.getHouse(house.getCoord(), house2.getCoord(), planet.getCoord()))
+						if (SkyPoint.getHouse(house.getLongitude(), house2.getLongitude(), planet.getLongitude()))
 							planet.setHouse(house);
 					}
 				}
@@ -1076,7 +1076,7 @@ public class PDFExporter {
 			        cell.setBackgroundColor(color);
 					table.addCell(cell);
 				} else {					
-					cell = new PdfPCell(new Phrase(CalcUtil.roundTo(house.getCoord(), 2) + "°", font));
+					cell = new PdfPCell(new Phrase(CalcUtil.roundTo(house.getLongitude(), 2) + "°", font));
 			        cell.setBorder(PdfPCell.NO_BORDER);
 			        cell.setBackgroundColor(color);
 					table.addCell(cell);
@@ -1618,7 +1618,7 @@ public class PDFExporter {
 				if (!house.getCode().equals("VII"))
 					continue;
 
-				Sign sign = SkyPoint.getSign(house.getCoord(), event.getBirthYear());
+				Sign sign = SkyPoint.getSign(house.getLongitude(), event.getBirthYear());
 				HouseSignText dict = (HouseSignText)hservice.find(house, sign);
 				if (dict != null) {
 					if (term)
@@ -1784,7 +1784,7 @@ public class PDFExporter {
 						House ehouse = (House)houses.get(j);
 						int h = (j == houses.size() - 1) ? 0 : j + 1;
 						House house2 = (House)houses.get(h);
-						if (SkyPoint.getHouse(ehouse.getCoord(), house2.getCoord(), planet.getCoord()))
+						if (SkyPoint.getHouse(ehouse.getLongitude(), house2.getLongitude(), planet.getLongitude()))
 							phouse = ehouse;
 					}
 					if (phouse != null && phouse.getId().equals(house.getId())) {
@@ -1803,7 +1803,7 @@ public class PDFExporter {
 							House ehouse = (House)houses2.get(j);
 							int h = (j == houses.size() - 1) ? 0 : j + 1;
 							House house2 = (House)houses.get(h);
-							if (SkyPoint.getHouse(ehouse.getCoord(), house2.getCoord(), planet.getCoord()))
+							if (SkyPoint.getHouse(ehouse.getLongitude(), house2.getLongitude(), planet.getLongitude()))
 								phouse = ehouse;
 						}
 						if (phouse != null && phouse.getId().equals(house.getId())) {

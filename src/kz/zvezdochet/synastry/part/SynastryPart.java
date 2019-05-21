@@ -298,11 +298,11 @@ public class SynastryPart extends ModelListView implements ICalculable {
 			for (Planet planet : planets) {
 				TableItem item = new TableItem(table, SWT.NONE);
 				item.setText(0, planet.getName());
-				item.setText(1, String.valueOf(planet.getCoord()));
+				item.setText(1, String.valueOf(planet.getLongitude()));
 				//планеты партнёра
 				if (conf2 != null) {
 					planet = (Planet)conf2.getPlanets().get(planet.getId());
-					item.setText(2, String.valueOf(planet.getCoord()));
+					item.setText(2, String.valueOf(planet.getLongitude()));
 				}
 			}
 			for (int i = 0; i < table.getColumnCount(); i++)
@@ -321,11 +321,11 @@ public class SynastryPart extends ModelListView implements ICalculable {
 				House house = (House)base;
 				TableItem item = new TableItem(table, SWT.NONE);
 				item.setText(0, house.getName());		
-				item.setText(1, String.valueOf(house.getCoord()));
+				item.setText(1, String.valueOf(house.getLongitude()));
 				//дома партнёра
 				if (conf2 != null) {
 					house = (House)conf2.getHouses().get(j);
-					item.setText(2, String.valueOf(house.getCoord()));
+					item.setText(2, String.valueOf(house.getLongitude()));
 				}
 			}
 			for (int i = 0; i < table.getColumnCount(); i++)
