@@ -22,11 +22,10 @@ import kz.zvezdochet.core.util.CalcUtil;
 import kz.zvezdochet.part.AspectPart;
 import kz.zvezdochet.service.AspectService;
 import kz.zvezdochet.synastry.part.SynastryPart;
-import kz.zvezdochet.util.Configuration;
 
 /**
  * Расчёт синастрических аспектов планет
- * @author Nataly Didenko
+ * @author Natalie Didenko
  *
  */
 public class AspectHandler extends Handler {
@@ -39,20 +38,16 @@ public class AspectHandler extends Handler {
 			SynastryPart synPart = (SynastryPart)activePart.getObject();
 			Event event = synPart.getPartner();
 			if (null == event) return;
-			Configuration conf = event.getConfiguration();
-			if (null == conf) return; //TODO выдавать сообщение
-			if (null == conf.getPlanets()) return; //TODO выдавать сообщение
+			if (null == event.getPlanets()) return; //TODO выдавать сообщение
 			updateStatus("Инициализация планет первого партнёра", false);
 
 			Event partner = (Event)synPart.getModel();
 			if (null == partner) return;
-			Configuration conf2 = partner.getConfiguration();
-			if (null == conf2) return; //TODO выдавать сообщение
-			if (null == conf2.getPlanets()) return; //TODO выдавать сообщение
+			if (null == partner.getPlanets()) return; //TODO выдавать сообщение
 			updateStatus("Инициализация планет второго партнёра", false);
 
-			Collection<Planet> planets = conf.getPlanets().values();
-			Collection<Planet> planets2 = conf2.getPlanets().values();
+			Collection<Planet> planets = event.getPlanets().values();
+			Collection<Planet> planets2 = partner.getPlanets().values();
 			int pcount = planets.size();
 			Object[][] data = new Object[pcount][pcount + 1];
 			//заполняем заголовки строк названиями планет и их координатами
@@ -83,7 +78,7 @@ public class AspectHandler extends Handler {
 		    part.setVisible(true);
 		    partService.showPart(part, PartState.VISIBLE);
 		    AspectPart aspectPart = (AspectPart)part.getObject();
-		    aspectPart.setConfiguration(conf);
+		    aspectPart.setEvent(event);
 		    aspectPart.setData(data);
 			updateStatus("Таблица аспектов сформирована", false);
 		} catch (Exception e) {

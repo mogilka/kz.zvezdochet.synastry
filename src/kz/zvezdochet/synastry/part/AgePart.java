@@ -190,14 +190,8 @@ public class AgePart extends ModelListView {
 		} else if (null == event) {
 			DialogUtil.alertError("Персона не задана");
 			return false;
-		} else if (null == event.getConfiguration()) {
-			DialogUtil.alertError("Конфигурация события не задана");
-			return false;
 		} else if (null == partner) {
 			DialogUtil.alertError("Партнёр не задан");
-			return false;
-		} else if (null == partner.getConfiguration()) {
-			DialogUtil.alertError("Конфигурация партнёра не задана");
 			return false;
 		}
 		return true;

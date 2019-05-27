@@ -11,7 +11,7 @@ import kz.zvezdochet.synastry.part.SynastryPart;
 
 /**
  * Расчёт синастрии
- * @author Nataly Didenko
+ * @author Natalie Didenko
  *
  */
 public class CalcHandler extends Handler {

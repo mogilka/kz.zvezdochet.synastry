@@ -24,7 +24,7 @@ import kz.zvezdochet.synastry.bean.Synastry;
 
 /**
  * Сервис синастрий
- * @author Nataly Didenko
+ * @author Natalie Didenko
  */
 public class SynastryService extends ModelService {
 

@@ -54,7 +54,6 @@ import kz.zvezdochet.provider.EventProposalProvider.EventContentProposal;
 import kz.zvezdochet.service.AspectTypeService;
 import kz.zvezdochet.synastry.bean.Synastry;
 import kz.zvezdochet.synastry.service.SynastryService;
-import kz.zvezdochet.util.Configuration;
 
 /**
  * Представление синастрии
@@ -168,8 +167,8 @@ public class SynastryPart extends ModelListView implements ICalculable {
 				aparams.addAll(Arrays.asList(types.get(button.getData("type"))));
 		}
 		params.put("aspects", aparams);
-		Configuration conf = (null == partner2) ? null : partner2.getConfiguration();
-		cmpCosmogram.paint(partner.getConfiguration(), conf, params);
+		Event event = (null == partner2) ? null : partner2;
+		cmpCosmogram.paint(partner, event, params);
 	}
 
 	/**
@@ -290,18 +289,16 @@ public class SynastryPart extends ModelListView implements ICalculable {
 		Control[] controls = grPlanets.getChildren();
 		Table table = (Table)controls[0];
 		table.removeAll();
-		Configuration conf = partner.getConfiguration();
-		Configuration conf2 = partner2.getConfiguration();
-		if (conf != null) {
+		if (partner != null) {
 			folder.setSelection(1);
-			Collection<Planet> planets = conf.getPlanets().values();
+			Collection<Planet> planets = partner.getPlanets().values();
 			for (Planet planet : planets) {
 				TableItem item = new TableItem(table, SWT.NONE);
 				item.setText(0, planet.getName());
 				item.setText(1, String.valueOf(planet.getLongitude()));
 				//планеты партнёра
-				if (conf2 != null) {
-					planet = (Planet)conf2.getPlanets().get(planet.getId());
+				if (partner2 != null) {
+					planet = (Planet)partner2.getPlanets().get(planet.getId());
 					item.setText(2, String.valueOf(planet.getLongitude()));
 				}
 			}
@@ -314,17 +311,17 @@ public class SynastryPart extends ModelListView implements ICalculable {
 		controls = grHouses.getChildren();
 		table = (Table)controls[0];
 		table.removeAll();
-		if (conf != null) {
+		if (partner != null) {
 			int j = -1;
-			for (Model base : conf.getHouses()) {
+			for (Model base : partner.getHouses()) {
 				++j;
 				House house = (House)base;
 				TableItem item = new TableItem(table, SWT.NONE);
 				item.setText(0, house.getName());		
 				item.setText(1, String.valueOf(house.getLongitude()));
 				//дома партнёра
-				if (conf2 != null) {
-					house = (House)conf2.getHouses().get(j);
+				if (partner2 != null) {
+					house = (House)partner2.getHouses().get(j);
 					item.setText(2, String.valueOf(house.getLongitude()));
 				}
 			}

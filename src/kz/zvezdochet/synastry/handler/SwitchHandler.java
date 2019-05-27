@@ -12,7 +12,7 @@ import kz.zvezdochet.synastry.part.SynastryPart;
  * Обработчик переключения карты синастрий.
  * По умолчанию отображаются планеты партнёра в карте человека.
  * Можно переключиться в режим планет человека в карте партнёра
- * @author Nataly Didenko
+ * @author Natalie Didenko
  */
 public class SwitchHandler extends Handler {
 	@Execute

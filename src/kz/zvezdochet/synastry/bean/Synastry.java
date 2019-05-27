@@ -17,7 +17,7 @@ import kz.zvezdochet.synastry.service.SynastryService;
 
 /**
  * Синастрия
- * @author Nataly Didenko
+ * @author Natalie Didenko
  *
  */
 public class Synastry extends Model {
@@ -99,8 +99,8 @@ public class Synastry extends Model {
 			aspectList = new ArrayList<>();
 			event.init(false);
 			partner.init(false);
-			Collection<Planet> planets = event.getConfiguration().getPlanets().values();
-			Collection<Planet> planets2 = partner.getConfiguration().getPlanets().values();
+			Collection<Planet> planets = event.getPlanets().values();
+			Collection<Planet> planets2 = partner.getPlanets().values();
 			List<Model> aspects = new AspectService().getList();
 			for (Planet planet : planets) {
 				for (Planet planet2 : planets2) {

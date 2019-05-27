@@ -13,11 +13,10 @@ import kz.zvezdochet.core.handler.Handler;
 import kz.zvezdochet.core.ui.util.DialogUtil;
 import kz.zvezdochet.part.EventPart;
 import kz.zvezdochet.synastry.part.SynastryPart;
-import kz.zvezdochet.util.Configuration;
 
 /**
  * Обработчик открытия синастрий персоны
- * @author Nataly Didenko
+ * @author Natalie Didenko
  *
  */
 public class SynastryHandler extends Handler {
@@ -30,8 +29,6 @@ public class SynastryHandler extends Handler {
 			EventPart eventPart = (EventPart)activePart.getObject();
 			Event event = (Event)eventPart.getModel(EventPart.MODE_CALC, true);
 			if (null == event) return;
-			Configuration conf = event.getConfiguration();
-			if (null == conf) return; //TODO выдавать сообщение
 
 			updateStatus("Открытие списка синастрий", false);
 			MPart part = partService.findPart("kz.zvezdochet.synastry.part.list");

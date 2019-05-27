@@ -14,7 +14,7 @@ import kz.zvezdochet.synastry.part.SynastryPart;
 
 /**
  * Экспорт синастрии
- * @author Nataly Didenko
+ * @author Natalie Didenko
  *
  */
 public class ExportHandler extends Handler {

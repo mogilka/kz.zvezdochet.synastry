@@ -22,7 +22,6 @@ import kz.zvezdochet.core.ui.util.DialogUtil;
 import kz.zvezdochet.core.util.CalcUtil;
 import kz.zvezdochet.service.AspectService;
 import kz.zvezdochet.synastry.part.AgePart;
-import kz.zvezdochet.util.Configuration;
 
 /**
  * Обработчик расчёта дирекций синастрии
@@ -44,13 +43,11 @@ public class AgeCalcHandler extends Handler {
 			event = agePart.getEvent();
 			partner = agePart.getPartner();
 
-			Configuration conf = event.getConfiguration();
-			Collection<Planet> planets1 = conf.getPlanets().values();
-			List<Model> houses1 = conf.getHouses();
+			Collection<Planet> planets1 = event.getPlanets().values();
+			List<Model> houses1 = event.getHouses();
 
-			Configuration conf2 = partner.getConfiguration();
-			Collection<Planet> planets2 = conf2.getPlanets().values();
-			List<Model> houses2 = conf2.getHouses();
+			Collection<Planet> planets2 = partner.getPlanets().values();
+			List<Model> houses2 = partner.getHouses();
 			
 			updateStatus("Расчёт дирекций на возраст", false);
 			Planet selplanet = agePart.getPlanet();

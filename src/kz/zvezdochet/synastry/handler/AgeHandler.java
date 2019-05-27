@@ -28,10 +28,10 @@ public class AgeHandler extends Handler {
 		try {
 			SynastryPart synastryPart = (SynastryPart)activePart.getObject();
 			final Event event = synastryPart.getPartner();
+			if (null == event) return;
 			event.init(false);
 			final Event partner = (Event)synastryPart.getModel();
 			partner.init(false);
-			if (null == event || null == event.getConfiguration()) return;
 		
 			MPart part = partService.findPart("kz.zvezdochet.synastry.part.age");
 		    part.setVisible(true);

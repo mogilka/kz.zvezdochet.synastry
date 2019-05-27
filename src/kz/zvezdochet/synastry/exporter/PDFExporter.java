@@ -87,7 +87,7 @@ import kz.zvezdochet.util.Cosmogram;
 
 /**
  * Генератор PDF-файла для экспорта событий
- * @author Nataly Didenko
+ * @author Natalie Didenko
  *
  */
 public class PDFExporter {
@@ -265,8 +265,8 @@ public class PDFExporter {
 			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Темпераменты", null));
 			chapter.setNumberDepth(0);
 			//стихии
-			EventStatistics statistics = new EventStatistics(event.getConfiguration());
-			EventStatistics statistics2 = new EventStatistics(partner.getConfiguration());
+			EventStatistics statistics = new EventStatistics(event);
+			EventStatistics statistics2 = new EventStatistics(partner);
 			statistics.getPlanetSigns(true);
 			statistics2.getPlanetSigns(true);
 			statistics.initPlanetDivisions();
@@ -369,7 +369,7 @@ public class PDFExporter {
 		    GC gc = new GC(image);
 		    gc.setBackground(new Color(display, 254, 250, 248));
 		    gc.fillRectangle(image.getBounds());
-			new Cosmogram(event.getConfiguration(), partner.getConfiguration(), null, gc);
+			new Cosmogram(event, partner, null, gc);
 			ImageLoader loader = new ImageLoader();
 		    loader.data = new ImageData[] {image.getImageData()};
 		    try {
@@ -434,13 +434,13 @@ public class PDFExporter {
 	 */
 	private void printPlanetSign(Document doc, Chapter chapter, Event event, Event partner) {
 		try {
-			if (event.getConfiguration().getPlanets() != null)
-				event.getConfiguration().initPlanetSigns(true);
+			if (event.getPlanets() != null)
+				event.initSigns();
 			else
 				return;
 
-			if (partner.getConfiguration().getPlanets() != null)
-				partner.getConfiguration().initPlanetSigns(true);
+			if (partner.getPlanets() != null)
+				partner.initSigns();
 			else
 				return;
 
@@ -463,8 +463,8 @@ public class PDFExporter {
 
 				Section section = PDFUtil.printSection(chapter, category.getName(), null);
 
-   				Planet planet = event.getConfiguration().getPlanets().get(category.getObjectId());
-   				Planet planet2 = partner.getConfiguration().getPlanets().get(category.getObjectId());
+   				Planet planet = event.getPlanets().get(category.getObjectId());
+   				Planet planet2 = partner.getPlanets().get(category.getObjectId());
 				Sign sign1 = planet.getSign();
 				Sign sign2 = planet2.getSign();
 
@@ -583,7 +583,7 @@ public class PDFExporter {
 			Event man = female ? partner : event;
 			Event woman = female ? event : partner;
 
-			if (woman.getConfiguration().getPlanets() != null && man.getConfiguration().getPlanets() != null) {
+			if (woman.getPlanets() != null && man.getPlanets() != null) {
 				SynastrySignService service = new SynastrySignService();
 				String[] general = {"Sun", "Mercury"};
 				List<String> planets = new ArrayList<>(Arrays.asList(general));
@@ -591,8 +591,8 @@ public class PDFExporter {
 					String love[] = {"Venus", "Mars"};
 					planets.addAll(Arrays.asList(love));
 				}
-				Collection<Planet> mplanets = man.getConfiguration().getPlanets().values();
-				Collection<Planet> wplanets = woman.getConfiguration().getPlanets().values();
+				Collection<Planet> mplanets = man.getPlanets().values();
+				Collection<Planet> wplanets = woman.getPlanets().values();
 				for (String code : planets) {
 					Planet planet1 = null;
 					Planet planet2 = null;
@@ -991,7 +991,7 @@ public class PDFExporter {
 			table.addCell(cell);
 
 			int i = -1;
-			Collection<Planet> planets = reverse ? partner.getConfiguration().getPlanets().values() : event.getConfiguration().getPlanets().values();
+			Collection<Planet> planets = reverse ? partner.getPlanets().values() : event.getPlanets().values();
 			for (Planet planet : planets) {
 				BaseColor color = (++i % 2 > 0) ? new BaseColor(255, 255, 255) : new BaseColor(230, 230, 250);
 
@@ -1054,7 +1054,7 @@ public class PDFExporter {
 				//определяем, в каком доме партнёра находится планета
 				boolean housable = reverse ? event.isHousable() : partner.isHousable();
 				if (housable) {
-					List<Model> houses = reverse ? event.getConfiguration().getHouses() : partner.getConfiguration().getHouses();
+					List<Model> houses = reverse ? event.getHouses() : partner.getHouses();
 					for (int j = 0; j < houses.size(); j++) {
 						House house = (House)houses.get(j);
 						int h = (j == houses.size() - 1) ? 0 : j + 1;
@@ -1288,8 +1288,8 @@ public class PDFExporter {
 		    text = term ? "Чем выше значение, тем легче и активнее планета выражает свои качества" : "Чем выше значение, тем легче и активнее проявляются качества";
 	    	section.add(new Paragraph(text, font));
 
-			Collection<Planet> planets = event.getConfiguration().getPlanets().values();
-			Collection<Planet> planets2 = partner.getConfiguration().getPlanets().values();
+			Collection<Planet> planets = event.getPlanets().values();
+			Collection<Planet> planets2 = partner.getPlanets().values();
 
 		    Bar[] bars = new Bar[planets.size() + planets2.size()];
 		    int i = -1;
@@ -1325,8 +1325,8 @@ public class PDFExporter {
 	 */
 	private void printAspectTypes(PdfWriter writer, Chapter chapter, Synastry synastry) {
 		try {
-			synastry.getEvent().getConfiguration().initPlanetAspects();
-			synastry.getPartner().getConfiguration().initPlanetAspects();
+			synastry.getEvent().initAspects();
+			synastry.getPartner().initAspects();
 			List<SkyPointAspect> aspects = synastry.getAspects();
 
 			//создаем карту статистики аспектов
@@ -1429,8 +1429,8 @@ public class PDFExporter {
 			Font font = new Font(baseFont, fontsize, Font.NORMAL);
 			Font bold = new Font(baseFont, fontsize, Font.BOLD);
 
-			Collection<Planet> planets = event.getConfiguration().getPlanets().values();
-			Collection<Planet> planets2 = partner.getConfiguration().getPlanets().values();
+			Collection<Planet> planets = event.getPlanets().values();
+			Collection<Planet> planets2 = partner.getPlanets().values();
 			int PLNUM = 5;
 			Planet[] items = new Planet[PLNUM];
 			Planet[] items2 = new Planet[PLNUM];
@@ -1497,8 +1497,8 @@ public class PDFExporter {
 			ElementService service = new ElementService();
 			long[] pids = new long[] {19L, 20L, 24L, 25L};
 			for (long pid : pids) {
-   				Planet planet = event.getConfiguration().getPlanets().get(pid);
-   				Planet planet2 = partner.getConfiguration().getPlanets().get(pid);
+   				Planet planet = event.getPlanets().get(pid);
+   				Planet planet2 = partner.getPlanets().get(pid);
    				kz.zvezdochet.bean.Element element1 = planet.getSign().getElement();
    				kz.zvezdochet.bean.Element element2 = planet2.getSign().getElement();
 
@@ -1600,7 +1600,7 @@ public class PDFExporter {
 	 */
 	private Phrase printHouseSign(Event event, boolean reverse) {
 		Phrase phrase = new Phrase();
-		List<Model> houses = event.getConfiguration().getHouses();
+		List<Model> houses = event.getHouses();
 		if (!event.isHousable())
 			return phrase;
 
@@ -1765,12 +1765,12 @@ public class PDFExporter {
 	 * @param synastry синастрия
 	 */
 	private void printPlanetHouses(Document doc, Chapter chapter, Synastry synastry) {
-		List<Model> houses = synastry.getEvent().getConfiguration().getHouses();
-		List<Model> houses2 = synastry.getPartner().getConfiguration().getHouses();
+		List<Model> houses = synastry.getEvent().getHouses();
+		List<Model> houses2 = synastry.getPartner().getHouses();
 		if (null == houses && null == houses2)
 			return;
-		Collection<Planet> planets = synastry.getEvent().getConfiguration().getPlanets().values();
-		Collection<Planet> planets2 = synastry.getPartner().getConfiguration().getPlanets().values();
+		Collection<Planet> planets = synastry.getEvent().getPlanets().values();
+		Collection<Planet> planets2 = synastry.getPartner().getPlanets().values();
 
 		List<Planet> hplanets = new ArrayList<>();
 		List<Planet> hplanets2 = new ArrayList<>();
