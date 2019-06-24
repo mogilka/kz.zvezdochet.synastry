@@ -110,7 +110,7 @@ public class AgeCalcHandler extends Handler {
 	private void calc(SkyPoint point1, SkyPoint point2, int age, boolean reverse) {
 		try {
 			//находим угол между точками космограммы с учетом возраста
-			double one = makeAge(point1.getLongitude(), age);
+			double one = CalcUtil.incrementCoord(point1.getLongitude(), age, true);
 			double two = point2.getLongitude();
 			double res = CalcUtil.getDifference(one, two);
 
@@ -139,18 +139,5 @@ public class AgeCalcHandler extends Handler {
 			DialogUtil.alertError(point1.getNumber() + ", " + point2.getNumber() + ", " + age);
 			e.printStackTrace();
 		}
-	}
-
-	/**
-	 * Преобразуем координату с учётом возраста
-	 * @param k координата
-	 * @param age возраст
-	 * @return модифицированное значение координаты
-	 */
-	private double makeAge(double k, int age) {
-		double res;
-		double val = k + age;
-		res = (val > 360) ? val - 360 : val;
-		return res;
 	}
 }
