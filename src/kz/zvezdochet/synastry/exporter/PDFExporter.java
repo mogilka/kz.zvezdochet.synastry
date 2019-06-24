@@ -136,8 +136,8 @@ public class PDFExporter {
 	 * @param partner второй партнёр
 	 */
 	public void generate(Event event, Event partner) {
-		event.init(true);
-		partner.init(true);
+		event.initData(true);
+		partner.initData(true);
 
 		name1 = event.getCallname();
 		name2 = partner.getCallname();

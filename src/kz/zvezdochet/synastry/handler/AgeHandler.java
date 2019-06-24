@@ -29,9 +29,9 @@ public class AgeHandler extends Handler {
 			SynastryPart synastryPart = (SynastryPart)activePart.getObject();
 			final Event event = synastryPart.getPartner();
 			if (null == event) return;
-			event.init(false);
+			event.initData(false);
 			final Event partner = (Event)synastryPart.getModel();
-			partner.init(false);
+			partner.initData(false);
 		
 			MPart part = partService.findPart("kz.zvezdochet.synastry.part.age");
 		    part.setVisible(true);

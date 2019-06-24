@@ -273,7 +273,7 @@ public class AgePart extends ModelListView {
 	 * @param event персона
 	 */
 	public void setPartner(Event event) {
-		event.init(false);
+		event.initData(false);
 		this.partner = event;
 	}
 

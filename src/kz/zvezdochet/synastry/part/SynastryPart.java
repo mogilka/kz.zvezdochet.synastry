@@ -149,7 +149,7 @@ public class SynastryPart extends ModelListView implements ICalculable {
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(parent);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(container);
 		GridLayoutFactory.swtDefaults().applyTo(container);
-		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(true, true).applyTo(table);
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(true, true).applyTo(tableViewer.getTable());
 	}
 
 	/**
@@ -363,7 +363,7 @@ public class SynastryPart extends ModelListView implements ICalculable {
 		System.out.println("onCalc" + MODE_CALC);
 		Event event = synpartner;
 		Event event2 = (Event)getModel();
-		event2.init(false);
+		event2.initData(false);
 		if (mode.equals(0)) {
 			refreshCard(event, event2);
 			refreshTabs(event, event2);

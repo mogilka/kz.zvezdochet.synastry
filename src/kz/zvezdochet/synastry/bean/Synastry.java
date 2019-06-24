@@ -97,8 +97,8 @@ public class Synastry extends Model {
 				return;
 
 			aspectList = new ArrayList<>();
-			event.init(false);
-			partner.init(false);
+			event.initData(false);
+			partner.initData(false);
 			Collection<Planet> planets = event.getPlanets().values();
 			Collection<Planet> planets2 = partner.getPlanets().values();
 			List<Model> aspects = new AspectService().getList();
