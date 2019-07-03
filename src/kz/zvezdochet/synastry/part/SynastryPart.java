@@ -312,17 +312,14 @@ public class SynastryPart extends ModelListView implements ICalculable {
 		table = (Table)controls[0];
 		table.removeAll();
 		if (partner != null) {
-			int j = -1;
-			for (Model base : partner.getHouses()) {
-				++j;
-				House house = (House)base;
+			for (House house : partner.getHouses().values()) {
 				TableItem item = new TableItem(table, SWT.NONE);
 				item.setText(0, house.getName());		
 				item.setText(1, String.valueOf(house.getLongitude()));
 				//дома партнёра
 				if (partner2 != null) {
-					house = (House)partner2.getHouses().get(j);
-					item.setText(2, String.valueOf(house.getLongitude()));
+					House house2 = (House)partner2.getHouses().get(house.getId());
+					item.setText(2, String.valueOf(house2.getLongitude()));
 				}
 			}
 			for (int i = 0; i < table.getColumnCount(); i++)

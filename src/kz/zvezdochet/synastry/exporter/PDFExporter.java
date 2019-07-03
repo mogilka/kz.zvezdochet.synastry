@@ -1054,10 +1054,9 @@ public class PDFExporter {
 				//определяем, в каком доме партнёра находится планета
 				boolean housable = reverse ? event.isHousable() : partner.isHousable();
 				if (housable) {
-					List<Model> houses = reverse ? event.getHouses() : partner.getHouses();
-					for (int j = 0; j < houses.size(); j++) {
-						House house = (House)houses.get(j);
-						int h = (j == houses.size() - 1) ? 0 : j + 1;
+					Map<Long, House> houses = reverse ? event.getHouses() : partner.getHouses();
+					for (House house : houses.values()) {
+						long h = (house.getNumber() == houses.size()) ? 142 : house.getId() + 1;
 						House house2 = (House)houses.get(h);
 						if (SkyPoint.getHouse(house.getLongitude(), house2.getLongitude(), planet.getLongitude()))
 							planet.setHouse(house);
@@ -1281,6 +1280,7 @@ public class PDFExporter {
 	 * @param chapter раздел
 	 * @param event событие
 	 */
+	@SuppressWarnings("unused")
 	private void printPlanetStrength(PdfWriter writer, Chapter chapter, Event event, Event partner) {
 		try {
 		    String text = term ? "Соотношение силы планет" : "Соотношение силы качеств";
@@ -1600,7 +1600,7 @@ public class PDFExporter {
 	 */
 	private Phrase printHouseSign(Event event, boolean reverse) {
 		Phrase phrase = new Phrase();
-		List<Model> houses = event.getHouses();
+		Collection<House> houses = event.getHouses().values();
 		if (!event.isHousable())
 			return phrase;
 
@@ -1765,8 +1765,8 @@ public class PDFExporter {
 	 * @param synastry синастрия
 	 */
 	private void printPlanetHouses(Document doc, Chapter chapter, Synastry synastry) {
-		List<Model> houses = synastry.getEvent().getHouses();
-		List<Model> houses2 = synastry.getPartner().getHouses();
+		Map<Long, House> houses = synastry.getEvent().getHouses();
+		Map<Long, House> houses2 = synastry.getPartner().getHouses();
 		if (null == houses && null == houses2)
 			return;
 		Collection<Planet> planets = synastry.getEvent().getPlanets().values();
@@ -1776,13 +1776,12 @@ public class PDFExporter {
 		List<Planet> hplanets2 = new ArrayList<>();
 		List<Planet> relative = new ArrayList<>();
 		try {
-			for (Model hmodel : houses) {
+			for (Model hmodel : houses.values()) {
 				House house = (House)hmodel;
 				for (Planet planet : planets2) {
 					House phouse = null;
-					for (int j = 0; j < houses.size(); j++) {
-						House ehouse = (House)houses.get(j);
-						int h = (j == houses.size() - 1) ? 0 : j + 1;
+					for (House ehouse : houses.values()) {
+						long h = (ehouse.getNumber() == houses.size()) ? 142 : ehouse.getId() + 1;
 						House house2 = (House)houses.get(h);
 						if (SkyPoint.getHouse(ehouse.getLongitude(), house2.getLongitude(), planet.getLongitude()))
 							phouse = ehouse;
@@ -1795,13 +1794,11 @@ public class PDFExporter {
 			}
 
 			if (synastry.getPartner().isHousable()) {
-				for (Model hmodel : houses2) {
-					House house = (House)hmodel;
+				for (House house : houses2.values()) {
 					for (Planet planet : planets) {
 						House phouse = null;
-						for (int j = 0; j < houses2.size(); j++) {
-							House ehouse = (House)houses2.get(j);
-							int h = (j == houses.size() - 1) ? 0 : j + 1;
+						for (House ehouse : houses2.values()) {
+							long h = (ehouse.getNumber() == houses.size()) ? 0 : ehouse.getNumber() + 1;
 							House house2 = (House)houses.get(h);
 							if (SkyPoint.getHouse(ehouse.getLongitude(), house2.getLongitude(), planet.getLongitude()))
 								phouse = ehouse;

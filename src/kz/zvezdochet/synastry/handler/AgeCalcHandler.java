@@ -44,10 +44,10 @@ public class AgeCalcHandler extends Handler {
 			partner = agePart.getPartner();
 
 			Collection<Planet> planets1 = event.getPlanets().values();
-			List<Model> houses1 = event.getHouses();
+			Collection<House> houses1 = event.getHouses().values();
 
 			Collection<Planet> planets2 = partner.getPlanets().values();
-			List<Model> houses2 = partner.getHouses();
+			Collection<House> houses2 = partner.getHouses().values();
 			
 			updateStatus("Расчёт дирекций на возраст", false);
 			Planet selplanet = agePart.getPlanet();
