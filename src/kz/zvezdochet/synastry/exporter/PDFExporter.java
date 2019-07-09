@@ -369,7 +369,7 @@ public class PDFExporter {
 		    GC gc = new GC(image);
 		    gc.setBackground(new Color(display, 254, 250, 248));
 		    gc.fillRectangle(image.getBounds());
-			new Cosmogram(event, partner, null, gc);
+			new Cosmogram(event, partner, null, gc, false);
 			ImageLoader loader = new ImageLoader();
 		    loader.data = new ImageData[] {image.getImageData()};
 		    try {
