@@ -1798,7 +1798,7 @@ public class PDFExporter {
 					for (Planet planet : planets) {
 						House phouse = null;
 						for (House ehouse : houses2.values()) {
-							long h = (ehouse.getNumber() == houses.size()) ? 0 : ehouse.getNumber() + 1;
+							long h = (ehouse.getNumber() == houses.size()) ? 142 : ehouse.getId() + 1;
 							House house2 = (House)houses.get(h);
 							if (SkyPoint.getHouse(ehouse.getLongitude(), house2.getLongitude(), planet.getLongitude()))
 								phouse = ehouse;
