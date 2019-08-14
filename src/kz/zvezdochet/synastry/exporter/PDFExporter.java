@@ -2201,7 +2201,7 @@ public class PDFExporter {
 	        chunk.setAnchor(event.getUrl());
 	        phrase.add(chunk);
 	
-	        phrase.add(new Chunk("   " + event.getDescription(), font));
+	        phrase.add(new Chunk("   " + event.getComment(), font));
 		} catch (DocumentException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
