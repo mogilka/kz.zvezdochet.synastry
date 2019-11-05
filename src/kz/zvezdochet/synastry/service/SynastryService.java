@@ -40,7 +40,7 @@ public class SynastryService extends ModelService {
 		try {
 			String sql;
 			if (null == model.getId()) 
-				sql = "insert into " + tableName + " values(0,?,?,?,?,?,?,?)";
+				sql = "insert into " + tableName + " values(0,?,?,?,?,?,?,?,?)";
 			else
 				sql = "update " + tableName + " set " +
 					"eventid = ?, " +
@@ -49,18 +49,21 @@ public class SynastryService extends ModelService {
 					"userid = ?, " +
 					"date = ?, " +
 					"calculated = ?, " +
-					"celebrity = ? " +
+					"celebrity = ?, " +
+					"updated_at = ? " +
 					"where id = ?";
 			ps = Connector.getInstance().getConnection().prepareStatement(sql);
 			ps.setLong(1, synastry.getEvent().getId());
 			ps.setLong(2, synastry.getPartner().getId());
 			ps.setString(3, synastry.getDescription());
 			ps.setLong(4, 3);
-			ps.setString(5, DateUtil.formatCustomDateTime(new Date(), "yyyy-MM-dd HH:mm:ss"));
+			String now = DateUtil.formatCustomDateTime(new Date(), "yyyy-MM-dd HH:mm:ss");
+			ps.setString(5, now);
 			ps.setInt(6, 0);
 			ps.setInt(7, 0); //TODO вычислять динамически
+			ps.setString(8, now);
 			if (model.getId() != null)
-				ps.setLong(8, model.getId());
+				ps.setLong(9, model.getId());
 
 			result = ps.executeUpdate();
 			if (1 == result) {
