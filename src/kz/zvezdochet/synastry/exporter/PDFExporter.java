@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -142,9 +141,12 @@ public class PDFExporter {
 		name1 = event.getCallname();
 		name2 = partner.getCallname();
 
-		saveCard(event, partner);
 		Document doc = new Document();
 		try {
+			Synastry synastry = (Synastry)new SynastryService().find(event.getId(), partner.getId());
+			synastry.init(true);
+			saveCard(event, partner);
+
 			String filename = PlatformUtil.getPath(Activator.PLUGIN_ID, "/out/synastry.pdf").getPath();
 			PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(filename));
 	        writer.setPageEvent(new PageEventHandler(doc));
@@ -214,7 +216,7 @@ public class PDFExporter {
 			chapter.add(p);
 
 			Font fontgray = PDFUtil.getAnnotationFont(false);
-			text = "Дата составления: " + DateUtil.fulldtf.format(new Date());
+			text = "Дата составления: " + DateUtil.fulldtf.format(synastry.getDate());
 			p = new Paragraph(text, fontgray);
 	        p.setAlignment(Element.ALIGN_CENTER);
 			chapter.add(p);
@@ -238,7 +240,6 @@ public class PDFExporter {
 			chapter.add(Chunk.NEXTPAGE);
 
 			//общая диаграмма
-			Synastry synastry = (Synastry)new SynastryService().find(event.getId(), partner.getId());
 			printChart(writer, chapter, synastry);
 			chapter.add(Chunk.NEXTPAGE);
 			doc.add(chapter);
@@ -310,7 +311,7 @@ public class PDFExporter {
 
 			//дома
 			if (synastry.getEvent().isHousable() || synastry.getPartner().isHousable()) {
-				chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Влияние друг на друга", null));
+				chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Влияние друг на друга", "planethouses"));
 				chapter.setNumberDepth(0);
 				chapter.add(new Paragraph("Этот раздел в меньшей степени рассказывает о том, как вы относитесь друг к другу, "
 			    	+ "и в большей степени – о том, что произойдёт в реальности, как вы измените жизнь и восприятие друг друга. "
@@ -369,7 +370,10 @@ public class PDFExporter {
 		    GC gc = new GC(image);
 		    gc.setBackground(new Color(display, 254, 250, 248));
 		    gc.fillRectangle(image.getBounds());
-			new Cosmogram(event, partner, null, gc, false);
+
+			Map<String, Object> params = new HashMap<>();
+			params.put("type", "synastry");
+			new Cosmogram(event, partner, params, gc, false);
 			ImageLoader loader = new ImageLoader();
 		    loader.data = new ImageData[] {image.getImageData()};
 		    try {
@@ -455,7 +459,8 @@ public class PDFExporter {
 				categories.addAll(Arrays.asList(deal));
 			}
 
-			List<Model> cats = new CategoryService().getList();
+			CategoryService catService = new CategoryService();
+			List<Model> cats = catService.getList();
 			for (Model m : cats) {
     			Category category = (Category)m;
     			if (!categories.contains(category.getCode()))
@@ -559,6 +564,71 @@ public class PDFExporter {
 	   				cell.setBorder(Rectangle.NO_BORDER);
 	   				table.addCell(cell);
 				}				
+				section.add(table);
+				chapter.add(Chunk.NEXTPAGE);
+			}
+
+			//идеальная пара
+			if (doctype.equals("love")) {
+				Section section = PDFUtil.printSection(chapter, "Ваша идеальная пара", null);
+
+				String code = event.isFemale() ? "male" : "female";
+				String code2 = partner.isFemale() ? "male" : "female";
+				Category category = (Category)catService.find(code);
+				Category category2 = (Category)catService.find(code2);
+
+				Planet planet = event.getPlanets().get(category.getObjectId());
+				Planet planet2 = partner.getPlanets().get(category2.getObjectId());
+				Sign sign1 = planet.getSign();
+				Sign sign2 = planet2.getSign();
+	
+		        PdfPTable table = new PdfPTable(2);
+		        table.setTotalWidth(doc.getPageSize().getWidth() - PDFUtil.PAGEBORDERWIDTH * 2);
+		        table.setLockedWidth(true);
+		        table.setWidths(new float[] { 50, 50 });
+		        table.setSpacingBefore(20);
+	
+				PdfPCell cell = null;
+				Event[] events = new Event[] {event, partner};
+	
+				for (Event e : events) {
+					cell = new PdfPCell(new Phrase(e.getCallname(), font));
+					PDFUtil.setCellBorderWidths(cell, 0, 0, .5F, 0);
+					cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+					table.addCell(cell);
+				}
+				table.setHeaderRows(1);
+	
+				Phrase phrase = new Phrase();
+				List<String> texts1 = new ArrayList<>();
+				List<String> texts2 = new ArrayList<>();
+				PlanetSignText text = service.find(category, sign1);
+				if (text != null) {
+	    			String t = text.getText();
+    				texts1 = PDFUtil.splitHtml(t);
+				}
+				PlanetSignText text2 = service.find(category2, sign2);
+				if (text2 != null)
+   					texts2 = PDFUtil.splitHtml(text2.getText());
+
+				int tcount = texts1.size() + texts2.size();
+				if (tcount > 0) {
+					for (int i = 0; i < tcount; i++) {
+						phrase = new Phrase();
+						if (texts1.size() > i)
+							phrase = PDFUtil.removeTags(texts1.get(i), font);
+						cell = new PdfPCell(phrase);
+						PDFUtil.setCellBorderWidths(cell, 0, .5F, 0, 0);
+						table.addCell(cell);
+
+						phrase = new Phrase();
+						if (texts2.size() > i)
+							phrase = PDFUtil.removeTags(texts2.get(i), font);
+						cell = new PdfPCell(phrase);
+						cell.setBorder(Rectangle.NO_BORDER);
+						table.addCell(cell);
+					}
+				}
 				section.add(table);
 				chapter.add(Chunk.NEXTPAGE);
 			}
@@ -817,10 +887,16 @@ public class PDFExporter {
 				} else {
 					if (aspectType.equals("NEGATIVE")) {
 						Paragraph p = new Paragraph("Ниже приведены отрицательные факторы ваших отношений. "
-								+ "Не преувеличивайте описанный негатив, он имеет место в любых парах. ", font);
-						p.add(new Chunk("Резкие выяснения отношений возможны только в толкованиях с высоким уровнем критичности (далее по тексту это видно – выделено красным цветом). ", PDFUtil.getDangerFont()));
-						p.add(new Chunk("Если красные пометки отсутствуют, значит возможные проблемы отношений будут связаны не с совместимостью, а с жизненными обстоятельствами (об этом расскажет долгосрочный прогноз отношений)", font));
-						section.add(p);
+							+ "Не преувеличивайте описанный негатив, он имеет место в любых парах. ", font);
+						p.add(new Chunk("То, что реально ставит отношения под угрозу, выделенно красным цветом. ", PDFUtil.getDangerFont()));
+						p.add(new Chunk("Если красные пометки отсутствуют, значит у вас отличная совместимость, "
+							+ "и проблемы могут возникнуть только в связи с жизненными обстоятельствами. " +
+							"Частично об этом написано в разделе ", font));
+						Anchor anchor = new Anchor("Влияние друг на друга", fonta);
+			            anchor.setReference("#planethouses");
+				        p.add(anchor);
+						p.add(new Chunk(". Более подробную информацию даст долгосрочный прогноз отношений", font));
+				        section.add(p);
 					} else
 						section.add(new Paragraph("Толкования в левой колонке адресованы вам, толкования в правой колонке – вашему партнёру", PDFUtil.getAnnotationFont(false)));
 
@@ -921,15 +997,13 @@ public class PDFExporter {
 						phrase.add(Chunk.NEWLINE);
 						phrase.add(Chunk.NEWLINE);
 					}
-					if (code.equals("OPPOSITION")) {
-						if (planet1.isMain() && planet2.isMain()) {
-							phrase.add(new Paragraph("Уровень критичности: высокий", PDFUtil.getDangerFont()));
-							phrase.add(Chunk.NEWLINE);
-							phrase.add(Chunk.NEWLINE);
-						}
-					} else if (code.equals("QUADRATURE")) {
-						if (planet1.isMain() && planet2.isMain()) {
+					if (planet1.isMain() && planet2.isMain()) {
+						if (code.equals("OPPOSITION")) {
 							phrase.add(new Paragraph("Уровень критичности: средний", PDFUtil.getWarningFont()));
+							phrase.add(Chunk.NEWLINE);
+							phrase.add(Chunk.NEWLINE);
+						} else if (code.equals("QUADRATURE")) {
+							phrase.add(new Paragraph("Уровень критичности: высокий", PDFUtil.getDangerFont()));
 							phrase.add(Chunk.NEWLINE);
 							phrase.add(Chunk.NEWLINE);
 						}
@@ -1348,7 +1422,7 @@ public class PDFExporter {
 			//фильтрация списка типов аспектов
 			List<Model> types = new AspectTypeService().getList();
 			String[] codes = {
-				"NEGATIVE", "NEGATIVE_HIDDEN", "POSITIVE", "POSITIVE_HIDDEN", "CREATIVE", "KARMIC", "SPIRITUAL", "PROGRESSIVE"
+				"NEUTRAL", "NEGATIVE", "NEGATIVE_HIDDEN", "POSITIVE", "POSITIVE_HIDDEN", "CREATIVE", "KARMIC", "SPIRITUAL", "PROGRESSIVE"
 			};
 
 			List<Bar> items = new ArrayList<Bar>();
@@ -1381,6 +1455,7 @@ public class PDFExporter {
 		    	if (!exists) {
 			    	Bar bar = new Bar();
 			    	bar.setName(mtype.getKeyword()/*.substring(0, 4)*/);
+			    	bar.setCode(mtype.getCode());
 			    	bar.setValue(value);
 					bar.setColor(mtype.getColor());
 					bar.setCategory("Аспекты");
@@ -1390,22 +1465,136 @@ public class PDFExporter {
 		    Bar[] bars = items.toArray(new Bar[items.size()]);
 		    com.itextpdf.text.Image image = PDFUtil.printBars(writer, "Аспекты отношений", "Аспекты", "Баллы", bars, 500, 300, false, false, true);
 			Section section = PDFUtil.printSection(chapter, "Аспекты отношений", null);
+			section.add(image);
+
+		    int size = items.size();
+		    Map<String, Double> map = new HashMap<>();
+		    for (int i = 0; i < size; i++) {
+		    	Bar bar = items.get(i);
+		    	map.put(bar.getCode(), bar.getValue());
+		    }
 
 			com.itextpdf.text.List list = new com.itextpdf.text.List(false, false, 10);
 			ListItem li = new ListItem();
-	        li.add(new Chunk("Если переживаний больше, чем стресса, значит вам нужно искать разрядку своим негативным эмоциям, рассказывать о своих проблемах и больше доверять друг другу. Не держите обиды и напряжение в себе", font));
-	        list.add(li);
+			String text = "";
+			if (map.containsKey("NEGATIVE_HIDDEN") && map.containsKey("NEGATIVE")) {
+				if (map.get("NEGATIVE_HIDDEN") > map.get("NEGATIVE")) {
+					text = "Переживаний больше, чем стресса, значит обоим нужно искать разрядку своим негативным эмоциям, "
+						+ "рассказывать о своих проблемах. Учитесь доверять друг другу, не держите обиды и напряжение в себе";
+			        li.add(new Chunk(text, font));
+			        list.add(li);
+				}
+			}
+			if (map.containsKey("POSITIVE_HIDDEN") && map.containsKey("POSITIVE")) {
+				if (map.get("POSITIVE_HIDDEN") > map.get("POSITIVE")) {
+					text = "Скрытого позитива больше, чем лёгкости, значит обоим нужно выражать больше эмоций, "
+						+ "не сдерживать радость, делиться своими успехами, стараться быть друг для друга интереснымм и понимающим собеседником";
+					li = new ListItem();
+			        li.add(new Chunk(text, new Font(baseFont, 12, Font.NORMAL, BaseColor.RED)));
+			        list.add(li);
+				}
+			}
+			if (map.containsKey("KARMIC") && map.containsKey("NEGATIVE")) {
+				if (map.get("KARMIC") > map.get("NEGATIVE")) {
+					text = "Воздаяния за ошибки больше, чем стресса, значит причины многих неудач таятся в вашем прошлом поведении и мышлении. "
+						+ "Испытания вам обоим даны для того, чтобы очиститься от старых грехов и обременяющих установок";
+					li = new ListItem();
+			        li.add(new Chunk(text, new Font(baseFont, 12, Font.NORMAL, BaseColor.BLUE)));
+			        list.add(li);
+				}
+			}
+			if (map.containsKey("KARMIC") && map.containsKey("CREATIVE")) {
+				text = null;
+				if (map.get("KARMIC") > map.get("CREATIVE"))
+					text = "Воздаяния за ошибки больше, чем свободы, значит в вашем союзе вы оба столкнётесь с ограничениями, "
+						+ "и не всегда будет возможность сделать тот выбор, который хочется";
+				else if (map.get("CREATIVE") > map.get("KARMIC"))
+					text = "Свободы больше, чем воздаяния за ошибки, значит ограничения вам не страшны, "
+						+ "и будет возможность согласованно делать выбор, который устроит обоих";
+				if (text != null) {
+					li = new ListItem();
+			        li.add(new Chunk(text, new Font(baseFont, 12, Font.NORMAL, new BaseColor(0, 102, 51))));
+			        list.add(li);
+				}
+			}
 
+			double hidden = 0, clear = 0;
+			if (map.containsKey("NEGATIVE_HIDDEN"))
+				hidden += map.get("NEGATIVE_HIDDEN");
+			if (map.containsKey("POSITIVE_HIDDEN"))
+				hidden += map.get("POSITIVE_HIDDEN");
+			if (map.containsKey("NEGATIVE"))
+				clear += map.get("NEGATIVE");
+			if (map.containsKey("POSITIVE"))
+				clear += map.get("POSITIVE");
+			if (hidden > clear) {
+				text = "Переживаний и скрытого позитива больше, чем стресса и лёгкости, значит больше активности и событий будет происходить за рамками ваших отношений, в закрытой форме";
+				li = new ListItem();
+		        li.add(new Chunk(text, new Font(baseFont, 12, Font.NORMAL, BaseColor.GRAY)));
+		        list.add(li);
+			}
+
+			if (map.containsKey("SPIRITUAL") && map.get("SPIRITUAL") > 0) {
+				text = "Чем больше духовности – тем более высокого уровня развития вы можете достичь в данном союзе (больше нуля – уже хорошо)";
+				li = new ListItem();
+		        li.add(new Chunk(text, new Font(baseFont, 12, Font.NORMAL, BaseColor.MAGENTA)));
+		        list.add(li);
+			}
+			if (map.containsKey("NEUTRAL") && map.get("NEUTRAL") > 0) {
+				text = "Чем больше насыщенности – тем больше жизненных изменений будет касаться вас обоих, а не поодиночке";
+				li = new ListItem();
+		        li.add(new Chunk(text, new Font(baseFont, 12, Font.NORMAL, new BaseColor(255, 153, 51))));
+		        list.add(li);
+			}
+
+			//определяем тип аспекта с экстремально высоким значением
+			String[] exclude = { "NEUTRAL", "SPIRITUAL", "PROGRESSIVE" };
+			for (String code : codes) {
+				if (!map.containsKey(code))
+					continue;
+				if (Arrays.asList(exclude).contains(code))
+					continue;
+
+				double val = map.get(code);
+				double max = 0;
+				for (String c : codes) {
+					if (c.equals(code))
+						continue;
+					if (map.containsKey(c)) {
+						double v = map.get(c);
+						if (v > max)
+							max = v;
+					}
+				}
+				if (val >= max + max) {
+					BaseColor color = BaseColor.BLACK;
+					if (code.equals("KARMIC")) {
+						color = BaseColor.BLUE;
+						text = "Кармические аспекты зашкаливают, значит беззаботному сосуществованию помешает частый возврат к прошлому. Старайтесь сразу же развеивать тени сомнения и разрешать конфликты, не оставляя проблемы на потом";
+					} else if (code.equals("CREATIVE")) {
+						color = new BaseColor(0, 102, 51);
+						text = "Творческие аспекты зашкаливают, так что у вас обоих в распоряжении будет достаточно свободы и возможностей, чтобы преобразить ваши отношения";
+					} else if (code.equals("NEGATIVE")) {
+						text = "Уровень стресса зашкаливает, значит отток энергии будет сильнее, чем приток. Развивайте силу духа, учитесь управлять конфликтами и рисками и преуменьшать их";
+					} else if (code.equals("POSITIVE")) {
+						color = BaseColor.RED;
+						text = "Уровень позитива зашкаливает, значит приток энергии будет сильнее, чем отток. Вы счастливчики!";
+					} else if (code.equals("POSITIVE_HIDDEN")) {
+						color = new BaseColor(153, 102, 102);
+						text = "Уровень скрытого позитива зашкаливает, значит внутренняя мотивация обоих очень сильна! Внутри себя вы будете полны энергии, несмотря на внешние обстоятельства";
+					} else if (code.equals("NEGATIVE_HIDDEN")) {
+						color = BaseColor.GRAY;
+						text = "Уровень скрытого негатива зашкаливает, старайтесь не растрачивать собственную энергию, не зацикливаться на внутренних проблемах, а решать их и преуменьшать";
+					}
+					li = new ListItem();
+			        li.add(new Chunk(text, new Font(baseFont, 12, Font.NORMAL, color)));
+			        list.add(li);
+				}
+			}
 			li = new ListItem();
-	        li.add(new Chunk("Если скрытого позитива больше, чем лёгкости, значит вам нужно выражать больше эмоций, не сдерживать радость, делиться своими успехами с партнёром", new Font(baseFont, 12, Font.NORMAL, BaseColor.RED)));
+	        li.add(new Chunk("В остальном показатели среднестатистические", font));
 	        list.add(li);
-
-			li = new ListItem();
-	        li.add(new Chunk("Если воздаяния за ошибки больше, чем стресса, значит нужно обратить взгляд в прошлое и найти причины, которые привели к текущим последствиям. Скорей всего они кроются в вашем прошлом поведении и мышлении", new Font(baseFont, 12, Font.NORMAL, BaseColor.BLUE)));
-	        list.add(li);
-
 			section.add(list);
-			section.add(image);
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
@@ -1747,7 +1936,7 @@ public class PDFExporter {
 
 			NumerologyService service = new NumerologyService();
 //			int years = Math.abs(event.getBirthYear() - partner.getBirthYear()); TODO определять с учётом весеннего равноденствия
-			int years = 3;
+			int years = 7;
 			Numerology dict = (Numerology)service.find(years);
 			if (dict != null) {
 				section.add(new Paragraph("Разница в годах цикла: " + CoreUtil.getAgeString(years), fonth5));
@@ -1931,6 +2120,12 @@ public class PDFExporter {
 	private Phrase printPlanetHouse(Synastry synastry, Planet planet, boolean reverse) {
 		Phrase phrase = new Phrase();
 		try {
+			if (planet.getCode().equals("Moon")) {
+				boolean housable = reverse ? synastry.getEvent().isHousable() : synastry.getPartner().isHousable();
+				if (!housable)
+					return phrase;
+			}
+
 			String sign = planet.isDamaged() || planet.isLilithed() ? "-" : "+";
 			House house = planet.getHouse();
 
