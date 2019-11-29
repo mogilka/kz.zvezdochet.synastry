@@ -2,15 +2,18 @@ package kz.zvezdochet.synastry.bean;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 import kz.zvezdochet.bean.Aspect;
 import kz.zvezdochet.bean.Event;
 import kz.zvezdochet.bean.Planet;
+import kz.zvezdochet.bean.SkyPoint;
 import kz.zvezdochet.bean.SkyPointAspect;
 import kz.zvezdochet.core.bean.Model;
 import kz.zvezdochet.core.service.DataAccessException;
 import kz.zvezdochet.core.service.ModelService;
+import kz.zvezdochet.core.ui.util.DialogUtil;
 import kz.zvezdochet.core.util.CalcUtil;
 import kz.zvezdochet.service.AspectService;
 import kz.zvezdochet.synastry.service.SynastryService;
@@ -128,5 +131,84 @@ public class Synastry extends Model {
 		}
 	}
 	@Override
-	public void init(boolean mode) {}
+	public void init(boolean mode) {
+		List<Model> aspects = null;
+		try {
+			aspects = new AspectService().getList();
+		} catch (DataAccessException e) {
+			e.printStackTrace();
+		}
+		List<SkyPointAspect> data = new ArrayList<SkyPointAspect>();
+		makeAspects(event, partner, aspects, data);
+		partner.setAspectList(data);
+	}
+
+	/**
+	 * Дата создания
+	 */
+	private Date date;
+
+	public Date getDate() {
+		return date;
+	}
+	public void setDate(Date date) {
+		this.date = date;
+	}
+
+	/**
+	 * Расчёт аспектов
+	 * @param first первый партнёр
+	 * @param second второй партнёр
+	 * @param aspects список аспектов
+	 * @param data массив аспектов партнёров
+	 */
+	private void makeAspects(Event first, Event second, List<Model> aspects, List<SkyPointAspect> data) {
+		Collection<Planet> trplanets = first.getPlanets().values();
+		Collection<Planet> splanets = second.getPlanets().values();
+		for (Planet trplanet : trplanets)
+			for (Planet planet : splanets)
+				calc(trplanet, planet, aspects, data);
+	}
+
+	/**
+	 * Определение аспекта между небесными точками
+	 * @param point1 первая небесная точка
+	 * @param point2 вторая небесная точка
+	 * @param aspects список аспектов
+	 * @param data массив аспектов партнёров
+	 */
+	private void calc(SkyPoint point1, SkyPoint point2, List<Model> aspects, List<SkyPointAspect> data) {
+		try {
+			//находим угол между точками космограммы
+			double one = point1.getLongitude();
+			double two = point2.getLongitude();
+			double res = CalcUtil.getDifference(one, two);
+
+//			if (20 == point1.getId() && 19 == point2.getId())
+//				System.out.println(point1.getCode() + " " + point2.getCode() + " = " + res);
+
+			//определяем, является ли аспект стандартным
+			for (Model realasp : aspects) {
+				Aspect a = (Aspect)realasp;
+				if (a.getPoints() < 2)
+					continue;
+
+				//соединения Солнца не рассматриваем
+				if (a.getPlanetid() > 0)
+					continue;
+
+				if (a.isAspect(res)) {
+					SkyPointAspect aspect = new SkyPointAspect();
+					aspect.setSkyPoint1(point1);
+					aspect.setSkyPoint2(point2);
+					aspect.setScore(res);
+					aspect.setAspect(a);
+					data.add(aspect);
+				}
+			}
+		} catch (Exception e) {
+			DialogUtil.alertError(point1.getNumber() + ", " + point2.getNumber());
+			e.printStackTrace();
+		}
+	}
 }

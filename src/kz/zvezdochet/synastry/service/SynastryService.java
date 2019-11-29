@@ -135,6 +135,7 @@ public class SynastryService extends ModelService {
 		dict.setEvent((Event)service.find(rs.getLong("eventid")));
 		dict.setPartner((Event)service.find(rs.getLong("partnerid")));
 		dict.setDescription(rs.getString("description"));
+		dict.setDate(DateUtil.getDatabaseDateTime(rs.getString("date")));
 		String s = rs.getString("calculated");
 		dict.setCalculated(s.equals("1") ? true : false);
 		s = rs.getString("celebrity");

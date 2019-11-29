@@ -167,6 +167,7 @@ public class SynastryPart extends ModelListView implements ICalculable {
 				aparams.addAll(Arrays.asList(types.get(button.getData("type"))));
 		}
 		params.put("aspects", aparams);
+		params.put("type", "synastry");
 		Event event = (null == partner2) ? null : partner2;
 		cmpCosmogram.paint(partner, event, params);
 	}
@@ -357,10 +358,19 @@ public class SynastryPart extends ModelListView implements ICalculable {
 	@Override
 	public void onCalc(Object mode) {
 		MODE_CALC = (int)mode;
-		System.out.println("onCalc" + MODE_CALC);
+//		System.out.println("onCalc" + MODE_CALC);
 		Event event = synpartner;
 		Event event2 = (Event)getModel();
 		event2.initData(false);
+
+		try {
+			Synastry synastry = (Synastry)new SynastryService().find(event.getId(), event2.getId());
+			synastry.init(true);
+			event2.setAspectList(synastry.getPartner().getAspectList()); //TODO устранить костыль, использовать одного партнёра а не двух разрозненных
+		} catch (DataAccessException e) {
+			e.printStackTrace();
+		}
+
 		if (mode.equals(0)) {
 			refreshCard(event, event2);
 			refreshTabs(event, event2);
