@@ -720,6 +720,9 @@ public class PDFExporter {
 
 			//аспекты для первого партнёра
 			for (SkyPointAspect aspect : aspects) {
+				if (aspect.getAspect().getPoints() < 2)
+					continue;
+
 				Planet planet1 = (Planet)aspect.getSkyPoint1();
 				if (!planet1.isMain())
 					continue;
@@ -740,12 +743,15 @@ public class PDFExporter {
 				AspectType type = aspect.checkType(true);
 				if (type.getCode().equals("NEGATIVE"))
 					negative1.add(aspect);
-				else if (type.getCode().equals("POSITIVE"))
+				else
 					positive1.add(aspect);
 			}
 
 			//аспекты для второго партнёра
 			for (SkyPointAspect aspect : aspects) {
+				if (aspect.getAspect().getPoints() < 2)
+					continue;
+
 				Planet planet1 = (Planet)aspect.getSkyPoint2();
 				if (!planet1.isMain())
 					continue;
@@ -777,7 +783,7 @@ public class PDFExporter {
 					}
 					if (!rel)
 						negative2.add(aspect);
-				} else if (type.getCode().equals("POSITIVE")) {
+				} else {
 					boolean rel = false;
 					for (SkyPointAspect a : positive1) {
 						if (a.getSkyPoint1().getId().equals(planet1.getId())
