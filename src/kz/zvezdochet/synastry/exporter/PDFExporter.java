@@ -165,17 +165,17 @@ public class PDFExporter {
 			chapter.add(p);
 
 			//тип
-			Map<String, String> map = new HashMap<String, String>() {
-				private static final long serialVersionUID = 4739421822269120671L;
-				{
-			        put("love", "любовный");
-			        put("family", "семейный");
-			        put("deal", "деловой");
-			    }
-			};
-			p = new Paragraph("Тип гороскопа: " + map.get(doctype), font);
-	        p.setAlignment(Element.ALIGN_CENTER);
-			chapter.add(p);
+//			Map<String, String> map = new HashMap<String, String>() {
+//				private static final long serialVersionUID = 4739421822269120671L;
+//				{
+//			        put("love", "любовный");
+//			        put("family", "семейный");
+//			        put("deal", "деловой");
+//			    }
+//			};
+//			p = new Paragraph("Тип гороскопа: " + map.get(doctype), font);
+//	        p.setAlignment(Element.ALIGN_CENTER);
+//			chapter.add(p);
 
 			//первый партнёр
 			String text = name1 + " - ";
@@ -230,10 +230,29 @@ public class PDFExporter {
 	        p.add(chunk);
 	        chapter.add(p);
 
-			chapter.add(new Paragraph("Гороскоп содержит как позитивные, так и негативные аспекты отношений. "
-				+ "Негатив – признак того, что вам необходимо переосмысление отношений с партнёром и мобилизация ресурсов для решения проблемы. "
-				+ "А также это возможность смягчить напряжение, ведь вы будете знать о нём заранее. "
-				+ "Не зацикливайтесь на негативе, используйте свои сильные стороны для достижения эффективного партнёрства", font));
+	        p = new Paragraph("Гороскоп содержит как позитивные, так и негативные аспекты отношений. "
+				+ "Не зацикливайтесь на негативе, используйте свои сильные стороны для достижения эффективного партнёрства.", font);
+	        p.setSpacingAfter(10);
+			chapter.add(p);
+
+			p = new Paragraph();
+			p.add(new Chunk("В файле есть информация с высоким и низким приоритетом. "
+				+ "Самыми важными являются разделы: ", font));
+			Anchor anchor = new Anchor("Позитив отношений", fonta);
+            anchor.setReference("#positiveaspects");
+	        p.add(anchor);
+	        p.add(", ");
+	        anchor = new Anchor("Риски отношений", fonta);
+            anchor.setReference("#negativeaspects");
+	        p.add(anchor);
+	        p.add(new Chunk(" и ", font));
+	        anchor = new Anchor("Взаимовлияние", fonta);
+		    anchor.setReference("#planethouses");
+			p.add(anchor);
+			p.add(new Chunk(", потому что отражают отношения конкретно между вами, с учётом индивидуальных особенностей. "
+				+ "Все остальные разделы тоже относятся к вам обоим, но дают более общую информацию, на фоне которой будет разворачиваться важное, – "
+				+ "это больше не про вас лично, а про взаимодействие ваших поколений и типажей", font));
+			chapter.add(p);
 
 			//космограмма
 			printCard(doc, chapter);
@@ -249,7 +268,7 @@ public class PDFExporter {
 			printPlanetSign(doc, chapter, event, partner);
 			doc.add(chapter);
 
-			//совместимость характеров, любовная, сексуальная, коммуникативная, эмоциональная совместимость
+			//совместимость по знакам Зодиака: характеры, любовь, секс, коммуникация, эмоции
 			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Общий типаж пары", null));
 			chapter.setNumberDepth(0);
 			chapter.add(new Paragraph("Типаж пары – это общая тенденция развития отношений такого человека, как вы, с таким человеком, как ваш партнёр", PDFUtil.getWarningFont()));
@@ -311,7 +330,7 @@ public class PDFExporter {
 
 			//дома
 			if (synastry.getEvent().isHousable() || synastry.getPartner().isHousable()) {
-				chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Влияние друг на друга", "planethouses"));
+				chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Взаимовлияние", "planethouses"));
 				chapter.setNumberDepth(0);
 				chapter.add(new Paragraph("Этот раздел в меньшей степени рассказывает о том, как вы относитесь друг к другу, "
 			    	+ "и в большей степени – о том, что произойдёт в реальности, как вы измените жизнь и восприятие друг друга. "
@@ -819,17 +838,20 @@ public class PDFExporter {
 			List<SkyPointAspect> list1, List<SkyPointAspect> list2) {
 		try {
 			String title = "";
-			if (aspectType.equals("POSITIVE"))
+			String acode = null;
+			if (aspectType.equals("POSITIVE")) {
 				title = "Позитив отношений";
-			else if (aspectType.equals("NEGATIVE"))
+				acode = "positiveaspects";
+			} else if (aspectType.equals("NEGATIVE")) {
 				title = "Риски отношений";
-			else if (aspectType.equals("RELATIVE")) {
+				acode = "negativeaspects";
+			} else if (aspectType.equals("RELATIVE")) {
 				if (list1.isEmpty())
 					return;
 				title = "Взаимные аспекты отношений";
 				//TODO объяснить, что такое общие аспекты
 			}
-			Section section = PDFUtil.printSection(chapter, title, null);
+			Section section = PDFUtil.printSection(chapter, title, acode);
 			SynastryAspectService service = new SynastryAspectService();
 			Font bold = new Font(baseFont, 12, Font.BOLD);
 
@@ -893,19 +915,47 @@ public class PDFExporter {
 				} else {
 					if (aspectType.equals("NEGATIVE")) {
 						Paragraph p = new Paragraph("Ниже приведены отрицательные факторы ваших отношений. "
-							+ "Не преувеличивайте описанный негатив, он имеет место в любых парах. ", font);
-						p.add(new Chunk("То, что реально ставит отношения под угрозу, выделенно красным цветом. ", PDFUtil.getDangerFont()));
+							+ "Не преувеличивайте описанный негатив, он имеет место в любых парах, "
+							+ "потому что в любом союзе, даже если он успешен и надёжно защищён, "
+							+ "стабильность является переменной величиной, зависящей от нас самих. " 
+							+ "Негатив является признаком того, что вам необходимо переосмысление отношений и "
+							+ "мобилизация ресурсов для решения проблемы.", font);
+						p.setSpacingAfter(10);
+						section.add(p);
+
+						p = new Paragraph("Следует ли избегать негативных ситуаций?", font);
+						p.setSpacingAfter(10);
+						section.add(p);
+
+						p = new Paragraph("Если это обезопасит отношения от лишних напрягов, то да. " +
+				        	"Но, с другой стороны, если всего избегать, то можно устать от паранойи. "
+				        	+ "Лучше понять те точки, где может произойти конфликт, и заранее определить для себя модель поведения в таких ситуациях. "
+				        	+ "Потому что если вы их заранее смоделируете и продумаете, то они уже не станут для вас большой неожиданностью, "
+				        	+ "а значит не возникнет бурных, неконтролируемых эмоций, которые могут накалить обстановку.", font);
+						p.setSpacingAfter(10);
+						section.add(p);
+
+						p = new Paragraph("В любом конфликте есть выбор - либо злиться, обижаться и игнорировать партнёра, "
+							+ "либо продолжать вести диалог и стремиться к взаимовыгодному конструктивному решению.", font);
+						p.setSpacingAfter(10);
+						section.add(p);
+
+						p = new Paragraph();
+						p.add(new Chunk("То, что реально поставит отношения под угрозу, выделенно красным цветом. ", PDFUtil.getDangerFont()));
 						p.add(new Chunk("Если красные пометки отсутствуют, значит у вас отличная совместимость, "
 							+ "и проблемы могут возникнуть только в связи с жизненными обстоятельствами. " +
 							"Частично об этом написано в разделе ", font));
-						Anchor anchor = new Anchor("Влияние друг на друга", fonta);
+						Anchor anchor = new Anchor("Взаимовлияние", fonta);
 			            anchor.setReference("#planethouses");
 				        p.add(anchor);
 						p.add(new Chunk(". Более подробную информацию даст долгосрочный прогноз отношений", font));
 				        section.add(p);
-					} else
+					} else {
+						Paragraph p = new Paragraph("Ниже приведены положительные факторы вашего союза. "
+							+ "Их можно использовать себе в помощь и для укрепления отношений.", PDFUtil.getSuccessFont());
+				        section.add(p);
 						section.add(new Paragraph("Толкования в левой колонке адресованы вам, толкования в правой колонке – вашему партнёру", PDFUtil.getAnnotationFont(false)));
-
+					}
 			        PdfPTable table = new PdfPTable(2);
 			        table.setTotalWidth(doc.getPageSize().getWidth() - PDFUtil.PAGEBORDERWIDTH * 2);
 			        table.setLockedWidth(true);
@@ -995,6 +1045,7 @@ public class PDFExporter {
 	
 			List<Model> dicts = service.finds(aspect);
 			Event event = reverse ? synastry.getEvent() : synastry.getPartner();
+			Event partner = reverse ? synastry.getPartner() : synastry.getEvent();
 			for (Model model : dicts) {
 				SynastryAspectText dict = (SynastryAspectText)model;
 				if (dict != null) {
@@ -1015,7 +1066,9 @@ public class PDFExporter {
 						}
 					}
 					phrase.add(new Paragraph(PDFUtil.removeTags(dict.getText(), font)));
-					Phrase ph = PDFUtil.printGenderCell(dict, event.isFemale(), event.isChild(), false);
+					Phrase ph = PDFUtil.printGenderCell(dict,
+						reverse ? partner.isFemale() : event.isFemale(),
+						reverse ? partner.isChild() : event.isChild(), false);
 					phrase.add(ph);
 	
 					Rule rule = EventRules.ruleSynastryAspect(aspect, event);
@@ -1942,7 +1995,7 @@ public class PDFExporter {
 
 			NumerologyService service = new NumerologyService();
 //			int years = Math.abs(event.getBirthYear() - partner.getBirthYear()); TODO определять с учётом весеннего равноденствия
-			int years = 7;
+			int years = 4;
 			Numerology dict = (Numerology)service.find(years);
 			if (dict != null) {
 				section.add(new Paragraph("Разница в годах цикла: " + CoreUtil.getAgeString(years), fonth5));
@@ -2023,7 +2076,7 @@ public class PDFExporter {
 			}
 
 			if (!relative.isEmpty()) {
-				Section section = PDFUtil.printSection(chapter, "Взаимовлияние", null);
+				Section section = PDFUtil.printSection(chapter, "Сходство во влиянии", null);
 				section.add(new Paragraph("Здесь перечислены толкования, которые показывают, в чём вы относитесь к партнёру так же, как он к вам:", PDFUtil.getAnnotationFont(false)));
 				section.add(Chunk.NEWLINE);
 				SynastryHouseService service = new SynastryHouseService();
