@@ -149,7 +149,7 @@ public class PDFExporter {
 
 			String filename = PlatformUtil.getPath(Activator.PLUGIN_ID, "/out/synastry.pdf").getPath();
 			PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(filename));
-	        writer.setPageEvent(new PageEventHandler(doc));
+	        writer.setPageEvent(new PageEventHandler());
 	        doc.open();
 
 	        //metadata
@@ -163,19 +163,6 @@ public class PDFExporter {
 			Paragraph p = new Paragraph();
 			PDFUtil.printHeader(p, "Парный гороскоп", null);
 			chapter.add(p);
-
-			//тип
-//			Map<String, String> map = new HashMap<String, String>() {
-//				private static final long serialVersionUID = 4739421822269120671L;
-//				{
-//			        put("love", "любовный");
-//			        put("family", "семейный");
-//			        put("deal", "деловой");
-//			    }
-//			};
-//			p = new Paragraph("Тип гороскопа: " + map.get(doctype), font);
-//	        p.setAlignment(Element.ALIGN_CENTER);
-//			chapter.add(p);
 
 			//первый партнёр
 			String text = name1 + " - ";
@@ -1625,7 +1612,7 @@ public class PDFExporter {
 							max = v;
 					}
 				}
-				if (val >= max + max) {
+				if (val >= max * 1.5) {
 					BaseColor color = BaseColor.BLACK;
 					if (code.equals("KARMIC")) {
 						color = BaseColor.BLUE;
