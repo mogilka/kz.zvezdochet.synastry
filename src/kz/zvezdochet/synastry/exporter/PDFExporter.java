@@ -130,21 +130,21 @@ public class PDFExporter {
 	}
 
 	/**
-	 * Генерация синастрии
-	 * @param event первый партнёр
-	 * @param partner второй партнёр
+	 * Генерация отчёта синастрии
+	 * @param synastry синастрия
 	 */
-	public void generate(Event event, Event partner) {
+	public void generate(Synastry synastry) {
+		Event event = synastry.getEvent();
+		Event partner = synastry.getPartner();
 		event.initData(true);
 		partner.initData(true);
+		synastry.init(true);
 
 		name1 = event.getCallname();
 		name2 = partner.getCallname();
 
 		Document doc = new Document();
 		try {
-			Synastry synastry = (Synastry)new SynastryService().find(event.getId(), partner.getId());
-			synastry.init(true);
 			saveCard(event, partner);
 
 			String filename = PlatformUtil.getPath(Activator.PLUGIN_ID, "/out/synastry.pdf").getPath();
@@ -836,7 +836,6 @@ public class PDFExporter {
 				if (list1.isEmpty())
 					return;
 				title = "Взаимные аспекты отношений";
-				//TODO объяснить, что такое общие аспекты
 			}
 			Section section = PDFUtil.printSection(chapter, title, acode);
 			SynastryAspectService service = new SynastryAspectService();
@@ -873,7 +872,7 @@ public class PDFExporter {
 	    				section.add(new Chunk(planet2.getSymbol(), PDFUtil.getHeaderAstroFont()));
 					}
 	
-					List<Model> dicts = service.finds(aspect);
+					List<Model> dicts = service.finds(aspect, false);
 						for (Model model : dicts) {
 							SynastryAspectText dict = (SynastryAspectText)model;
 							if (dict != null) {
@@ -885,7 +884,7 @@ public class PDFExporter {
 										section.add(new Paragraph("Уровень критичности: средний", PDFUtil.getDangerFont()));
 								else if (code.equals("QUADRATURE"))
 									if (planet1.isMain() && planet2.isMain())
-										section.add(new Paragraph("Уровень критичности: средний", PDFUtil.getWarningFont()));
+										section.add(new Paragraph("Уровень критичности: средний", PDFUtil.getDangerFont()));
 
 								section.add(new Paragraph(PDFUtil.removeTags(dict.getText(), font)));
 								printGender(section, dict);
@@ -902,11 +901,10 @@ public class PDFExporter {
 				} else {
 					if (aspectType.equals("NEGATIVE")) {
 						Paragraph p = new Paragraph("Ниже приведены отрицательные факторы ваших отношений. "
-							+ "Не преувеличивайте описанный негатив, он имеет место в любых парах, "
-							+ "потому что в любом союзе, даже если он успешен и надёжно защищён, "
-							+ "стабильность является переменной величиной, зависящей от нас самих. " 
+							+ "Не преувеличивайте описанный негатив, он имеет место в любых парах: "
+							+ "даже если союз успешен и защищён, стабильность является переменной величиной, зависящей от нас самих. " 
 							+ "Негатив является признаком того, что вам необходимо переосмысление отношений и "
-							+ "мобилизация ресурсов для решения проблемы.", font);
+							+ "мобилизация совместных ресурсов для решения проблемы.", font);
 						p.setSpacingAfter(10);
 						section.add(p);
 
@@ -914,21 +912,24 @@ public class PDFExporter {
 						p.setSpacingAfter(10);
 						section.add(p);
 
-						p = new Paragraph("Если это обезопасит отношения от лишних напрягов, то да. " +
-				        	"Но, с другой стороны, если всего избегать, то можно устать от паранойи. "
-				        	+ "Лучше понять те точки, где может произойти конфликт, и заранее определить для себя модель поведения в таких ситуациях. "
+						p = new Paragraph("Если это обезопасит отношения от лишнего напряжения, то да: "
+							+ "например, если гороскоп не советует вам вместе работать, то будет лучше не пересекаться в деловой обстановке. "
+				        	+ "Но, с другой стороны, если избегать любых трений в обыденной жизни, то вы устанете от паранойи и привыкнете отвергать истинную натуру партнёра, которая, как и ваша, состоит из минусов. "
+				        	+ "Лучше понять те точки, где может назреть конфликт, и заранее определить для себя модель поведения в таких ситуациях. "
 				        	+ "Потому что если вы их заранее смоделируете и продумаете, то они уже не станут для вас большой неожиданностью, "
-				        	+ "а значит не возникнет бурных, неконтролируемых эмоций, которые могут накалить обстановку.", font);
+				        	+ "а значит не возникнет бурных, неконтролируемых эмоций, которые накалят обстановку.", font);
 						p.setSpacingAfter(10);
 						section.add(p);
 
-						p = new Paragraph("В любом конфликте есть выбор - либо злиться, обижаться и игнорировать партнёра, "
-							+ "либо продолжать вести диалог и стремиться к взаимовыгодному конструктивному решению.", font);
+						p = new Paragraph("В любом конфликте есть выбор – либо злиться, обижаться и игнорировать партнёра, "
+							+ "либо продолжить вести диалог и стремиться к взаимовыгодному решению.", font);
 						p.setSpacingAfter(10);
 						section.add(p);
 
 						p = new Paragraph();
-						p.add(new Chunk("То, что реально поставит отношения под угрозу, выделенно красным цветом. ", PDFUtil.getDangerFont()));
+						p.add(new Chunk("То, что реально поставит отношения под угрозу, выделенно ниже красным цветом. "
+							+ "Чем больше красных пометок в тексте, тем более вы должны быть готовы к тому, что ваши отношения не окажутся идиллией. ", PDFUtil.getDangerFont()));
+
 						p.add(new Chunk("Если красные пометки отсутствуют, значит у вас отличная совместимость, "
 							+ "и проблемы могут возникнуть только в связи с жизненными обстоятельствами. " +
 							"Частично об этом написано в разделе ", font));
@@ -939,10 +940,11 @@ public class PDFExporter {
 				        section.add(p);
 					} else {
 						Paragraph p = new Paragraph("Ниже приведены положительные факторы вашего союза. "
-							+ "Их можно использовать себе в помощь и для укрепления отношений.", PDFUtil.getSuccessFont());
+							+ "Используйте их себе в помощь и для укрепления отношений.", PDFUtil.getSuccessFont());
 				        section.add(p);
 						section.add(new Paragraph("Толкования в левой колонке адресованы вам, толкования в правой колонке – вашему партнёру", PDFUtil.getAnnotationFont(false)));
 					}
+
 			        PdfPTable table = new PdfPTable(2);
 			        table.setTotalWidth(doc.getPageSize().getWidth() - PDFUtil.PAGEBORDERWIDTH * 2);
 			        table.setLockedWidth(true);
@@ -1030,7 +1032,7 @@ public class PDFExporter {
 				phrase.add(new Chunk(planet2.getSymbol(), PDFUtil.getHeaderAstroFont()));
 			}
 	
-			List<Model> dicts = service.finds(aspect);
+			List<Model> dicts = service.finds(aspect, reverse);
 			Event event = reverse ? synastry.getEvent() : synastry.getPartner();
 			Event partner = reverse ? synastry.getPartner() : synastry.getEvent();
 			for (Model model : dicts) {
@@ -1043,7 +1045,7 @@ public class PDFExporter {
 					}
 					if (planet1.isMain() && planet2.isMain()) {
 						if (code.equals("OPPOSITION")) {
-							phrase.add(new Paragraph("Уровень критичности: средний", PDFUtil.getWarningFont()));
+							phrase.add(new Paragraph("Уровень критичности: средний", PDFUtil.getDangerFont()));
 							phrase.add(Chunk.NEWLINE);
 							phrase.add(Chunk.NEWLINE);
 						} else if (code.equals("QUADRATURE")) {
@@ -1056,8 +1058,11 @@ public class PDFExporter {
 					Phrase ph = PDFUtil.printGenderCell(dict,
 						reverse ? partner.isFemale() : event.isFemale(),
 						reverse ? partner.isChild() : event.isChild(), false);
-					phrase.add(ph);
-	
+					if (ph != null) {
+						phrase.add(Chunk.NEWLINE);
+						phrase.add(Chunk.NEWLINE);
+						phrase.add(ph);
+					}
 					Rule rule = EventRules.ruleSynastryAspect(aspect, event);
 					if (rule != null) {
 						phrase.add(Chunk.NEWLINE);
@@ -1612,7 +1617,7 @@ public class PDFExporter {
 							max = v;
 					}
 				}
-				if (val >= max * 1.5) {
+				if (val >= max) {
 					BaseColor color = BaseColor.BLACK;
 					if (code.equals("KARMIC")) {
 						color = BaseColor.BLUE;
@@ -1624,7 +1629,7 @@ public class PDFExporter {
 						text = "Уровень стресса зашкаливает, значит отток энергии будет сильнее, чем приток. Развивайте силу духа, учитесь управлять конфликтами и рисками и преуменьшать их";
 					} else if (code.equals("POSITIVE")) {
 						color = BaseColor.RED;
-						text = "Уровень позитива зашкаливает, значит приток энергии будет сильнее, чем отток. Вы счастливчики!";
+						text = "Уровень позитива зашкаливает, значит приток энергии в вашем союзе будет сильнее, чем отток. Это поможет побороть негативные факторы отношений";
 					} else if (code.equals("POSITIVE_HIDDEN")) {
 						color = new BaseColor(153, 102, 102);
 						text = "Уровень скрытого позитива зашкаливает, значит внутренняя мотивация обоих очень сильна! Внутри себя вы будете полны энергии, несмотря на внешние обстоятельства";
@@ -1982,7 +1987,7 @@ public class PDFExporter {
 
 			NumerologyService service = new NumerologyService();
 //			int years = Math.abs(event.getBirthYear() - partner.getBirthYear()); TODO определять с учётом весеннего равноденствия
-			int years = 4;
+			int years = 2;
 			Numerology dict = (Numerology)service.find(years);
 			if (dict != null) {
 				section.add(new Paragraph("Разница в годах цикла: " + CoreUtil.getAgeString(years), fonth5));

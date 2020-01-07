@@ -9,8 +9,10 @@ import org.eclipse.swt.widgets.Display;
 import kz.zvezdochet.bean.Event;
 import kz.zvezdochet.core.handler.Handler;
 import kz.zvezdochet.core.ui.util.DialogUtil;
+import kz.zvezdochet.synastry.bean.Synastry;
 import kz.zvezdochet.synastry.exporter.PDFExporter;
 import kz.zvezdochet.synastry.part.SynastryPart;
+import kz.zvezdochet.synastry.service.SynastryService;
 
 /**
  * Экспорт синастрии
@@ -25,13 +27,14 @@ public class ExportHandler extends Handler {
 			SynastryPart synastryPart = (SynastryPart)activePart.getObject();
 			final Event event = synastryPart.getPartner();
 			final Event partner = (Event)synastryPart.getModel();
+			final Synastry synastry = (Synastry)new SynastryService().find(event.getId(), partner.getId());
 			updateStatus("Сохранение синастрии в файл", false);
 
 			final Display display = Display.getDefault();
     		BusyIndicator.showWhile(display, new Runnable() {
     			@Override
     			public void run() {
-    				new PDFExporter(display).generate(event, partner);
+    				new PDFExporter(display).generate(synastry);
     			}
     		});
 			//TODO показывать диалог, что документ сформирован
