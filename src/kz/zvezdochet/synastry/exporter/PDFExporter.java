@@ -81,7 +81,6 @@ import kz.zvezdochet.service.EventService;
 import kz.zvezdochet.service.YinYangService;
 import kz.zvezdochet.synastry.Activator;
 import kz.zvezdochet.synastry.bean.Synastry;
-import kz.zvezdochet.synastry.service.SynastryService;
 import kz.zvezdochet.util.Cosmogram;
 
 /**
