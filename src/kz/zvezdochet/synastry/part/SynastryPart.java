@@ -92,8 +92,13 @@ public class SynastryPart extends ModelListView implements ICalculable {
 
 	@PostConstruct @Override
 	public View create(Composite parent) {
-		super.create(parent);
-		Group grCosmogram = new Group(parent, SWT.NONE);
+		return super.create(parent);
+	}
+
+	@Override
+	protected void init(Composite parent) {
+		super.init(parent);
+		Group grCosmogram = new Group(sashForm, SWT.NONE);
 		grCosmogram.setText("Космограмма");
 		cmpCosmogram = new CosmogramComposite(grCosmogram, SWT.NONE);
 
@@ -113,7 +118,6 @@ public class SynastryPart extends ModelListView implements ICalculable {
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(grCosmogram);
 		GridDataFactory.fillDefaults().align(SWT.CENTER, SWT.FILL).
 			hint(514, 514).span(3, 1).grab(true, false).applyTo(cmpCosmogram);
-		return null;
 	}
 
 	@Override
@@ -141,13 +145,6 @@ public class SynastryPart extends ModelListView implements ICalculable {
 				return null;
 			}
 		};
-	}
-
-	@Override
-	protected void init(Composite parent) {
-		GridLayoutFactory.swtDefaults().numColumns(2).applyTo(parent);
-		GridDataFactory.fillDefaults().grab(true, true).applyTo(parent);
-		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(true, true).applyTo(tableViewer.getTable());
 	}
 
 	/**

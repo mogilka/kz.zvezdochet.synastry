@@ -51,8 +51,7 @@ public class AgePart extends ModelListView {
 
 	@PostConstruct @Override
 	public View create(Composite parent) {
-		super.create(parent);
-		return null;
+		return super.create(parent);
 	}
 	
 	@Override
@@ -154,6 +153,7 @@ public class AgePart extends ModelListView {
 	@Override
 	protected void initControls() {
 		try {
+			super.initControls();
 			cvPlanet.setContentProvider(new ArrayContentProvider());
 			cvPlanet.setLabelProvider(new DictionaryLabelProvider());
 			List<Model> list = new PlanetService().getList();
