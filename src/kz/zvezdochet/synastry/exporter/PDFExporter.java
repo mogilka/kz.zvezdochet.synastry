@@ -18,6 +18,8 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.widgets.Display;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import com.itextpdf.text.Anchor;
 import com.itextpdf.text.BaseColor;
@@ -260,7 +262,7 @@ public class PDFExporter {
 			chapter.add(new Paragraph("Типаж пары – это общая тенденция развития отношений такого человека, как вы, с таким человеком, как ваш партнёр", PDFUtil.getWarningFont()));
 
 			//совместимость по Зороастрийскому календарю
-			printZoroastr(chapter, event, partner);
+			printZoroastr(chapter, synastry, event, partner);
 			chapter.add(Chunk.NEXTPAGE);
 
 			//совместимость планет в знаках
@@ -1975,22 +1977,33 @@ public class PDFExporter {
 
 	/**
 	 * Генерация совместимости по Зороастрийскому календарю
-	 * @param date дата события
-	 * @param cell тег-контейнер для вложенных тегов
+	 * @param chapter раздел
+	 * @param synastry синастрия
+	 * @param event первый партнёр
+	 * @param partner второй партнёр
 	 */
-	private void printZoroastr(Chapter chapter, Event event, Event partner) {
+	private void printZoroastr(Chapter chapter, Synastry synastry, Event event, Event partner) {
 		try {
 			Section section = PDFUtil.printSection(chapter, "Совместимость по Зороастрийскому календарю", null);
 			section.add(new Paragraph("В Зороастрийском календаре началом нового года считается день весеннего равноденствия (в северном полушарии – 20 марта, в южном – 22-23 сентября)", PDFUtil.getAnnotationFont(false)));
 			section.add(Chunk.NEWLINE);
 
-			NumerologyService service = new NumerologyService();
+			int years = 0;
+			try {
+			     JSONObject jsonObject = new JSONObject(synastry.getOptions());
+			     if (jsonObject != null)
+			    	 years = jsonObject.getInt("zoroastr");
+			} catch (JSONException ex) {
+			     ex.printStackTrace();
+			}
+			if (years > 0) {
+				NumerologyService service = new NumerologyService();
 //			int years = Math.abs(event.getBirthYear() - partner.getBirthYear()); TODO определять с учётом весеннего равноденствия
-			int years = 2;
-			Numerology dict = (Numerology)service.find(years);
-			if (dict != null) {
-				section.add(new Paragraph("Разница в годах цикла: " + CoreUtil.getAgeString(years), fonth5));
-				section.add(new Paragraph(PDFUtil.removeTags(dict.getZoroastrsyn(), font)));
+				Numerology dict = (Numerology)service.find(years);
+				if (dict != null) {
+					section.add(new Paragraph("Разница в годах цикла: " + CoreUtil.getAgeString(years), fonth5));
+					section.add(new Paragraph(PDFUtil.removeTags(dict.getZoroastrsyn(), font)));
+				}
 			}
 		} catch(Exception e) {
 			e.printStackTrace();

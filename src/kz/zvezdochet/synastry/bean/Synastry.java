@@ -211,4 +211,16 @@ public class Synastry extends Model {
 			e.printStackTrace();
 		}
 	}
+
+	/**
+	 * Настройки гороскопа
+	 */
+	private String options;
+
+	public String getOptions() {
+		return options;
+	}
+	public void setOptions(String options) {
+		this.options = options;
+	}
 }

@@ -40,7 +40,7 @@ public class SynastryService extends ModelService {
 		try {
 			String sql;
 			if (null == model.getId()) 
-				sql = "insert into " + tableName + " values(0,?,?,?,?,?,?,?,?)";
+				sql = "insert into " + tableName + " values(0,?,?,?,?,?,?,?,?,?)";
 			else
 				sql = "update " + tableName + " set " +
 					"eventid = ?, " +
@@ -50,7 +50,8 @@ public class SynastryService extends ModelService {
 					"date = ?, " +
 					"calculated = ?, " +
 					"celebrity = ?, " +
-					"updated_at = ? " +
+					"updated_at = ?, " +
+					"options = ? " +
 					"where id = ?";
 			ps = Connector.getInstance().getConnection().prepareStatement(sql);
 			ps.setLong(1, synastry.getEvent().getId());
@@ -62,8 +63,9 @@ public class SynastryService extends ModelService {
 			ps.setInt(6, 0);
 			ps.setInt(7, 0); //TODO вычислять динамически
 			ps.setString(8, now);
+			ps.setString(9, synastry.getOptions());
 			if (model.getId() != null)
-				ps.setLong(9, model.getId());
+				ps.setLong(10, model.getId());
 
 			result = ps.executeUpdate();
 			if (1 == result) {
@@ -140,6 +142,7 @@ public class SynastryService extends ModelService {
 		dict.setCalculated(s.equals("1") ? true : false);
 		s = rs.getString("celebrity");
 		dict.setCelebrity(s.equals("1") ? true : false);
+		dict.setOptions(rs.getString("options"));
 		dict.initAspects();
 		return dict;
 	}
