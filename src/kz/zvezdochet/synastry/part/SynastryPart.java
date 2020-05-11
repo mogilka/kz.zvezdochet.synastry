@@ -128,11 +128,6 @@ public class SynastryPart extends ModelListView implements ICalculable {
 	}
 
 	@Override
-	public boolean check(int mode) throws Exception {
-		return false;
-	}
-
-	@Override
 	protected IBaseLabelProvider getLabelProvider() {
 		return new ModelLabelProvider() {
 			@Override
@@ -401,5 +396,12 @@ public class SynastryPart extends ModelListView implements ICalculable {
 	@Override
 	public Model createModel() {
 		return null;
+	}
+
+	@Override
+	public Model getModel(int mode, boolean sync) throws Exception {
+		Synastry synastry = (Synastry)new SynastryService().find(synpartner.getId(), ((Event)getModel()).getId());
+		synastry.init(true);
+		return synastry;
 	}
 }
