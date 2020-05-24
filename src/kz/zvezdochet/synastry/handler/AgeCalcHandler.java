@@ -94,7 +94,7 @@ public class AgeCalcHandler extends Handler {
 		    agePart.setData(aged);
 			updateStatus("Таблица дирекций сформирована", false);
 		} catch (Exception e) {
-			DialogUtil.alertError(e.getMessage());
+			DialogUtil.alertWarning(e.getMessage());
 			updateStatus("Ошибка", true);
 			e.printStackTrace();
 		}
@@ -136,7 +136,7 @@ public class AgeCalcHandler extends Handler {
 				}
 			}
 		} catch (Exception e) {
-			DialogUtil.alertError(point1.getNumber() + ", " + point2.getNumber() + ", " + age);
+			DialogUtil.alertWarning(point1.getNumber() + ", " + point2.getNumber() + ", " + age);
 			e.printStackTrace();
 		}
 	}

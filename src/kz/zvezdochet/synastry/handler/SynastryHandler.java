@@ -38,7 +38,7 @@ public class SynastryHandler extends Handler {
 		    synastryPart.setPartner(event);
 			updateStatus("Таблица синастрий сформирована", false);
 		} catch (Exception e) {
-			DialogUtil.alertError(e.getMessage());
+			DialogUtil.alertWarning(e.getMessage());
 			updateStatus("Ошибка", true);
 			e.printStackTrace();
 		}

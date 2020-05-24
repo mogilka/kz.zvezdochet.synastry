@@ -185,13 +185,13 @@ public class AgePart extends ModelListView {
 	@Override
 	public boolean check(int mode) {
 		if (spFrom.getSelection() > spTo.getSelection()) {
-			DialogUtil.alertError("Укажите правильный период жизни");
+			DialogUtil.alertWarning("Укажите правильный период жизни");
 			return false;
 		} else if (null == event) {
-			DialogUtil.alertError("Персона не задана");
+			DialogUtil.alertWarning("Персона не задана");
 			return false;
 		} else if (null == partner) {
-			DialogUtil.alertError("Партнёр не задан");
+			DialogUtil.alertWarning("Партнёр не задан");
 			return false;
 		}
 		return true;

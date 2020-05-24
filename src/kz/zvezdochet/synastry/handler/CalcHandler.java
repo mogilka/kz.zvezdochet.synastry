@@ -23,7 +23,7 @@ public class CalcHandler extends Handler {
 			synastryPart.onCalc(0);
 			updateStatus("Карта синастрий сформирована", false);
 		} catch (Exception e) {
-			DialogUtil.alertError(e.getMessage());
+			DialogUtil.alertWarning(e.getMessage());
 			updateStatus("Ошибка", true);
 			e.printStackTrace();
 		}

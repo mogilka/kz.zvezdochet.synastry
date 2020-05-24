@@ -26,7 +26,7 @@ public class SwitchHandler extends Handler {
 			synastryPart.onCalc(mode);
 			updateStatus("Карта синастрий переключена", false);
 		} catch (Exception e) {
-			DialogUtil.alertError(e.getMessage());
+			DialogUtil.alertWarning(e.getMessage());
 			updateStatus("Ошибка", true);
 			e.printStackTrace();
 		}

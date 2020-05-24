@@ -41,7 +41,7 @@ public class ExportHandler extends Handler {
 			//а ещё лучше открывать его
 			updateStatus("Файл событий сформирован", false);
 		} catch (Exception e) {
-			DialogUtil.alertError(e.getMessage());
+			DialogUtil.alertWarning(e.getMessage());
 			updateStatus("Ошибка", true);
 			e.printStackTrace();
 		}

@@ -82,7 +82,7 @@ public class AspectHandler extends Handler {
 		    aspectPart.setData(data);
 			updateStatus("Таблица аспектов сформирована", false);
 		} catch (Exception e) {
-			DialogUtil.alertError(e.getMessage());
+			DialogUtil.alertWarning(e.getMessage());
 			updateStatus("Ошибка", true);
 			e.printStackTrace();
 		}

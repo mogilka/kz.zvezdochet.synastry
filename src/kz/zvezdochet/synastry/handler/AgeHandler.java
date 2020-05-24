@@ -40,7 +40,7 @@ public class AgeHandler extends Handler {
 		    agePart.setEvent(event);
 		    agePart.setPartner(partner);
 		} catch (Exception e) {
-			DialogUtil.alertError(e.getMessage());
+			DialogUtil.alertWarning(e.getMessage());
 			e.printStackTrace();
 		}
 	}

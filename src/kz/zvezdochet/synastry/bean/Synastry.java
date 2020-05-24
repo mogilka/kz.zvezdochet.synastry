@@ -207,7 +207,7 @@ public class Synastry extends Model {
 				}
 			}
 		} catch (Exception e) {
-			DialogUtil.alertError(point1.getNumber() + ", " + point2.getNumber());
+			DialogUtil.alertWarning(point1.getNumber() + ", " + point2.getNumber());
 			e.printStackTrace();
 		}
 	}
