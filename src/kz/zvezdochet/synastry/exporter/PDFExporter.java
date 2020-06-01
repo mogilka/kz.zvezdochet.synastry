@@ -557,14 +557,14 @@ public class PDFExporter {
 					for (int i = 0; i < tcount; i++) {
 						phrase = new Phrase();
 						if (texts1.size() > i)
-							phrase = PDFUtil.removeTags(texts1.get(i), font);
+							phrase = PDFUtil.printTextCell(texts1.get(i));
 						cell = new PdfPCell(phrase);
 						PDFUtil.setCellBorderWidths(cell, 0, .5F, 0, 0);
 						table.addCell(cell);
 
 						phrase = new Phrase();
 						if (texts2.size() > i)
-							phrase = PDFUtil.removeTags(texts2.get(i), font);
+							phrase = PDFUtil.printTextCell(texts2.get(i));
 						cell = new PdfPCell(phrase);
 						cell.setBorder(Rectangle.NO_BORDER);
 						table.addCell(cell);
@@ -672,9 +672,13 @@ public class PDFExporter {
 			List<SkyPointAspect> positive2 = new ArrayList<>();
 			List<SkyPointAspect> negative2 = new ArrayList<>();
 			List<SkyPointAspect> aspects = synastry.getAspects();
+			AspectTypeService service = new AspectTypeService();
 
 			//аспекты для первого партнёра
 			for (SkyPointAspect aspect : aspects) {
+				if (aspect.getAspect().getPlanetid() > 0)
+					continue;
+
 				if (aspect.getAspect().getPoints() < 2)
 					continue;
 
@@ -691,11 +695,13 @@ public class PDFExporter {
 				if (!synastry.getPartner().isHousable() && planet2.getCode().equals("Moon"))
 					continue;
 
-				long asplanetid = aspect.getAspect().getPlanetid();
-				if (asplanetid > 0 && asplanetid != planet1.getId())
-					continue;
+				AspectType type = aspect.checkType(false);
 
-				AspectType type = aspect.checkType(true);
+				if (aspect.getAspect().getType().getCode().equals("NEUTRAL")) {
+					if (planet1.isLilithed() || planet1.isKethued()
+							|| planet2.isLilithed() || planet2.isKethued())
+						type = (AspectType)service.find("NEGATIVE");
+				}
 				if (type.getCode().equals("NEGATIVE"))
 					negative1.add(aspect);
 				else
@@ -704,6 +710,9 @@ public class PDFExporter {
 
 			//аспекты для второго партнёра
 			for (SkyPointAspect aspect : aspects) {
+				if (aspect.getAspect().getPlanetid() > 0)
+					continue;
+
 				if (aspect.getAspect().getPoints() < 2)
 					continue;
 
@@ -720,16 +729,19 @@ public class PDFExporter {
 				if (!synastry.getEvent().isHousable() && planet2.getCode().equals("Moon"))
 					continue;
 
-				long asplanetid = aspect.getAspect().getPlanetid();
-				if (asplanetid > 0 && asplanetid != planet1.getId())
-					continue;
-
 				AspectType type = aspect.checkType(true);
+
+				if (aspect.getAspect().getType().getCode().equals("NEUTRAL")) {
+					if (planet1.isLilithed() || planet1.isKethued()
+							|| planet2.isLilithed() || planet2.isKethued())
+						type = (AspectType)service.find("NEGATIVE");
+				}
 				if (type.getCode().equals("NEGATIVE")) {
 					boolean rel = false;
 					for (SkyPointAspect a : negative1) {
 						if (a.getSkyPoint1().getId().equals(planet1.getId())
-								&& a.getSkyPoint2().getId().equals(planet2.getId())) {
+								&& a.getSkyPoint2().getId().equals(planet2.getId())
+								&& aspect.getAspect().getTypeid() == a.getAspect().getTypeid()) {
 							relative.add(a);
 							negative1.remove(a);
 							rel = true;
@@ -791,6 +803,8 @@ public class PDFExporter {
 
 			if (aspectType.equals("RELATIVE")) {
 				section.add(new Paragraph("Здесь перечислены толкования, которые показывают, в чём вы относитесь к партнёру так же, как он к вам:", PDFUtil.getAnnotationFont(false)));
+				section.add(Chunk.NEWLINE);
+
 				for (SkyPointAspect aspect : list1) {
 					AspectType type = aspect.checkType(true);
 					Planet planet1 = (Planet)aspect.getSkyPoint1();
@@ -810,7 +824,7 @@ public class PDFExporter {
 						planet2.getShortName();
 					Anchor anchorTarget = new Anchor(text, fonth5);
 					anchorTarget.setName(aspect.getCode());
-					Paragraph p = new Paragraph();
+					Paragraph p = new Paragraph("", fonth5);
 					p.add(anchorTarget);
 					section.addSection(p);
 	
@@ -856,7 +870,7 @@ public class PDFExporter {
 						section.add(p);
 
 						p = new Paragraph("Негатив указывает на ситуации, где необходимо переосмысление отношений и "
-							+ "мобилизация совместных ресурсов для решения проблемы." 
+							+ "мобилизация совместных ресурсов для решения проблемы. " 
 							+ "В условиях конфликта всегда есть выбор – либо злиться, обижаться и игнорировать партнёра, "
 							+ "либо продолжить вести диалог и устремиться к взаимовыгодному решению (если отношения ценны для вас).", font);
 						p.setSpacingAfter(10);
@@ -915,7 +929,8 @@ public class PDFExporter {
 						Iterator<SkyPointAspect> iter2 = list2.iterator();
 						for (int i = 0; i < tcount; i++) {
 							if (iter.hasNext()) {
-								Phrase phrase = printAspect(synastry, iter.next(), service, false);
+								SkyPointAspect aspect = iter.next();
+								Phrase phrase = printAspect(synastry, aspect, service, false);
 			       				cell = new PdfPCell(phrase);
 								PDFUtil.setCellBorderWidths(cell, 0, .5F, 0, 0);
 			       				table.addCell(cell);
@@ -926,7 +941,8 @@ public class PDFExporter {
 							}
 
 							if (iter2.hasNext()) {
-								Phrase phrase = printAspect(synastry, iter2.next(), service, true);
+								SkyPointAspect aspect = iter2.next();
+								Phrase phrase = printAspect(synastry, aspect, service, true);
 			       				cell = new PdfPCell(phrase);
 			       				cell.setBorder(Rectangle.NO_BORDER);
 			       				table.addCell(cell);
@@ -956,7 +972,7 @@ public class PDFExporter {
 	private Phrase printAspect(Synastry synastry, SkyPointAspect aspect, SynastryAspectService service, boolean reverse) {
 		Phrase phrase = new Phrase();
 		try {
-			AspectType type = aspect.checkType(true);
+			AspectType type = aspect.checkType(false);
 			Planet planet1 = (Planet)(reverse ? aspect.getSkyPoint2() : aspect.getSkyPoint1());
 			Planet planet2 = (Planet)(reverse ? aspect.getSkyPoint1() : aspect.getSkyPoint2());
 	
@@ -980,7 +996,7 @@ public class PDFExporter {
 	
 				phrase.add(new Chunk(planet2.getSymbol(), PDFUtil.getHeaderAstroFont()));
 			}
-	
+
 			List<Model> dicts = service.finds(aspect, reverse);
 			Event event = reverse ? synastry.getEvent() : synastry.getPartner();
 			Event partner = reverse ? synastry.getPartner() : synastry.getEvent();
@@ -1927,6 +1943,10 @@ public class PDFExporter {
 	private void printZoroastr(Chapter chapter, Synastry synastry, Event event, Event partner) {
 		try {
 			Section section = PDFUtil.printSection(chapter, "Совместимость по Зороастрийскому календарю", null);
+			section.add(new Paragraph("Толкование совместимости по Зороастрийскому календарю относится к обобщённым трактовкам, "
+				+ "т.к. говорит об общих тенденциях общения ваших поколений. "
+				+ "Эту трактовку надо иметь в виду, но не стоит считать определяющей для важного решения.", font));
+			section.add(Chunk.NEWLINE);
 			section.add(new Paragraph("В Зороастрийском календаре началом нового года считается день весеннего равноденствия (в северном полушарии – 20 марта, в южном – 22-23 сентября)", PDFUtil.getAnnotationFont(false)));
 			section.add(Chunk.NEWLINE);
 
@@ -2089,7 +2109,8 @@ public class PDFExporter {
 			Iterator<Planet> iter2 = hplanets2.iterator();
 			for (int i = 0; i < planets.size(); i++) {
 				if (iter.hasNext()) {
-					Phrase phrase = printPlanetHouse(synastry, iter.next(), false);
+					Planet planet = iter.next();
+					Phrase phrase = printPlanetHouse(synastry, planet, false);
        				cell = new PdfPCell(phrase);
 					PDFUtil.setCellBorderWidths(cell, 0, .5F, 0, 0);
        				table.addCell(cell);
@@ -2100,11 +2121,16 @@ public class PDFExporter {
 				}
 
 				if (iter2.hasNext()) {
-					Phrase phrase = printPlanetHouse(synastry, iter2.next(), true);
+					Planet planet = iter2.next();
+					Phrase phrase = printPlanetHouse(synastry, planet, true);
        				cell = new PdfPCell(phrase);
        				cell.setBorder(Rectangle.NO_BORDER);
        				table.addCell(cell);
 				} else if (iter.hasNext()) {
+       				cell = new PdfPCell();
+       				cell.setBorder(Rectangle.NO_BORDER);
+       				table.addCell(cell);
+				} else if (i == planets.size() - 1) {
        				cell = new PdfPCell();
        				cell.setBorder(Rectangle.NO_BORDER);
        				table.addCell(cell);
@@ -2427,6 +2453,9 @@ public class PDFExporter {
 
 			//аспекты первого партнёра
 			for (SkyPointAspect aspect : aspects) {
+				if (aspect.getAspect().getPlanetid() > 0)
+					continue;
+
 				if (aspect.getAspect().getPoints() < 2)
 					continue;
 
@@ -2443,15 +2472,14 @@ public class PDFExporter {
 				if (!synastry.getPartner().isHousable() && planet2.getCode().equals("Moon"))
 					continue;
 
-				long asplanetid = aspect.getAspect().getPlanetid();
-				if (asplanetid > 0 && asplanetid != planet1.getId())
-					continue;
-
 				spas.add(aspect);
 			}
 
 			//аспекты второго партнёра
 			for (SkyPointAspect aspect : aspects) {
+				if (aspect.getAspect().getPlanetid() > 0)
+					continue;
+
 				if (aspect.getAspect().getPoints() < 2)
 					continue;
 
@@ -2468,10 +2496,6 @@ public class PDFExporter {
 				if (!synastry.getEvent().isHousable() && planet2.getCode().equals("Moon"))
 					continue;
 
-				long asplanetid = aspect.getAspect().getPlanetid();
-				if (asplanetid > 0 && asplanetid != planet1.getId())
-					continue;
-
 				aspect.setReverse(true);
 				spas2.add(aspect);
 			}
@@ -2479,7 +2503,18 @@ public class PDFExporter {
 			List<SkyPointAspect> positive = new ArrayList<>();
 			List<SkyPointAspect> negative = new ArrayList<>();
 			SynastryAspectService service = new SynastryAspectService();
+
 			for (SkyPointAspect aspect : spas) {
+				if (aspect.getAspect().getValue() < 1) {
+					SkyPoint planet = aspect.getSkyPoint2();
+					SkyPoint planet2 = aspect.getSkyPoint1();
+					if (planet.isLilithed() || planet.isKethued()
+							|| planet2.isLilithed() || planet2.isKethued()) {
+						negative.add(aspect);
+						continue;
+					}
+				}
+
 				List<Model> dicts = service.finds(aspect, false);
 				for (Model model : dicts) {
 					SynastryAspectText dict = (SynastryAspectText)model;
@@ -2493,7 +2528,18 @@ public class PDFExporter {
 						negative.add(aspect);
 				}
 			}
+
 			for (SkyPointAspect aspect : spas2) {
+				if (aspect.getAspect().getValue() < 1) {
+					SkyPoint planet = aspect.getSkyPoint2();
+					SkyPoint planet2 = aspect.getSkyPoint1();
+					if (planet.isLilithed() || planet.isKethued()
+							|| planet2.isLilithed() || planet2.isKethued()) {
+						negative.add(aspect);
+						continue;
+					}
+				}
+
 				List<Model> dicts = service.finds(aspect, true);
 				for (Model model : dicts) {
 					SynastryAspectText dict = (SynastryAspectText)model;
@@ -2509,27 +2555,18 @@ public class PDFExporter {
 			}
 
 			Section section = PDFUtil.printSection(chapter, "Плюсы и минусы", "levels");
-			section.add(new Paragraph("Здесь перечислены самые важные факторы, влияющие на ваши отношения:", font));
-			com.itextpdf.text.List ilist = new com.itextpdf.text.List(false, false, 10);
-			ListItem li = new ListItem();
-			Font green = PDFUtil.getSuccessFont();
-	        li.add(new Chunk("плюсы – сильные стороны вашего союза, которые можно и нужно использовать для укрепления и налаживания отношений,", green));
-	        ilist.add(li);
-
-			li = new ListItem();
-			Font red = PDFUtil.getDangerFont();
-	        li.add(new Chunk("минусы – слабые стороны вашего союза, которые станут причиной конфликта и могут оказаться критичными для дальнейшей совместной жизни", red));
-	        ilist.add(li);
-	        section.add(ilist);
+			section.add(new Paragraph("Здесь перечислены самые важные факторы, влияющие на ваши отношения", font));
 	        section.add(Chunk.NEWLINE);
 
 	        section.add(new Paragraph("Плюсы", fonth5));
-	        section.add(new Paragraph("в толкованиях они отмечены зелёным", green));
+	        section.add(new Paragraph("Это сильные стороны вашего союза, которые можно и нужно использовать для укрепления и налаживания отношений.", font));
+	        section.add(new Paragraph("В толкованиях они отмечены зелёным", PDFUtil.getSuccessFont()));
 	        section.add(getAspectList(positive));
 	        section.add(Chunk.NEWLINE);
 
 	        section.add(new Paragraph("Минусы", fonth5));
-	        section.add(new Paragraph("в толкованиях они отмечены красным", red));
+	        section.add(new Paragraph("Это слабые стороны вашего союза, которые станут причиной конфликта и могут оказаться критичными для дальнейшей совместной жизни.", font));
+	        section.add(new Paragraph("В толкованиях они отмечены красным", PDFUtil.getDangerFont()));
 	        section.add(getAspectList(negative));
 		} catch(Exception e) {
 			e.printStackTrace();
