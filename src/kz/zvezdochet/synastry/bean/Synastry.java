@@ -215,7 +215,7 @@ public class Synastry extends Model {
 	/**
 	 * Настройки гороскопа
 	 */
-	private String options;
+	private String options = "{\"zoroastr\":0}";
 
 	public String getOptions() {
 		return options;
