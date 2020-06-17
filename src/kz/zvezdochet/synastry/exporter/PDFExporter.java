@@ -47,6 +47,7 @@ import kz.zvezdochet.analytics.bean.PlanetHouseText;
 import kz.zvezdochet.analytics.bean.PlanetSignText;
 import kz.zvezdochet.analytics.bean.Rule;
 import kz.zvezdochet.analytics.bean.SynastryAspectText;
+import kz.zvezdochet.analytics.bean.SynastryHouseText;
 import kz.zvezdochet.analytics.bean.SynastryText;
 import kz.zvezdochet.analytics.exporter.EventRules;
 import kz.zvezdochet.analytics.exporter.EventStatistics;
@@ -1961,7 +1962,7 @@ public class PDFExporter {
 			} catch (JSONException ex) {
 			     ex.printStackTrace();
 			}
-			if (years > 0) {
+			if (years >= 0) {
 				NumerologyService service = new NumerologyService();
 //			int years = Math.abs(event.getBirthYear() - partner.getBirthYear()); TODO определять с учётом весеннего равноденствия
 				Numerology dict = (Numerology)service.find(years);
@@ -1982,66 +1983,37 @@ public class PDFExporter {
 	 * @param synastry синастрия
 	 */
 	private void printPlanetHouses(Document doc, Chapter chapter, Synastry synastry) {
-		Map<Long, House> houses = synastry.getEvent().getHouses();
-		Map<Long, House> houses2 = synastry.getPartner().getHouses();
-		if (null == houses && null == houses2)
-			return;
-		Collection<Planet> planets = synastry.getEvent().getPlanets().values();
-		Collection<Planet> planets2 = synastry.getPartner().getPlanets().values();
+		List<Planet> planets = synastry.getPlanetList();
+		List<Planet> planets2 = synastry.getPlanet2List();
 
 		List<Planet> hplanets = new ArrayList<>();
 		List<Planet> hplanets2 = new ArrayList<>();
 		List<Planet> relative = new ArrayList<>();
 		try {
-			for (Model hmodel : houses.values()) {
-				House house = (House)hmodel;
-				for (Planet planet : planets2) {
-					House phouse = null;
-					for (House ehouse : houses.values()) {
-						long h = (ehouse.getNumber() == houses.size()) ? 142 : ehouse.getId() + 1;
-						House house2 = (House)houses.get(h);
-						if (SkyPoint.getHouse(ehouse.getLongitude(), house2.getLongitude(), planet.getLongitude()))
-							phouse = ehouse;
-					}
-					if (phouse != null && phouse.getId().equals(house.getId())) {
-						planet.setHouse(house);
-						hplanets.add(planet);
-					}
-				}
-			}
+			hplanets = planets2;
 
-			if (synastry.getPartner().isHousable()) {
-				for (House house : houses2.values()) {
-					for (Planet planet : planets) {
-						House phouse = null;
-						for (House ehouse : houses2.values()) {
-							long h = (ehouse.getNumber() == houses2.size()) ? 142 : ehouse.getId() + 1;
-							House house2 = (House)houses2.get(h);
-							if (SkyPoint.getHouse(ehouse.getLongitude(), house2.getLongitude(), planet.getLongitude()))
-								phouse = ehouse;
+			for (Planet planet : planets) {
+				House house = planet.getHouse();
+				if (house != null) {
+					boolean rel = false;
+					for (Planet p : hplanets) {
+						if (planet.getId().equals(p.getId())
+								&& house.getId().equals(p.getHouse().getId())) {
+							boolean damaged = planet.isDamaged() || planet.isLilithed();
+							boolean damaged2 = p.isDamaged() || p.isLilithed();
+							if (damaged == damaged2) {
+								relative.add(p);
+								hplanets.remove(p);
+								rel = true;
+								break;
+							}
 						}
-						if (phouse != null && phouse.getId().equals(house.getId())) {
-							boolean rel = false;
-							for (Planet p : hplanets) {
-								if (planet.getId().equals(p.getId())
-										&& house.getId().equals(p.getHouse().getId())) {
-									boolean damaged = planet.isDamaged() || planet.isLilithed();
-									boolean damaged2 = p.isDamaged() || p.isLilithed();
-									if (damaged == damaged2) {
-										relative.add(p);
-										hplanets.remove(p);
-										rel = true;
-										break;
-									}
-								}
-							}
-							if (!rel) {
-								planet.setHouse(house);
-								hplanets2.add(planet);
-							}
-						}					
 					}
-				}
+					if (!rel) {
+						planet.setHouse(house);
+						hplanets2.add(planet);
+					}
+				}					
 			}
 
 			if (!relative.isEmpty()) {
@@ -2158,27 +2130,25 @@ public class PDFExporter {
 					return phrase;
 			}
 
-			String sign = planet.isDamaged() || planet.isLilithed() ? "-" : "+";
+			String sign = planet.isDamaged()
+					|| planet.isLilithed()
+					|| planet.getCode().equals("Lilith")
+					|| planet.getCode().equals("Kethu")
+				? "-" : "+";
 			House house = planet.getHouse();
 
-			if (term) {
-				String mark = planet.getMark("house");
-				if (mark.length() > 0) {
-					phrase.add(new Chunk(mark, fonth5));
-					phrase.add(new Chunk(planet.getSymbol() + " ", PDFUtil.getHeaderAstroFont()));
-				}
-				phrase.add(new Chunk(" " + planet.getName() + " в " + house.getDesignation() + " доме", fonth5));
-				phrase.add(Chunk.NEWLINE);
-			} else {
-				phrase.add(new Chunk((reverse ? name2 : name1) + "-" + house.getSynastry()
-					+ " " + sign + " "
-					+ (reverse ? name1 : name2) + "-" + planet.getShortName(), fonth5));
-				phrase.add(Chunk.NEWLINE);
-				phrase.add(Chunk.NEWLINE);
-			}
+			String text = (reverse ? name2 : name1) + "-" + house.getSynastry()
+				+ " " + sign + " "
+				+ (reverse ? name1 : name2) + "-" + planet.getShortName();
+
+        	Anchor anchorTarget = new Anchor(text, fonth5);
+        	anchorTarget.setName(planet.getCode());
+        	phrase.add(anchorTarget);
+			phrase.add(Chunk.NEWLINE);
+			phrase.add(Chunk.NEWLINE);
 
 			if ((planet.getCode().equals("LILITH") || planet.getCode().equals("KETHU"))
-					&& (doctype.equals("love") && Arrays.asList(new String[] {"V_2", "VII"}).contains(house.getCode()))) {
+					&& (doctype.equals("love") && Arrays.asList(new String[] {"V_2", "V_3", "VII"}).contains(house.getCode()))) {
 				phrase.add(new Paragraph("Уровень критичности: высокий", PDFUtil.getDangerFont()));
 				phrase.add(Chunk.NEWLINE);
 				phrase.add(Chunk.NEWLINE);
@@ -2445,8 +2415,6 @@ public class PDFExporter {
 	 */
 	private void printLevels(Chapter chapter, Synastry synastry) {
 		try {
-//			List<SkyPointAspect> positiveh = new ArrayList<>();
-//			List<SkyPointAspect> negativeh = new ArrayList<>();
 			List<SkyPointAspect> aspects = synastry.getAspects();
 			List<SkyPointAspect> spas = new ArrayList<>();
 			List<SkyPointAspect> spas2 = new ArrayList<>();
@@ -2554,6 +2522,42 @@ public class PDFExporter {
 				}
 			}
 
+			List<Planet> planets = synastry.getPlanetList();
+			List<Planet> planets2 = synastry.getPlanet2List();
+			List<Planet> positiveh = new ArrayList<>();
+			List<Planet> negativeh = new ArrayList<>();
+			SynastryHouseService hservice = new SynastryHouseService();
+
+			//дома первого партнёра
+			for (Planet planet : planets) {
+				House house = planet.getHouse();
+				if (null == house)
+					continue;
+				SynastryHouseText dict = (SynastryHouseText)hservice.find(planet, house, null);
+				if (null == dict)
+					continue;
+				planet.setDone(dict.getLevel() < 0);
+				if (dict.getLevel() > 0)
+					positiveh.add(planet);
+				else if (dict.getLevel() < 0)
+					negativeh.add(planet);
+			}
+
+			//дома второго партнёра
+			for (Planet planet : planets2) {
+				House house = planet.getHouse();
+				if (null == house)
+					continue;
+				SynastryHouseText dict = (SynastryHouseText)hservice.find(planet, house, null);
+				if (null == dict)
+					continue;
+				planet.setDone(dict.getLevel() < 0);
+				if (dict.getLevel() > 0)
+					positiveh.add(planet);
+				else if (dict.getLevel() < 0)
+					negativeh.add(planet);
+			}
+
 			Section section = PDFUtil.printSection(chapter, "Плюсы и минусы", "levels");
 			section.add(new Paragraph("Здесь перечислены самые важные факторы, влияющие на ваши отношения", font));
 	        section.add(Chunk.NEWLINE);
@@ -2562,12 +2566,14 @@ public class PDFExporter {
 	        section.add(new Paragraph("Это сильные стороны вашего союза, которые можно и нужно использовать для укрепления и налаживания отношений.", font));
 	        section.add(new Paragraph("В толкованиях они отмечены зелёным", PDFUtil.getSuccessFont()));
 	        section.add(getAspectList(positive));
+	        section.add(getPlanetList(positiveh));
 	        section.add(Chunk.NEWLINE);
 
 	        section.add(new Paragraph("Минусы", fonth5));
 	        section.add(new Paragraph("Это слабые стороны вашего союза, которые станут причиной конфликта и могут оказаться критичными для дальнейшей совместной жизни.", font));
 	        section.add(new Paragraph("В толкованиях они отмечены красным", PDFUtil.getDangerFont()));
 	        section.add(getAspectList(negative));
+	        section.add(getPlanetList(negativeh));
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
@@ -2690,5 +2696,36 @@ public class PDFExporter {
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * Генерация списка уровней совместимости
+	 * @param planets список аспектов
+	 * @return список уровней совместимости
+	 */
+	private com.itextpdf.text.List getPlanetList(List<Planet> planets) {
+		SynastryHouseService service = new SynastryHouseService();
+		com.itextpdf.text.List list = new com.itextpdf.text.List(false, false, 10);
+		try {
+			for (Planet planet : planets) {
+				House house = planet.getHouse();
+				if (null == house)
+					continue;
+				boolean reverse = (boolean)planet.getData();
+				String symbol = planet.isDone() ? "-" : "+";
+				ListItem li = new ListItem();
+				String text = (reverse ? name2 : name1) + "-" + planet.getShortName() +
+					" " + symbol + " " + 
+					(reverse ? name1 : name2) + "-" + house.getSynastry();
+
+					Anchor anchor = new Anchor(text, fonta);
+		            anchor.setReference("#" + planet.getAnchor());
+			        li.add(anchor);
+			        list.add(li);
+			}			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return list;		
 	}
 }

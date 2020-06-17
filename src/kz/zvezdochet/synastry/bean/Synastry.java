@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import kz.zvezdochet.bean.Aspect;
 import kz.zvezdochet.bean.Event;
+import kz.zvezdochet.bean.House;
 import kz.zvezdochet.bean.Planet;
 import kz.zvezdochet.bean.SkyPoint;
 import kz.zvezdochet.bean.SkyPointAspect;
@@ -141,6 +143,7 @@ public class Synastry extends Model {
 		List<SkyPointAspect> data = new ArrayList<SkyPointAspect>();
 		makeAspects(event, partner, aspects, data);
 		partner.setAspectList(data);
+		makePlanets();
 	}
 
 	/**
@@ -222,5 +225,75 @@ public class Synastry extends Model {
 	}
 	public void setOptions(String options) {
 		this.options = options;
+	}
+
+	/**
+	 * Планеты первого партнёра
+	 */
+	private	List<Planet> planetList;
+	/**
+	 * Планеты второго партнёра
+	 */
+	private	List<Planet> planet2List;
+
+	public List<Planet> getPlanetList() {
+		return planetList;
+	}
+	public List<Planet> getPlanet2List() {
+		return planet2List;
+	}
+
+	/**
+	 * Расчёт аспектов
+	 * @param first первый партнёр
+	 * @param second второй партнёр
+	 * @param aspects список аспектов
+	 * @param data массив аспектов партнёров
+	 */
+	private void makePlanets() {
+		planetList = new ArrayList<Planet>();
+		if (partner.isHousable()) {
+			Collection<Planet> planets = event.getPlanets().values();
+			Map<Long, House> houses = partner.getHouses();
+			for (Model hmodel : houses.values()) {
+				House house = (House)hmodel;
+				for (Planet planet : planets) {
+					House phouse = null;
+					for (House ehouse : houses.values()) {
+						long h = (ehouse.getNumber() == houses.size()) ? 142 : ehouse.getId() + 1;
+						House house2 = (House)houses.get(h);
+						if (SkyPoint.getHouse(ehouse.getLongitude(), house2.getLongitude(), planet.getLongitude()))
+							phouse = ehouse;
+					}
+					if (phouse != null && phouse.getId().equals(house.getId())) {
+						planet.setHouse(house);
+						planet.setData(false);
+						planetList.add(planet);
+					}
+				}
+			}
+		}
+		planet2List = new ArrayList<Planet>();
+		if (event.isHousable()) {
+			Collection<Planet> planets = partner.getPlanets().values();
+			Map<Long, House> houses = event.getHouses();
+			for (Model hmodel : houses.values()) {
+				House house = (House)hmodel;
+				for (Planet planet : planets) {
+					House phouse = null;
+					for (House ehouse : houses.values()) {
+						long h = (ehouse.getNumber() == houses.size()) ? 142 : ehouse.getId() + 1;
+						House house2 = (House)houses.get(h);
+						if (SkyPoint.getHouse(ehouse.getLongitude(), house2.getLongitude(), planet.getLongitude()))
+							phouse = ehouse;
+					}
+					if (phouse != null && phouse.getId().equals(house.getId())) {
+						planet.setHouse(house);
+						planet.setData(true);
+						planet2List.add(planet);
+					}
+				}
+			}
+		}
 	}
 }
