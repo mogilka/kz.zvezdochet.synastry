@@ -266,8 +266,8 @@ public class Synastry extends Model {
 							phouse = ehouse;
 					}
 					if (phouse != null && phouse.getId().equals(house.getId())) {
-						planet.setHouse(house);
-						planet.setData(false);
+						planet.setData(house);
+						planet.setDone(false);
 						planetList.add(planet);
 					}
 				}
@@ -288,8 +288,8 @@ public class Synastry extends Model {
 							phouse = ehouse;
 					}
 					if (phouse != null && phouse.getId().equals(house.getId())) {
-						planet.setHouse(house);
-						planet.setData(true);
+						planet.setData(house);
+						planet.setDone(true);
 						planet2List.add(planet);
 					}
 				}
