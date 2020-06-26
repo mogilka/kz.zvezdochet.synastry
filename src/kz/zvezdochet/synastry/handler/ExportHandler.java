@@ -28,13 +28,15 @@ public class ExportHandler extends Handler {
 			final Event event = synastryPart.getPartner();
 			final Event partner = (Event)synastryPart.getModel();
 			final Synastry synastry = (Synastry)new SynastryService().find(event.getId(), partner.getId());
+
+			final int choice = DialogUtil.alertQuestion("Вопрос", "Выберите тип гороскопа:", new String[] {"Любовный", "Партнёрский"});
 			updateStatus("Сохранение синастрии в файл", false);
 
 			final Display display = Display.getDefault();
     		BusyIndicator.showWhile(display, new Runnable() {
     			@Override
     			public void run() {
-    				new PDFExporter(display).generate(synastry);
+    				new PDFExporter(display).generate(synastry, choice);
     			}
     		});
 			//TODO показывать диалог, что документ сформирован
