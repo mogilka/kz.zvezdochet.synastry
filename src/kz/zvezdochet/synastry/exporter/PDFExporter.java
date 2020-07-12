@@ -1487,9 +1487,8 @@ public class PDFExporter {
 		    	}
 		    }
 		    Bar[] bars = items.toArray(new Bar[items.size()]);
-		    com.itextpdf.text.Image image = PDFUtil.printBars(writer, "Аспекты отношений", "Аспекты", "Баллы", bars, 500, 300, false, false, true);
 			Section section = PDFUtil.printSection(chapter, "Аспекты отношений", null);
-			section.add(image);
+			section.add(PDFUtil.printBars(writer, "Аспекты отношений", "Аспекты", "Баллы", bars, 500, 300, false, false, true));
 
 		    int size = items.size();
 		    Map<String, Double> map = new HashMap<>();
@@ -2416,8 +2415,7 @@ public class PDFExporter {
 				bar.setCategory("Сферы совместимости");
 				bars[++i] = bar;
 		    }
-		    com.itextpdf.text.Image image = PDFUtil.printBars(writer, "Сферы совместимости", "Сферы совместимости", "Баллы", bars, 500, 300, false, false, false);
-			section.add(image);
+			section.add(PDFUtil.printBars(writer, "Сферы совместимости", "Сферы совместимости", "Баллы", bars, 500, 300, false, false, false));
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
