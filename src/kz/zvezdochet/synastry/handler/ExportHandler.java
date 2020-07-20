@@ -17,7 +17,6 @@ import kz.zvezdochet.synastry.service.SynastryService;
 /**
  * Экспорт синастрии
  * @author Natalie Didenko
- *
  */
 public class ExportHandler extends Handler {
 	@Execute
@@ -29,7 +28,7 @@ public class ExportHandler extends Handler {
 			final Event partner = (Event)synastryPart.getModel();
 			final Synastry synastry = (Synastry)new SynastryService().find(event.getId(), partner.getId());
 
-			final int choice = DialogUtil.alertQuestion("Вопрос", "Выберите тип гороскопа:", new String[] {"Любовный", "Партнёрский"});
+			final int choice = DialogUtil.alertQuestion("Вопрос", "Выберите тип гороскопа:", new String[] {"Любовный", "Партнёрский", "Семейный"});
 			updateStatus("Сохранение синастрии в файл", false);
 
 			final Display display = Display.getDefault();

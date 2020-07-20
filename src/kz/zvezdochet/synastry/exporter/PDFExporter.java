@@ -166,7 +166,7 @@ public class PDFExporter {
 			PDFUtil.printHeader(p, "Парный гороскоп", null);
 			chapter.add(p);
 
-			String text = "Тип гороскопа: " + (doctype > 0 ? "партнёрский" : "любовный");
+			String text = "Тип гороскопа: " + (doctype > 1 ? "семейный" : doctype > 0 ? "партнёрский" : "любовный");
 			p = new Paragraph(text, font);
 	        p.setAlignment(Element.ALIGN_CENTER);
 			chapter.add(p);
@@ -486,6 +486,9 @@ public class PDFExporter {
 			} else if (1 == doctype) {
 				String deal[] = {"thinking", "work", "profession", "activity"};
 				categories.addAll(Arrays.asList(deal));
+			} else if (2 == doctype) {
+				String deal[] = {"thinking", "activity"};
+				categories.addAll(Arrays.asList(deal));
 			}
 
 			CategoryService catService = new CategoryService();
@@ -622,7 +625,7 @@ public class PDFExporter {
 				SynastrySignService service = new SynastrySignService();
 				String[] general = {"Sun", "Mercury"};
 				List<String> planets = new ArrayList<>(Arrays.asList(general));
-				if (0 == doctype) {
+				if (doctype < 1) {
 					String love[] = {"Venus", "Mars"};
 					planets.addAll(Arrays.asList(love));
 				}
@@ -644,11 +647,12 @@ public class PDFExporter {
 		    			}
 					}
 					if (planet1 != null && planet2 != null) {
+				    	Section section = PDFUtil.printSection(chapter, planet1.getSynastry(), null);
+				    	section.add(new Chunk(partner1.getCallname() + "-" + planet1.getSign().getShortname() +
+				    		" + " + partner2.getCallname() + "-" + planet2.getSign().getShortname(), fonth5));
+
 				    	SynastryText object = service.find(planet1, planet1.getSign(), planet2.getSign());
 				    	if (object != null) {
-					    	Section section = PDFUtil.printSection(chapter, planet1.getSynastry(), null);
-					    	section.add(new Chunk(partner1.getCallname() + "-" + planet1.getSign().getShortname() +
-					    		" + " + partner2.getCallname() + "-" + planet2.getSign().getShortname(), fonth5));
 //			    			if (term) {
 //			    				section.add(new Chunk(planet.getMark("sign"), fonth5));
 //			    				section.add(new Chunk(planet.getSymbol(), PDFUtil.getHeaderAstroFont()));
@@ -658,7 +662,7 @@ public class PDFExporter {
 //			    			}
 					    	if (object.getText() != null)
 					    		section.add(new Paragraph(PDFUtil.removeTags(object.getText(), font)));
-			    			PDFUtil.printGender(section, object, doctype > 0 ? "deal" : "love");
+			    			PDFUtil.printGender(section, object, doctype > 1 ? "family" : doctype > 0 ? "deal" : "love");
 					    }
 					}
 				}
@@ -1006,7 +1010,7 @@ public class PDFExporter {
 			List<Model> dicts = aspect.getTexts();
 			Event event = reverse ? synastry.getEvent() : synastry.getPartner();
 			Event partner = reverse ? synastry.getPartner() : synastry.getEvent();
-			String gtype = doctype > 0 ? "deal" : "love";
+			String gtype = doctype > 1 ? "family" : doctype > 0 ? "deal" : "love";
 			if (dicts != null) {
 				for (Model model : dicts) {
 					SynastryAspectText dict = (SynastryAspectText)model;
@@ -1709,7 +1713,7 @@ public class PDFExporter {
 
 			ElementService service = new ElementService();
 			long[] pids = new long[] {19L, 20L, 24L, 25L};
-			String type = doctype > 0 ? "deal" : "love";
+			String type = doctype > 1 ? "family" : doctype > 0 ? "deal" : "love";
 			for (long pid : pids) {
    				Planet planet = event.getPlanets().get(pid);
    				Planet planet2 = partner.getPlanets().get(pid);
@@ -2019,7 +2023,7 @@ public class PDFExporter {
 			for (Planet planet : planets) {
 				House house = (House)planet.getData();
 				if (house != null) {
-					if (doctype > 0 && !Arrays.asList(hcodes).contains(house.getCode()))
+					if (1 == doctype && !Arrays.asList(hcodes).contains(house.getCode()))
 						continue;
 					hplanets.add(planet);
 				}
@@ -2028,7 +2032,7 @@ public class PDFExporter {
 			for (Planet planet : planets2) {
 				House house = (House)planet.getData();
 				if (house != null) {
-					if (doctype > 0 && !Arrays.asList(hcodes).contains(house.getCode()))
+					if (1 == doctype && !Arrays.asList(hcodes).contains(house.getCode()))
 						continue;
 					boolean rel = false;
 					for (Planet p : hplanets) {
@@ -2297,7 +2301,7 @@ public class PDFExporter {
 	 */
 	private void printGender(Section section, ITextGender dict) throws DocumentException, IOException {
 		if (dict != null) {
-			TextGender gender = dict.getGenderText(doctype > 0 ? "deal" : "love");
+			TextGender gender = dict.getGenderText(doctype > 1 ? "family" : doctype > 0 ? "deal" : "love");
 			if (gender != null) {
 				Paragraph p = new Paragraph(PDFUtil.getGenderHeader(gender.getType()), PDFUtil.getSubheaderFont());
 				p.setSpacingBefore(10);
@@ -2350,7 +2354,7 @@ public class PDFExporter {
 			        put("Kethu", new String[] {"Характеры"});
 			        put("Mercury", new String[] {"Общение"});
 			        put("Venus", new String[] {"Любовь, чувства, вкусы"});
-			        put("Mars", (0 == doctype) ? new String[] {"Секс", "Соперничество"} : new String[] {"Соперничество"});
+			        put("Mars", (doctype < 1) ? new String[] {"Секс", "Соперничество"} : new String[] {"Соперничество"});
 			        put("Selena", new String[] {"Характеры"});
 			        put("Lilith", new String[] {"Характеры"});
 			        put("Jupiter", new String[] {"Характеры"});
@@ -2659,7 +2663,7 @@ public class PDFExporter {
 	 */
 	private void printIdeal(Document doc, Chapter chapter, Event event, Event partner) {
 		try {
-			if (0 == doctype) {
+			if (doctype < 1) {
 				Section section = PDFUtil.printSection(chapter, "Ожидание", null);
 				String code = event.isFemale() ? "male" : "female";
 				String code2 = partner.isFemale() ? "male" : "female";
