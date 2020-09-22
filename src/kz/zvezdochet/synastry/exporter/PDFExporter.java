@@ -621,7 +621,7 @@ public class PDFExporter {
 				partner1 = female ? partner : event;
 				partner2 = female ? event : partner;
 			}
-			if (partner1.getPlanets() != null && partner2.getPlanets() != null) {
+			if (event.getPlanets() != null && partner.getPlanets() != null) {
 				SynastrySignService service = new SynastrySignService();
 				String[] general = {"Sun", "Mercury"};
 				List<String> planets = new ArrayList<>(Arrays.asList(general));
@@ -629,8 +629,8 @@ public class PDFExporter {
 					String love[] = {"Venus", "Mars"};
 					planets.addAll(Arrays.asList(love));
 				}
-				Collection<Planet> mplanets = partner1.getPlanets().values();
-				Collection<Planet> wplanets = partner2.getPlanets().values();
+				Collection<Planet> mplanets = event.getPlanets().values();
+				Collection<Planet> wplanets = partner.getPlanets().values();
 				for (String code : planets) {
 					Planet planet1 = null;
 					Planet planet2 = null;
@@ -648,8 +648,8 @@ public class PDFExporter {
 					}
 					if (planet1 != null && planet2 != null) {
 				    	Section section = PDFUtil.printSection(chapter, planet1.getSynastry(), null);
-				    	section.add(new Chunk(partner1.getCallname() + "-" + planet1.getSign().getShortname() +
-				    		" + " + partner2.getCallname() + "-" + planet2.getSign().getShortname(), fonth5));
+				    	section.add(new Chunk(event.getCallname() + "-" + planet1.getSign().getShortname() +
+				    		" + " + partner.getCallname() + "-" + planet2.getSign().getShortname(), fonth5));
 
 				    	SynastryText object = service.find(planet1, planet1.getSign(), planet2.getSign());
 				    	if (object != null) {
@@ -662,6 +662,8 @@ public class PDFExporter {
 //			    			}
 					    	if (object.getText() != null)
 					    		section.add(new Paragraph(PDFUtil.removeTags(object.getText(), font)));
+			    			PDFUtil.printGender(section, object, female ? "male" : "female");
+			    			PDFUtil.printGender(section, object, female ? "woman" : "man");
 			    			PDFUtil.printGender(section, object, doctype > 1 ? "family" : doctype > 0 ? "deal" : "love");
 					    }
 					}
@@ -709,6 +711,9 @@ public class PDFExporter {
 					continue;
 				if (!synastry.getPartner().isHousable() && planet2.getCode().equals("Moon"))
 					continue;
+
+				if (25 == aspect.getSkyPoint1().getId() && 30 == aspect.getSkyPoint2().getId())
+					System.out.println();
 
 				boolean positive = true;
 				List<Model> dicts = service.finds(aspect, false);
