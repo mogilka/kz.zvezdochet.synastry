@@ -2336,8 +2336,22 @@ public class PDFExporter {
 				+ "что повлечёт за собой конфликты, напряжение, неудовлетворение (даже не явные). "
 				+ "Противоречия эти чаще всего будут возникать в сферах, чьи значения ниже нуля", font));
 
-			Map<String, Integer> map = new HashMap<String, Integer>() {
+			Map<String, Integer> map1 = new HashMap<String, Integer>() {
 				private static final long serialVersionUID = 4739420822269120671L;
+				{
+			        put("Характеры", 0);
+			        put("Общение", 0);
+			        put("Любовь, чувства, вкусы", 0);
+			        put("Семья, забота, эмоции", 0);
+			        put("Дружба, увлечения", 0);
+			        if (0 == doctype)
+			        	put("Секс", 0);
+			        put("Сотрудничество", 0);
+			        put("Соперничество", 0);
+			    }
+			};
+			Map<String, Integer> map2 = new HashMap<String, Integer>() {
+				private static final long serialVersionUID = -7246716343066391656L;
 				{
 			        put("Характеры", 0);
 			        put("Общение", 0);
@@ -2392,8 +2406,8 @@ public class PDFExporter {
 				//оппозиция усиливает соперничество
 				if (aspect.getAspect().getCode().equals("OPPOSITION")) {
 					String cat = "Соперничество";
-					int value = map.get(cat);
-					map.put(cat, value - 1);
+					int value = map1.get(cat);
+					map1.put(cat, value + 1);
 				}
 
 				AspectType type = aspect.checkType(true);
@@ -2402,18 +2416,26 @@ public class PDFExporter {
 			    while (iterator.hasNext()) {
 			    	Entry<String, String[]> entry = iterator.next();
 			    	String key = entry.getKey();
-			    	if (pcode.equals(key) || pcode2.equals(key)) {
+			    	boolean first = pcode.equals(key), second = pcode2.equals(key);
+			    	Map<String, Integer> map = first ? map1 : second ? map2 : null;
+			    	if (map != null) {
 			    		String categories[] = entry.getValue();
 						for (String cat : categories) {
 							int value = map.get(cat);
-							value += points;
+							if (first)
+								value += points;
+							else if (second)
+								value -= points;
 							map.put(cat, value);
 						}
 			    	}
 		    	}
 			}
-		    Bar[] bars = new Bar[map.size()];
-			Iterator<Map.Entry<String, Integer>> iterator = map.entrySet().iterator();
+			String key = "Соперничество";
+			map2.put(key, map1.get(key) * -1);
+
+		    Bar[] bars = new Bar[map1.size() * 2];
+			Iterator<Map.Entry<String, Integer>> iterator = map1.entrySet().iterator();
 			int i = -1;
 		    while (iterator.hasNext()) {
 		    	Entry<String, Integer> entry = iterator.next();
@@ -2421,10 +2443,20 @@ public class PDFExporter {
 		    	bar.setName(entry.getKey());
 		    	bar.setValue(entry.getValue());
 //				bar.setColor(mtype.getColor());
-				bar.setCategory("Сферы совместимости");
+				bar.setCategory(synastry.getEvent().getCallname());
 				bars[++i] = bar;
 		    }
-			section.add(PDFUtil.printBars(writer, "Сферы совместимости", "Сферы совместимости", "Баллы", bars, 500, 300, false, false, false));
+			iterator = map2.entrySet().iterator();
+		    while (iterator.hasNext()) {
+		    	Entry<String, Integer> entry = iterator.next();
+		    	Bar bar = new Bar();
+		    	bar.setName(entry.getKey());
+		    	bar.setValue(entry.getValue());
+//				bar.setColor(mtype.getColor());
+				bar.setCategory(synastry.getPartner().getCallname());
+				bars[++i] = bar;
+		    }
+			section.add(PDFUtil.printStackChart(writer, "Сферы совместимости", "Сферы совместимости", "Баллы", bars, 500, 0, true));
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
