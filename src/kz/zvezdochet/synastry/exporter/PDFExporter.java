@@ -81,6 +81,7 @@ import kz.zvezdochet.export.util.PDFUtil;
 import kz.zvezdochet.service.AspectTypeService;
 import kz.zvezdochet.service.ElementService;
 import kz.zvezdochet.service.EventService;
+import kz.zvezdochet.service.PlanetService;
 import kz.zvezdochet.service.YinYangService;
 import kz.zvezdochet.synastry.Activator;
 import kz.zvezdochet.synastry.bean.Synastry;
@@ -611,16 +612,8 @@ public class PDFExporter {
 	 */
 	private void printSign(Chapter chapter, Event event, Event partner) {
 		try {
-			Event partner1 = event;
-			Event partner2 = partner;
-
 			//только для мужчины и женщины
 			boolean female = event.isFemale();
-			boolean female2 = partner.isFemale();
-			if (female != female2) {
-				partner1 = female ? partner : event;
-				partner2 = female ? event : partner;
-			}
 			if (event.getPlanets() != null && partner.getPlanets() != null) {
 				SynastrySignService service = new SynastrySignService();
 				String[] general = {"Sun", "Mercury"};
@@ -712,8 +705,13 @@ public class PDFExporter {
 				if (!synastry.getPartner().isHousable() && planet2.getCode().equals("Moon"))
 					continue;
 
-				if (25 == aspect.getSkyPoint1().getId() && 30 == aspect.getSkyPoint2().getId())
-					System.out.println();
+//				if (25 == aspect.getSkyPoint1().getId() && 30 == aspect.getSkyPoint2().getId())
+//				System.out.println();
+
+				if (aspect.getAspect().getCode().equals("OPPOSITION")
+						&& (planet2.getCode().equals("Rakhu")
+							|| planet2.getCode().equals("Kethu")))
+					continue;
 
 				boolean positive = true;
 				List<Model> dicts = service.finds(aspect, false);
@@ -748,6 +746,11 @@ public class PDFExporter {
 				if (!synastry.getPartner().isHousable() && planet1.getCode().equals("Moon"))
 					continue;
 				if (!synastry.getEvent().isHousable() && planet2.getCode().equals("Moon"))
+					continue;
+
+				if (aspect.getAspect().getCode().equals("OPPOSITION")
+						&& (planet2.getCode().equals("Rakhu")
+							|| planet2.getCode().equals("Kethu")))
 					continue;
 
 				boolean positive = true;
@@ -1436,11 +1439,15 @@ public class PDFExporter {
 			synastry.getPartner().initAspects();
 			List<SkyPointAspect> aspects = synastry.getAspects();
 
-			//создаем карту статистики аспектов
+			//создаём карту общей статистики аспектов
 			List<Model> aspectTypes = new AspectTypeService().getList();
 			Map<String, Integer> aspcountmap = new HashMap<String, Integer>();
 			for (Model asptype : aspectTypes)
 				aspcountmap.put(((AspectType)asptype).getCode(), 0);
+
+			//создаём карту аспектов для каждого партнёра
+			Map<Long, Model> planets = new PlanetService().getMap();
+			Map<Long, Model> planets2 = new PlanetService().getMap();
 
 			for (SkyPointAspect spa : aspects) {
 				Aspect a = spa.getAspect();
@@ -1448,8 +1455,24 @@ public class PDFExporter {
 
 				//суммируем аспекты каждого типа для планеты
 				int score = aspcountmap.get(aspectTypeCode);
-				//для людей считаем только аспекты главных планет
 				aspcountmap.put(aspectTypeCode, ++score);
+
+				//суммируем аспекты по типу для каждого партнёра
+				Planet planet = (Planet)planets.get(spa.getSkyPoint1().getId());
+				Map<String, Integer> aspcountmap1 = planet.getAspectCountMap();
+				if (aspcountmap1.isEmpty())
+					for (Model asptype : aspectTypes)
+						aspcountmap1.put(((AspectType)asptype).getCode(), 0);
+				score = aspcountmap1.get(aspectTypeCode);
+				aspcountmap1.put(aspectTypeCode, ++score);
+
+				planet = (Planet)planets2.get(spa.getSkyPoint2().getId());
+				aspcountmap1 = planet.getAspectCountMap();
+				if (aspcountmap1.isEmpty())
+					for (Model asptype : aspectTypes)
+						aspcountmap1.put(((AspectType)asptype).getCode(), 0);
+				score = aspcountmap1.get(aspectTypeCode);
+				aspcountmap1.put(aspectTypeCode, ++score);
 			}
 
 			//фильтрация списка типов аспектов
@@ -1458,6 +1481,8 @@ public class PDFExporter {
 				"NEUTRAL", "NEGATIVE", "NEGATIVE_HIDDEN", "POSITIVE", "POSITIVE_HIDDEN", "CREATIVE", "KARMIC", "SPIRITUAL", "PROGRESSIVE"
 			};
 
+			Map<String, Bar[]> pmap = new HashMap<String, Bar[]>();
+			Map<String, Bar[]> pmap2 = new HashMap<String, Bar[]>();
 			List<Bar> items = new ArrayList<Bar>();
 		    for (Model tmodel : types) {
 		    	AspectType mtype = null; 
@@ -1476,8 +1501,44 @@ public class PDFExporter {
 		    	if (0 == value)
 		    		continue;
 
-		    	boolean exists = false;
+		    	//первый партнёр
+				List<Bar> pitems = new ArrayList<Bar>();
 		    	String name = term ? mtype.getName() : mtype.getKeyword();
+		    	value = 0;
+		    	for (Map.Entry<Long, Model> entry : planets.entrySet()) {
+		    		Planet planet = (Planet)entry.getValue();
+		    		Map<String, Integer> map = planet.getAspectCountMap();
+					int val = map.get(type.getCode());
+					value += val;
+
+			    	Bar bar = new Bar();
+			    	bar.setName(planet.getName().substring(0, 3));
+			    	bar.setValue(val);
+					bar.setColor(mtype.getColor());
+					bar.setCategory(name);
+					pitems.add(bar);
+		    	}
+		    	pmap.put(name, pitems.toArray(new Bar[] {}));
+
+		    	//второй партнёр
+				pitems = new ArrayList<Bar>();
+		    	value = 0;
+		    	for (Map.Entry<Long, Model> entry : planets2.entrySet()) {
+		    		Planet planet = (Planet)entry.getValue();
+		    		Map<String, Integer> map = planet.getAspectCountMap();
+					int val = map.get(type.getCode());
+					value += val;
+
+			    	Bar bar = new Bar();
+			    	bar.setName(planet.getName().substring(0, 3));
+			    	bar.setValue(val);
+					bar.setColor(mtype.getColor());
+					bar.setCategory(name);
+					pitems.add(bar);
+		    	}
+		    	pmap2.put(name, pitems.toArray(new Bar[] {}));
+
+		    	boolean exists = false;
 		    	for (Bar b : items) {
 		    		if (b.getName().equals(name)) {
 		    			exists = true;
@@ -1486,8 +1547,9 @@ public class PDFExporter {
 		    		}
 		    	}
 		    	if (!exists) {
+		    		value = aspcountmap.get(type.getCode());
 			    	Bar bar = new Bar();
-			    	bar.setName(mtype.getKeyword()/*.substring(0, 4)*/);
+			    	bar.setName(mtype.getKeyword());
 			    	bar.setCode(mtype.getCode());
 			    	bar.setValue(value);
 					bar.setColor(mtype.getColor());
@@ -1570,7 +1632,7 @@ public class PDFExporter {
 			}
 
 			if (map.containsKey("SPIRITUAL") && map.get("SPIRITUAL") > 0) {
-				text = "Чем больше духовности – тем более высокого уровня развития вы можете достичь в данном союзе (больше нуля – уже хорошо)";
+				text = "Чем больше духовности – тем более высокого уровня развития вы можете достичь в данном союзе";
 				li = new ListItem();
 		        li.add(new Chunk(text, new Font(baseFont, 12, Font.NORMAL, BaseColor.MAGENTA)));
 		        list.add(li);
@@ -1610,10 +1672,10 @@ public class PDFExporter {
 						color = new BaseColor(0, 102, 51);
 						text = "Творческие аспекты зашкаливают, так что у вас обоих в распоряжении будет достаточно свободы и возможностей, чтобы преобразить ваши отношения";
 					} else if (code.equals("NEGATIVE")) {
-						text = "Уровень стресса зашкаливает, значит отток энергии будет сильнее, чем приток. Учитесь управлять конфликтами и рисками и преуменьшать их. Не воспринимайте каждую трудность и непонимание как проблему, ищите позитив в вашем общении с партнёром. Старайтесь по возможности разряжать обстановку, а не накалять её";
+						text = "Уровень стресса зашкаливает, значит отток энергии будет сильным. Учитесь управлять конфликтами и преуменьшать риски. Не превращайте каждую трудность и непонимание в проблему, ищите позитив в вашем общении с партнёром. Старайтесь по возможности разряжать обстановку, а не накалять её";
 					} else if (code.equals("POSITIVE")) {
 						color = BaseColor.RED;
-						text = "Уровень позитива зашкаливает, значит приток энергии в вашем союзе будет сильнее, чем отток. Это поможет побороть негативные факторы отношений";
+						text = "Уровень позитива зашкаливает, значит приток энергии будет сильным. Это поможет побороть негативные факторы отношений";
 					} else if (code.equals("POSITIVE_HIDDEN")) {
 						color = new BaseColor(153, 102, 102);
 						text = "Уровень скрытого позитива зашкаливает, значит внутренняя мотивация обоих очень сильна! Внутри себя вы будете полны энергии, несмотря на внешние обстоятельства";
@@ -1629,6 +1691,25 @@ public class PDFExporter {
 			li = new ListItem();
 	        li.add(new Chunk("В остальном показатели среднестатистические", PDFUtil.getAnnotationFont(false)));
 	        list.add(li);
+			section.add(list);
+			chapter.add(Chunk.NEXTPAGE);
+
+			section = PDFUtil.printSection(chapter, "Ваши аспекты в данной паре", null);
+			section.add(new Paragraph("Диаграммы показывают, в какой сфере вы испытаете с партнёром больше лёгкости, свободы, переживаний, стресса и испытаний:", font));
+		    com.itextpdf.text.Image image = PDFUtil.printMultiStackChart(writer, synastry.getEvent().getCallname(), "Планеты", "Баллы", pmap, 500, 180, false);
+			section.add(image);
+
+			image = PDFUtil.printMultiStackChart(writer, synastry.getPartner().getCallname(), "Планеты", "Баллы", pmap2, 500, 180, true);
+			section.add(image);
+			section.add(Chunk.NEWLINE);
+			list = new com.itextpdf.text.List(false, false, 10);
+			Font minifont = new Font(baseFont, 10, Font.NORMAL);
+	    	for (Model model : synastry.getEvent().getPlanets().values()) {
+	    		Planet planet = (Planet)model;
+	    		li = new ListItem();
+	    		li.add(new Chunk(planet.getName() + " – " + planet.getPositive(), minifont));
+	    		list.add(li);
+			}
 			section.add(list);
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -2043,14 +2124,10 @@ public class PDFExporter {
 					for (Planet p : hplanets) {
 						if (planet.getId().equals(p.getId())
 								&& house.getId().equals(((House)p.getData()).getId())) {
-							boolean damaged = planet.isDamaged() || planet.isLilithed();
-							boolean damaged2 = p.isDamaged() || p.isLilithed();
-							if (damaged == damaged2) {
-								relative.add(p);
-								hplanets.remove(p);
-								rel = true;
-								break;
-							}
+							relative.add(p);
+							hplanets.remove(p);
+							rel = true;
+							break;
 						}
 					}
 					if (!rel) {
@@ -2066,7 +2143,6 @@ public class PDFExporter {
 				section.add(Chunk.NEWLINE);
 				SynastryHouseService service = new SynastryHouseService();
 				for (Planet planet : relative) {
-					String sign = planet.isDamaged() || planet.isLilithed() ? "-" : "+";
 					House house = (House)planet.getData();
 
 					Paragraph p = new Paragraph("", fonth5);
@@ -2079,7 +2155,7 @@ public class PDFExporter {
 	    				p.add(new Chunk(" " + planet.getName() + " в " + house.getDesignation() + " доме", fonth5));
 	    				p.add(Chunk.NEWLINE);
 	    			} else
-	    				p.add(new Chunk(house.getSynastry() + " " + sign + " " + planet.getShortName(), fonth5));
+	    				p.add(new Chunk(house.getSynastry() + " + " + planet.getShortName(), fonth5));
 	    			section.addSection(p);
 
 					PlanetHouseText dict = (PlanetHouseText)service.find(planet, house, null);
@@ -2179,9 +2255,7 @@ public class PDFExporter {
 					return phrase;
 			}
 
-			String sign = planet.isDamaged()
-					|| planet.isLilithed()
-					|| planet.getCode().equals("Lilith")
+			String sign = planet.getCode().equals("Lilith")
 					|| planet.getCode().equals("Kethu")
 				? "-" : "+";
 			House house = (House)planet.getData();
@@ -2331,58 +2405,52 @@ public class PDFExporter {
 			section.add(new Paragraph("Чем выше значение, тем более вы с партнёром совместимы в указанной сфере отношений, "
 				+ "тем меньше у вас претензий друг к другу, и тем выше чуткость, эмпатия, влечение и одобрение.", font));
 			section.add(Chunk.NEWLINE);
-			section.add(new Paragraph("Пункт «Соперничество» указывает на количество возникающих противоречий. "
-				+ "Если значение сильно ниже нуля, значит, во многих вопросах вам будет трудно достичь двухстороннего понимания и согласия, "
-				+ "что повлечёт за собой конфликты, напряжение, неудовлетворение (даже не явные). "
-				+ "Противоречия эти чаще всего будут возникать в сферах, чьи значения ниже нуля", font));
+			section.add(new Paragraph("Если значение ниже нуля, значит, в указанной сфере будет труднее достичь двухстороннего понимания и согласия, "
+				+ "что повлечёт за собой конфликт, напряжение, противоречие, неудовлетворение (даже не явное)", font));
 
 			Map<String, Integer> map1 = new HashMap<String, Integer>() {
 				private static final long serialVersionUID = 4739420822269120671L;
 				{
-			        put("Характеры", 0);
+			        put("Характер", 0);
 			        put("Общение", 0);
-			        put("Любовь, чувства, вкусы", 0);
-			        put("Семья, забота, эмоции", 0);
-			        put("Дружба, увлечения", 0);
-			        if (0 == doctype)
-			        	put("Секс", 0);
-			        put("Сотрудничество", 0);
-			        put("Соперничество", 0);
+			        put("Чувства", 0);
+			        put("Забота", 0);
+			        put("Дружба", 0);
+		        	put((0 == doctype) ? "Секс" : "Вражда", 0);
+			        put("Работа", 0);
 			    }
 			};
 			Map<String, Integer> map2 = new HashMap<String, Integer>() {
 				private static final long serialVersionUID = -7246716343066391656L;
 				{
-			        put("Характеры", 0);
+			        put("Характер", 0);
 			        put("Общение", 0);
-			        put("Любовь, чувства, вкусы", 0);
-			        put("Семья, забота, эмоции", 0);
-			        put("Дружба, увлечения", 0);
-			        if (0 == doctype)
-			        	put("Секс", 0);
-			        put("Сотрудничество", 0);
-			        put("Соперничество", 0);
+			        put("Чувства", 0);
+			        put("Забота", 0);
+			        put("Дружба", 0);
+		        	put((0 == doctype) ? "Секс" : "Вражда", 0);
+			        put("Работа", 0);
 			    }
 			};
 			Map<String, String[]> planets = new HashMap<String, String[]>() {
 				private static final long serialVersionUID = 4739420822269120672L;
 				{
-			        put("Sun", new String[] {"Характеры"});
-			        put("Moon", new String[] {"Семья, забота, эмоции"});
-			        put("Rakhu", new String[] {"Характеры"});
-			        put("Kethu", new String[] {"Характеры"});
+			        put("Sun", new String[] {"Характер"});
+			        put("Moon", new String[] {"Забота"});
+			        put("Rakhu", new String[] {"Характер"});
+			        put("Kethu", new String[] {"Характер"});
 			        put("Mercury", new String[] {"Общение"});
-			        put("Venus", new String[] {"Любовь, чувства, вкусы"});
-			        put("Mars", (doctype < 1) ? new String[] {"Секс", "Соперничество"} : new String[] {"Соперничество"});
-			        put("Selena", new String[] {"Характеры"});
-			        put("Lilith", new String[] {"Характеры"});
-			        put("Jupiter", new String[] {"Характеры"});
-			        put("Saturn", new String[] {"Характеры"});
-			        put("Chiron", new String[] {"Сотрудничество"});
-			        put("Uranus", new String[] {"Дружба, увлечения"});
-			        put("Neptune", new String[] {"Характеры"});
-			        put("Pluto", new String[] {"Характеры"});
-			        put("Proserpina", new String[] {"Характеры"});
+			        put("Venus", new String[] {"Чувства"});
+			        put("Mars", (doctype < 1) ? new String[] {"Секс"} : new String[] {"Вражда"});
+			        put("Selena", new String[] {"Характер"});
+			        put("Lilith", new String[] {"Характер"});
+			        put("Jupiter", new String[] {"Характер"});
+			        put("Saturn", new String[] {"Характер"});
+			        put("Chiron", new String[] {"Работа"});
+			        put("Uranus", new String[] {"Дружба"});
+			        put("Neptune", new String[] {"Характер"});
+			        put("Pluto", new String[] {"Характер"});
+			        put("Proserpina", new String[] {"Характер"});
 			    }
 			};
 			List<SkyPointAspect> aspects = synastry.getAspects();
@@ -2403,13 +2471,6 @@ public class PDFExporter {
 				String pcode = planet1.getCode();
 				String pcode2 = planet2.getCode();
 
-				//оппозиция усиливает соперничество
-				if (aspect.getAspect().getCode().equals("OPPOSITION")) {
-					String cat = "Соперничество";
-					int value = map1.get(cat);
-					map1.put(cat, value + 1);
-				}
-
 				AspectType type = aspect.checkType(true);
 				int points = type.getPoints();
 				Iterator<Map.Entry<String, String[]>> iterator = planets.entrySet().iterator();
@@ -2422,19 +2483,14 @@ public class PDFExporter {
 			    		String categories[] = entry.getValue();
 						for (String cat : categories) {
 							int value = map.get(cat);
-							if (first)
-								value += points;
-							else if (second)
-								value -= points;
+							value += points;
 							map.put(cat, value);
 						}
 			    	}
 		    	}
 			}
-			String key = "Соперничество";
-			map2.put(key, map1.get(key) * -1);
 
-		    Bar[] bars = new Bar[map1.size() * 2];
+		    Bar[] bars = new Bar[map1.size()];
 			Iterator<Map.Entry<String, Integer>> iterator = map1.entrySet().iterator();
 			int i = -1;
 		    while (iterator.hasNext()) {
@@ -2446,7 +2502,12 @@ public class PDFExporter {
 				bar.setCategory(synastry.getEvent().getCallname());
 				bars[++i] = bar;
 		    }
+		    Map<String, Bar[]> pmap = new HashMap<String, Bar[]>();
+		    pmap.put(synastry.getEvent().getCallname(), bars);
+
+		    bars = new Bar[map2.size()];
 			iterator = map2.entrySet().iterator();
+			i = -1;
 		    while (iterator.hasNext()) {
 		    	Entry<String, Integer> entry = iterator.next();
 		    	Bar bar = new Bar();
@@ -2456,7 +2517,8 @@ public class PDFExporter {
 				bar.setCategory(synastry.getPartner().getCallname());
 				bars[++i] = bar;
 		    }
-			section.add(PDFUtil.printStackChart(writer, "Сферы совместимости", "Сферы совместимости", "Баллы", bars, 500, 0, true));
+		    pmap.put(synastry.getPartner().getCallname(), bars);
+			section.add(PDFUtil.printMultiStackChart(writer, "Сферы совместимости", "Сферы совместимости", "Баллы", pmap, 500, 0, true));
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
@@ -2552,16 +2614,6 @@ public class PDFExporter {
 			SynastryAspectService service = new SynastryAspectService();
 
 			for (SkyPointAspect aspect : spas) {
-				if (aspect.getAspect().getValue() < 1) {
-					SkyPoint planet = aspect.getSkyPoint2();
-					SkyPoint planet2 = aspect.getSkyPoint1();
-					if (planet.isLilithed() || planet.isKethued()
-							|| planet2.isLilithed() || planet2.isKethued()) {
-						negative.add(aspect);
-						continue;
-					}
-				}
-
 				List<Model> dicts = service.finds(aspect, false);
 				for (Model model : dicts) {
 					SynastryAspectText dict = (SynastryAspectText)model;
@@ -2577,16 +2629,6 @@ public class PDFExporter {
 			}
 
 			for (SkyPointAspect aspect : spas2) {
-				if (aspect.getAspect().getValue() < 1) {
-					SkyPoint planet = aspect.getSkyPoint2();
-					SkyPoint planet2 = aspect.getSkyPoint1();
-					if (planet.isLilithed() || planet.isKethued()
-							|| planet2.isLilithed() || planet2.isKethued()) {
-						negative.add(aspect);
-						continue;
-					}
-				}
-
 				List<Model> dicts = service.finds(aspect, true);
 				for (Model model : dicts) {
 					SynastryAspectText dict = (SynastryAspectText)model;
