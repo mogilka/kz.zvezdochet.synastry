@@ -6,13 +6,11 @@ import org.eclipse.e4.ui.model.application.ui.basic.MPart;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Display;
 
-import kz.zvezdochet.bean.Event;
 import kz.zvezdochet.core.handler.Handler;
 import kz.zvezdochet.core.ui.util.DialogUtil;
 import kz.zvezdochet.synastry.bean.Synastry;
 import kz.zvezdochet.synastry.exporter.PDFExporter;
 import kz.zvezdochet.synastry.part.SynastryPart;
-import kz.zvezdochet.synastry.service.SynastryService;
 
 /**
  * Экспорт синастрии
@@ -24,9 +22,7 @@ public class ExportHandler extends Handler {
 		try {
 			updateStatus("Экспорт синастрии", false);
 			SynastryPart synastryPart = (SynastryPart)activePart.getObject();
-			final Event event = synastryPart.getPartner();
-			final Event partner = (Event)synastryPart.getModel();
-			final Synastry synastry = (Synastry)new SynastryService().find(event.getId(), partner.getId());
+			final Synastry synastry = (Synastry)synastryPart.getModel();
 
 			final int choice = DialogUtil.alertQuestion("Вопрос", "Выберите тип гороскопа:", new String[] {"Любовный", "Партнёрский", "Семейный"});
 			updateStatus("Сохранение синастрии в файл", false);

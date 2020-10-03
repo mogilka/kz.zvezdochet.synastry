@@ -69,14 +69,6 @@ public class SynastryPart extends ModelListView implements ICalculable {
 	 */
 	private Event synpartner;
 
-	/**
-	 * Поиск первого партнёра
-	 * @return человек
-	 */
-	public Event getPartner() {
-		return synpartner;
-	}
-
 	private CosmogramComposite cmpCosmogram;
 	private CTabFolder folder;
 	private Group grPlanets;
@@ -123,7 +115,9 @@ public class SynastryPart extends ModelListView implements ICalculable {
 	@Override
 	protected String[] initTableColumns() {
 		return new String[] {
-			"Имя",
+			"Персона",
+			"Дата",
+			"Партнёр",
 			"Дата" };
 	}
 
@@ -132,10 +126,12 @@ public class SynastryPart extends ModelListView implements ICalculable {
 		return new ModelLabelProvider() {
 			@Override
 			public String getColumnText(Object element, int columnIndex) {
-				Event event = (Event)element;
+				Synastry model = (Synastry)element;
 				switch (columnIndex) {
-					case 0: return event.getName();
-					case 1: return DateUtil.formatDateTime(event.getBirth());
+					case 0: return model.getEvent().getName();
+					case 1: return DateUtil.formatDateTime(model.getEvent().getBirth());
+					case 2: return model.getPartner().getName();
+					case 3: return DateUtil.formatDateTime(model.getPartner().getBirth());
 				}
 				return null;
 			}
@@ -339,8 +335,12 @@ public class SynastryPart extends ModelListView implements ICalculable {
 			@Override
 			public void proposalAccepted(IContentProposal proposal) {
 				Event event = (Event)((EventContentProposal)proposal).getObject();
-				if (event != null)
-					addModel(event);
+				if (event != null) {
+					Synastry synastry = new Synastry();
+					synastry.setEvent(synpartner);
+					synastry.setPartner(event);
+					addModel(synastry);
+				}
 			}
 		});
 	}
@@ -349,17 +349,11 @@ public class SynastryPart extends ModelListView implements ICalculable {
 	public void onCalc(Object mode) {
 		MODE_CALC = (int)mode;
 //		System.out.println("onCalc" + MODE_CALC);
-		Event event = synpartner;
-		Event event2 = (Event)getModel();
-		event2.initData(false);
-
-		try {
-			Synastry synastry = (Synastry)new SynastryService().find(event.getId(), event2.getId());
-			synastry.init(true);
-			event2.setAspectList(synastry.getPartner().getAspectList()); //TODO устранить костыль, использовать одного партнёра а не двух разрозненных
-		} catch (DataAccessException e) {
-			e.printStackTrace();
-		}
+		Synastry synastry = (Synastry)getModel();
+		synastry.init(true);
+		Event event = synastry.getEvent();
+		Event event2 = synastry.getPartner();
+		event2.setAspectList(synastry.getPartner().getAspectList()); //TODO устранить костыль, использовать одного партнёра а не двух разрозненных
 
 		if (mode.equals(0)) {
 			refreshCard(event, event2);

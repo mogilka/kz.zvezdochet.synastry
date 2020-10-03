@@ -21,6 +21,7 @@ import kz.zvezdochet.core.ui.util.DialogUtil;
 import kz.zvezdochet.core.util.CalcUtil;
 import kz.zvezdochet.part.AspectPart;
 import kz.zvezdochet.service.AspectService;
+import kz.zvezdochet.synastry.bean.Synastry;
 import kz.zvezdochet.synastry.part.SynastryPart;
 
 /**
@@ -36,12 +37,13 @@ public class AspectHandler extends Handler {
 	public void execute(@Active MPart activePart) {
 		try {
 			SynastryPart synPart = (SynastryPart)activePart.getObject();
-			Event event = synPart.getPartner();
+			Synastry synastry = (Synastry)synPart.getModel();
+			Event event = synastry.getEvent();
 			if (null == event) return;
 			if (null == event.getPlanets()) return; //TODO выдавать сообщение
 			updateStatus("Инициализация планет первого партнёра", false);
 
-			Event partner = (Event)synPart.getModel();
+			Event partner = synastry.getPartner();
 			if (null == partner) return;
 			if (null == partner.getPlanets()) return; //TODO выдавать сообщение
 			updateStatus("Инициализация планет второго партнёра", false);

@@ -95,22 +95,23 @@ public class SynastryService extends ModelService {
 	}
 
 	/**
-	 * Поиск партнёров персоны
+	 * Поиск синастрий персоны
 	 * @param eventid идентификатор персоны
 	 * @return список персон
 	 */
-	public List<Event> findPartners(Long eventid) throws DataAccessException {
+	public List<Synastry> findPartners(Long eventid) throws DataAccessException {
 		if (null == eventid) return null;
-		List<Event> list = new ArrayList<Event>();
+		List<Synastry> list = new ArrayList<Synastry>();
         PreparedStatement ps = null;
         ResultSet rs = null;
 		try {
-			String sql = "select * from " + tableName + " where eventid = ?";
+			String sql = "select * from " + tableName + " where eventid = ? or partnerid = ?";
 			ps = Connector.getInstance().getConnection().prepareStatement(sql);
 			ps.setLong(1, eventid);
+			ps.setLong(2, eventid);
 			rs = ps.executeQuery();
 			while (rs.next())
-				list.add((Event)new EventService().find(rs.getLong("partnerid")));
+				list.add((Synastry)init(rs, new Synastry()));
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {

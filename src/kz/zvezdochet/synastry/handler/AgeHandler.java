@@ -11,6 +11,7 @@ import org.eclipse.e4.ui.workbench.modeling.EPartService.PartState;
 import kz.zvezdochet.bean.Event;
 import kz.zvezdochet.core.handler.Handler;
 import kz.zvezdochet.core.ui.util.DialogUtil;
+import kz.zvezdochet.synastry.bean.Synastry;
 import kz.zvezdochet.synastry.part.AgePart;
 import kz.zvezdochet.synastry.part.SynastryPart;
 
@@ -27,10 +28,11 @@ public class AgeHandler extends Handler {
 	public void execute(@Active MPart activePart) {
 		try {
 			SynastryPart synastryPart = (SynastryPart)activePart.getObject();
-			final Event event = synastryPart.getPartner();
+			Synastry synastry = (Synastry)synastryPart.getModel();
+			final Event event = synastry.getEvent();
 			if (null == event) return;
 			event.initData(false);
-			final Event partner = (Event)synastryPart.getModel();
+			final Event partner = synastry.getPartner();
 			partner.initData(false);
 		
 			MPart part = partService.findPart("kz.zvezdochet.synastry.part.age");
