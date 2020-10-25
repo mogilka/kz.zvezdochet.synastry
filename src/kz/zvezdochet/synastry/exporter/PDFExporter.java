@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -211,7 +212,8 @@ public class PDFExporter {
 			chapter.add(p);
 
 			Font fontgray = PDFUtil.getAnnotationFont(false);
-			text = "Дата составления: " + DateUtil.fulldtf.format(synastry.getDate());
+			Date date = synastry.getDate(); 
+			text = "Дата составления: " + DateUtil.fulldtf.format(date != null ? date : new Date());
 			p = new Paragraph(text, fontgray);
 	        p.setAlignment(Element.ALIGN_CENTER);
 			chapter.add(p);
@@ -2286,6 +2288,11 @@ public class PDFExporter {
 					phrase.add(Chunk.NEWLINE);
 					phrase.add(ph);
 				}
+				ph = PDFUtil.printGenderCell(dict, doctype > 1 ? "family" : doctype > 0 ? "deal" : "love");
+				if (ph != null) {
+					phrase.add(Chunk.NEWLINE);
+					phrase.add(ph);
+				}
 				List<Rule> rules = EventRules.ruleSynastryPlanetHouse(planet, house, event.isFemale());
 				for (Rule rule : rules) {
 					phrase.add(new Paragraph(PDFUtil.removeTags(rule.getText(), font)));
@@ -2417,7 +2424,7 @@ public class PDFExporter {
 			        put("Забота", 0);
 			        put("Дружба", 0);
 		        	put((0 == doctype) ? "Секс" : "Вражда", 0);
-			        put("Работа", 0);
+			        put("Равноправие", 0);
 			    }
 			};
 			Map<String, Integer> map2 = new HashMap<String, Integer>() {
@@ -2429,7 +2436,7 @@ public class PDFExporter {
 			        put("Забота", 0);
 			        put("Дружба", 0);
 		        	put((0 == doctype) ? "Секс" : "Вражда", 0);
-			        put("Работа", 0);
+			        put("Равноправие", 0);
 			    }
 			};
 			Map<String, String[]> planets = new HashMap<String, String[]>() {
@@ -2446,7 +2453,7 @@ public class PDFExporter {
 			        put("Lilith", new String[] {"Характер"});
 			        put("Jupiter", new String[] {"Характер"});
 			        put("Saturn", new String[] {"Характер"});
-			        put("Chiron", new String[] {"Работа"});
+			        put("Chiron", new String[] {"Равноправие"});
 			        put("Uranus", new String[] {"Дружба"});
 			        put("Neptune", new String[] {"Характер"});
 			        put("Pluto", new String[] {"Характер"});
@@ -2518,7 +2525,7 @@ public class PDFExporter {
 				bars[++i] = bar;
 		    }
 		    pmap.put(synastry.getPartner().getCallname(), bars);
-			section.add(PDFUtil.printMultiStackChart(writer, "Сферы совместимости", "Сферы совместимости", "Баллы", pmap, 500, 0, true));
+			section.add(PDFUtil.printMultiStackChart(writer, "Сферы совместимости", "Сферы совместимости", "Баллы", pmap, 550, 0, true));
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
