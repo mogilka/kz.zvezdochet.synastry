@@ -115,6 +115,7 @@ public class SynastryPart extends ModelListView implements ICalculable {
 	@Override
 	protected String[] initTableColumns() {
 		return new String[] {
+			"ID",
 			"Персона",
 			"Дата",
 			"Партнёр",
@@ -128,10 +129,11 @@ public class SynastryPart extends ModelListView implements ICalculable {
 			public String getColumnText(Object element, int columnIndex) {
 				Synastry model = (Synastry)element;
 				switch (columnIndex) {
-					case 0: return model.getEvent().getName();
-					case 1: return DateUtil.formatDateTime(model.getEvent().getBirth());
-					case 2: return model.getPartner().getName();
-					case 3: return DateUtil.formatDateTime(model.getPartner().getBirth());
+					case 0: return model.getId() != null ? model.getId().toString() : "";
+					case 1: return model.getEvent().getName();
+					case 2: return DateUtil.formatDateTime(model.getEvent().getBirth());
+					case 3: return model.getPartner().getName();
+					case 4: return DateUtil.formatDateTime(model.getPartner().getBirth());
 				}
 				return null;
 			}
@@ -146,7 +148,7 @@ public class SynastryPart extends ModelListView implements ICalculable {
 	private void refreshCard(Event partner, Event partner2) {
 		Map<String, Object> params = new HashMap<>();
 		List<String> aparams = new ArrayList<String>();
-		Map<String, String[]> types = AspectType.getHierarchy();
+		Map<String, String[]> types = AspectType.getHierarchy(true);
 		for (Control control : grAspectType.getChildren()) {
 			Button button = (Button)control;
 			if (button.getSelection())
@@ -367,11 +369,9 @@ public class SynastryPart extends ModelListView implements ICalculable {
 	@Override
 	public void addModel(Model model) {
 		super.addModel(model);
-		//сразу сохраняем партнёра в базу
-		Synastry synastry = new Synastry();
-		synastry.setEvent(synpartner);
-		synastry.setPartner((Event)model);
 		try {
+			//сразу сохраняем партнёра в базу
+			Synastry synastry = (Synastry)model;
 			new SynastryService().save(synastry);
 		} catch (DataAccessException e) {
 			e.printStackTrace();

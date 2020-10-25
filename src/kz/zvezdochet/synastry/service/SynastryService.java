@@ -144,7 +144,6 @@ public class SynastryService extends ModelService {
 		s = rs.getString("celebrity");
 		dict.setCelebrity(s.equals("1") ? true : false);
 		dict.setOptions(rs.getString("options"));
-		dict.initAspects();
 		return dict;
 	}
 

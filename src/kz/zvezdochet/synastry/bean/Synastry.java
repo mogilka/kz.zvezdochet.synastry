@@ -136,6 +136,7 @@ public class Synastry extends Model {
 	public void init(boolean mode) {
 		List<Model> aspects = null;
 		try {
+			initAspects();
 			aspects = new AspectService().getList();
 		} catch (DataAccessException e) {
 			e.printStackTrace();
@@ -193,8 +194,6 @@ public class Synastry extends Model {
 			//определяем, является ли аспект стандартным
 			for (Model realasp : aspects) {
 				Aspect a = (Aspect)realasp;
-				if (a.getPoints() < 2)
-					continue;
 
 				//соединения Солнца не рассматриваем
 				if (a.getPlanetid() > 0)
