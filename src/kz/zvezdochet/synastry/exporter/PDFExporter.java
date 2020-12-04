@@ -834,6 +834,7 @@ public class PDFExporter {
 				title = "Взаимные аспекты отношений";
 			}
 			Section section = PDFUtil.printSection(chapter, title, acode);
+			int chapternum = 6, sectionum = 0;
 
 			if (aspectType.equals("RELATIVE")) {
 				section.add(new Paragraph("Здесь перечислены толкования, которые показывают, в чём вы относитесь к партнёру так же, как он к вам:", PDFUtil.getAnnotationFont(false)));
@@ -889,7 +890,10 @@ public class PDFExporter {
 					}
 				}
 			} else {
+				++sectionum;
+				int cellnum = 0;
 				if (aspectType.equals("NEGATIVE")) {
+					++sectionum;
 					Paragraph p = new Paragraph("Ниже приведены отрицательные факторы ваших отношений. "
 						+ "Не преувеличивайте описанный негатив, он имеет место в любых парах: "
 						+ "даже если союз успешен и защищён, стабильность является переменной величиной, зависящей от нас самих.", font);
@@ -945,8 +949,10 @@ public class PDFExporter {
 					Iterator<SkyPointAspect> iter2 = list2.iterator();
 					for (int i = 0; i < tcount; i++) {
 						if (iter.hasNext()) {
+							++cellnum;
+							String num = chapternum + "." + sectionum + "." + cellnum;
 							SkyPointAspect aspect = iter.next();
-							Phrase phrase = printAspect(synastry, aspect, aspectType, false);
+							Phrase phrase = printAspect(synastry, aspect, aspectType, false, num);
 							cell = new PdfPCell(phrase);
 							PDFUtil.setCellBorderWidths(cell, 0, .5F, 0, 0);
 							table.addCell(cell);
@@ -957,8 +963,10 @@ public class PDFExporter {
 						}
 
 						if (iter2.hasNext()) {
+							++cellnum;
+							String num = chapternum + "." + sectionum + "." + cellnum;
 							SkyPointAspect aspect = iter2.next();
-							Phrase phrase = printAspect(synastry, aspect, aspectType, true);
+							Phrase phrase = printAspect(synastry, aspect, aspectType, true, num);
 							cell = new PdfPCell(phrase);
 							cell.setBorder(Rectangle.NO_BORDER);
 							table.addCell(cell);
@@ -983,16 +991,17 @@ public class PDFExporter {
 	 * @param aspect аспект
 	 * @param aspectType тип раздела
 	 * @param reverse true - толкование предназначено для партнёра
+	 * @param sectionum нумерация раздела
 	 * @return толкование
 	 */
-	private Phrase printAspect(Synastry synastry, SkyPointAspect aspect, String aspectType, boolean reverse) {
+	private Phrase printAspect(Synastry synastry, SkyPointAspect aspect, String aspectType, boolean reverse, String sectionum) {
 		Phrase phrase = new Phrase();
 		try {
 			AspectType type = aspect.checkType(false);
 			Planet planet1 = (Planet)(reverse ? aspect.getSkyPoint2() : aspect.getSkyPoint1());
 			Planet planet2 = (Planet)(reverse ? aspect.getSkyPoint1() : aspect.getSkyPoint2());
 	
-			String text = (reverse ? name2 : name1) + "-" + planet1.getShortName() + " " + 
+			String text = sectionum + " " + (reverse ? name2 : name1) + "-" + planet1.getShortName() + " " + 
 				type.getSymbol() + " " + 
 				(reverse ? name1 : name2) + "-" + planet2.getShortName();
         	Anchor anchorTarget = new Anchor(text, fonth5);
@@ -2116,8 +2125,10 @@ public class PDFExporter {
 	 * @param synastry синастрия
 	 */
 	private void printPlanetHouses(Document doc, Chapter chapter, Synastry synastry) {
-		String[] hcodes = new String[] {"I_3", "II", "II_2", "II_3", "III", "III_2", "IV_3", "V", "VI", "VI_3",
-			"VII_2", "VII_3", "VIII", "VIII_3", "IX", "IX_2", "IX_3", "X", "X_2", "X_3", "XI", "XI_2", "XI_3", "XII"};
+//		String[] hcodes = new String[] {"I_3", "II", "II_2", "II_3", "III", "III_2", "IV_3", "V", "VI", "VI_3",
+//			"VII_2", "VII_3", "VIII", "VIII_3", "IX", "IX_2", "IX_3", "X", "X_2", "X_3", "XI", "XI_2", "XI_3", "XII"};
+
+//		System.out.println("chapter depth=" + chapter.getDepth() + " numberDepth=" + chapter.getNumberDepth());
 
 		List<Planet> planets = synastry.getPlanetList();
 		List<Planet> planets2 = synastry.getPlanet2List();
@@ -2128,8 +2139,8 @@ public class PDFExporter {
 			for (Planet planet : planets) {
 				House house = (House)planet.getData();
 				if (house != null) {
-					if (1 == doctype && !Arrays.asList(hcodes).contains(house.getCode()))
-						continue;
+//					if (1 == doctype && !Arrays.asList(hcodes).contains(house.getCode()))
+//						continue;
 					hplanets.add(planet);
 				}
 			}
@@ -2137,8 +2148,8 @@ public class PDFExporter {
 			for (Planet planet : planets2) {
 				House house = (House)planet.getData();
 				if (house != null) {
-					if (1 == doctype && !Arrays.asList(hcodes).contains(house.getCode()))
-						continue;
+//					if (1 == doctype && !Arrays.asList(hcodes).contains(house.getCode()))
+//						continue;
 					boolean rel = false;
 					for (Planet p : hplanets) {
 						if (planet.getId().equals(p.getId())
@@ -2156,8 +2167,11 @@ public class PDFExporter {
 				}					
 			}
 
+			int chapternum = 7, sectionum = 1;
 			if (!relative.isEmpty()) {
+				++sectionum;
 				Section section = PDFUtil.printSection(chapter, "Сходство во влиянии", null);
+//				System.out.println("section depth=" + section.getDepth() + " numberDepth=" + section.getNumberDepth());
 				section.add(new Paragraph("Здесь перечислены толкования, которые показывают, в чём вы относитесь к партнёру так же, как он к вам:", PDFUtil.getAnnotationFont(false)));
 				section.add(Chunk.NEWLINE);
 				SynastryHouseService service = new SynastryHouseService();
@@ -2220,13 +2234,18 @@ public class PDFExporter {
 			}
 			table.setHeaderRows(1);
 
+			++sectionum;
+			int cellnum = 0;
+
 			Iterator<Planet> iter = hplanets2.iterator();
 			Iterator<Planet> iter2 = hplanets.iterator();
 			int psize = synastry.getEvent().getPlanets().size();
 			for (int i = 0; i < psize; i++) {
 				if (iter.hasNext()) {
+					++cellnum;
+					String num = chapternum + "." + sectionum + "." + cellnum;
 					Planet planet = iter.next();
-					Phrase phrase = printPlanetHouse(synastry, planet, false);
+					Phrase phrase = printPlanetHouse(synastry, planet, false, num);
        				cell = new PdfPCell(phrase);
 					PDFUtil.setCellBorderWidths(cell, 0, .5F, 0, 0);
        				table.addCell(cell);
@@ -2237,8 +2256,10 @@ public class PDFExporter {
 				}
 
 				if (iter2.hasNext()) {
+					++cellnum;
+					String num = chapternum + "." + sectionum + "." + cellnum;
 					Planet planet = iter2.next();
-					Phrase phrase = printPlanetHouse(synastry, planet, true);
+					Phrase phrase = printPlanetHouse(synastry, planet, true, num);
        				cell = new PdfPCell(phrase);
        				cell.setBorder(Rectangle.NO_BORDER);
        				table.addCell(cell);
@@ -2263,9 +2284,10 @@ public class PDFExporter {
 	 * @param synastry синастрия
 	 * @param planet планета
 	 * @param reverse true - толкование для партнёра
-	 * @return
+	 * @param sectionum нумерация раздела
+	 * @return текстовый блок
 	 */
-	private Phrase printPlanetHouse(Synastry synastry, Planet planet, boolean reverse) {
+	private Phrase printPlanetHouse(Synastry synastry, Planet planet, boolean reverse, String sectionum) {
 		Phrase phrase = new Phrase();
 		try {
 			if (planet.getCode().equals("Moon")) {
@@ -2283,7 +2305,7 @@ public class PDFExporter {
 				+ " " + sign + " "
 				+ (reverse ? name1 : name2) + "-" + planet.getShortName();
 
-        	Anchor anchorTarget = new Anchor(text, fonth5);
+        	Anchor anchorTarget = new Anchor(sectionum + " " + text, fonth5);
         	anchorTarget.setName(planet.getAnchor());
         	phrase.add(anchorTarget);
 			phrase.add(Chunk.NEWLINE);
