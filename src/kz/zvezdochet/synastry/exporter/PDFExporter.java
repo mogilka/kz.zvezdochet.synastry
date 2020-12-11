@@ -111,9 +111,14 @@ public class PDFExporter {
 	private boolean term = false;
 	/**
 	 * Тип гороскопа совместимости
-	 * love|family|deal любовный|семейный|партнёрский
+	 * 0|1|2 любовный|партнёрский|семейный
 	 */
 	private int doctype = 0;
+	/**
+	 * Используемые типы толкований
+	 * love|deal|family любовный|партнёрский|семейный
+	 */
+	private String[] genderTypes = {};
 	/**
 	 * Имена партнёров
 	 */
@@ -145,7 +150,14 @@ public class PDFExporter {
 
 		name1 = event.getCallname();
 		name2 = partner.getCallname();
+
 		doctype = choice;
+		if (doctype > 1)
+			genderTypes = new String[] {"family"};
+		else if (doctype > 0)
+			genderTypes = new String[] {"deal"};
+		else
+			genderTypes = new String[] {"love", "family"};
 
 		Document doc = new Document();
 		try {
@@ -1045,7 +1057,6 @@ public class PDFExporter {
 			List<Model> dicts = aspect.getTexts();
 			Event event = reverse ? synastry.getEvent() : synastry.getPartner();
 			Event partner = reverse ? synastry.getPartner() : synastry.getEvent();
-			String gtype = doctype > 1 ? "family" : doctype > 0 ? "deal" : "love";
 			if (dicts != null) {
 				for (Model model : dicts) {
 					SynastryAspectText dict = (SynastryAspectText)model;
@@ -1059,11 +1070,12 @@ public class PDFExporter {
 							phrase.add(Chunk.NEWLINE);
 							phrase.add(ph);
 						}
-	
-		    			ph = PDFUtil.printGenderCell(dict, gtype);
-		    			if (ph != null)
-							phrase.add(ph);
-	
+
+						for (String gtype : genderTypes) {
+			    			ph = PDFUtil.printGenderCell(dict, gtype);
+			    			if (ph != null)
+								phrase.add(ph);
+						}	
 						Rule rule = EventRules.ruleSynastryAspect(aspect, event);
 						if (rule != null) {
 							phrase.add(Chunk.NEWLINE);
@@ -1818,7 +1830,6 @@ public class PDFExporter {
 
 			ElementService service = new ElementService();
 			long[] pids = new long[] {19L, 20L, 23L, 24L, 25L};
-			String type = doctype > 1 ? "family" : doctype > 0 ? "deal" : "love";
 			for (long pid : pids) {
    				Planet planet = event.getPlanets().get(pid);
    				Planet planet2 = partner.getPlanets().get(pid);
@@ -1839,11 +1850,13 @@ public class PDFExporter {
 	    				phrase.add(Chunk.NEWLINE);
 		    			phrase.add(PDFUtil.printTextCell(element.getSynastry()));
 
-		    			Phrase ph = PDFUtil.printGenderCell(element, type);
-		    			if (ph != null) {
-							phrase.add(Chunk.NEWLINE);
-							phrase.add(Chunk.NEWLINE);
-							phrase.add(ph);
+		    			for (String gtype : genderTypes) {
+			    			Phrase ph = PDFUtil.printGenderCell(element, gtype);
+			    			if (ph != null) {
+								phrase.add(Chunk.NEWLINE);
+								phrase.add(Chunk.NEWLINE);
+								phrase.add(ph);
+			    			}
 		    			}
 	    				if (element1.getId().equals(element2.getId())) {
 		    				cell = new PdfPCell(phrase);
@@ -1879,12 +1892,14 @@ public class PDFExporter {
 		    				phrase.add(Chunk.NEWLINE);
 		    				phrase.add(PDFUtil.printTextCell(element.getSynastry()));
 
-			    			Phrase ph = PDFUtil.printGenderCell(element, type);
-			    			if (ph != null) {
-								phrase.add(Chunk.NEWLINE);
-								phrase.add(Chunk.NEWLINE);
-								phrase.add(ph);
-			    			}
+		    				for (String gtype : genderTypes) {
+				    			Phrase ph = PDFUtil.printGenderCell(element, gtype);
+				    			if (ph != null) {
+									phrase.add(Chunk.NEWLINE);
+									phrase.add(Chunk.NEWLINE);
+									phrase.add(ph);
+				    			}
+		    				}
 		    				cell = new PdfPCell(phrase);
 		    				cell.setBorder(Rectangle.NO_BORDER);
     	       				table.addCell(cell);
@@ -2110,7 +2125,8 @@ public class PDFExporter {
 				if (dict != null) {
 					section.add(new Paragraph("Разница в годах цикла: " + CoreUtil.getAgeString(years), fonth5));
 					section.add(new Paragraph(PDFUtil.removeTags(dict.getZoroastrsyn(), font)));
-	    			PDFUtil.printGender(section, dict, doctype > 1 ? "family" : doctype > 0 ? "deal" : "love");
+					for (String gtype : genderTypes)
+						PDFUtil.printGender(section, dict, gtype);
 				}
 			}
 		} catch(Exception e) {
@@ -2327,10 +2343,12 @@ public class PDFExporter {
 					phrase.add(Chunk.NEWLINE);
 					phrase.add(ph);
 				}
-				ph = PDFUtil.printGenderCell(dict, doctype > 1 ? "family" : doctype > 0 ? "deal" : "love");
-				if (ph != null) {
-					phrase.add(Chunk.NEWLINE);
-					phrase.add(ph);
+				for (String gtype : genderTypes) {
+					ph = PDFUtil.printGenderCell(dict, gtype);
+					if (ph != null) {
+						phrase.add(Chunk.NEWLINE);
+						phrase.add(ph);
+					}
 				}
 				List<Rule> rules = EventRules.ruleSynastryPlanetHouse(planet, house, event.isFemale());
 				for (Rule rule : rules) {
@@ -2426,14 +2444,16 @@ public class PDFExporter {
 	 */
 	private void printGender(Section section, ITextGender dict) throws DocumentException, IOException {
 		if (dict != null) {
-			TextGender gender = dict.getGenderText(doctype > 1 ? "family" : doctype > 0 ? "deal" : "love");
-			if (gender != null) {
-				Paragraph p = new Paragraph(PDFUtil.getGenderHeader(gender.getType()), PDFUtil.getSubheaderFont());
-				p.setSpacingBefore(10);
-				section.add(p);
-				section.add(new Paragraph(PDFUtil.removeTags(gender.getText(), font)));
-			};
-			section.add(Chunk.NEWLINE);
+			for (String gtype : genderTypes) {
+				TextGender gender = dict.getGenderText(gtype);
+				if (gender != null) {
+					Paragraph p = new Paragraph(PDFUtil.getGenderHeader(gender.getType()), PDFUtil.getSubheaderFont());
+					p.setSpacingBefore(10);
+					section.add(p);
+					section.add(new Paragraph(PDFUtil.removeTags(gender.getText(), font)));
+				};
+				section.add(Chunk.NEWLINE);
+			}
 		}
 	}
 
@@ -2483,20 +2503,20 @@ public class PDFExporter {
 				{
 			        put("Sun", new String[] {"Характер"});
 			        put("Moon", new String[] {"Забота"});
-			        put("Rakhu", new String[] {"Характер"});
-			        put("Kethu", new String[] {"Характер"});
+//			        put("Rakhu", new String[] {"Характер"});
+//			        put("Kethu", new String[] {"Характер"});
 			        put("Mercury", new String[] {"Общение"});
 			        put("Venus", new String[] {"Чувства"});
 			        put("Mars", (doctype < 1) ? new String[] {"Секс"} : new String[] {"Вражда"});
-			        put("Selena", new String[] {"Характер"});
-			        put("Lilith", new String[] {"Характер"});
-			        put("Jupiter", new String[] {"Характер"});
-			        put("Saturn", new String[] {"Характер"});
+//			        put("Selena", new String[] {"Характер"});
+//			        put("Lilith", new String[] {"Характер"});
+//			        put("Jupiter", new String[] {"Характер"});
+//			        put("Saturn", new String[] {"Характер"});
 			        put("Chiron", new String[] {"Равноправие"});
 			        put("Uranus", new String[] {"Дружба"});
-			        put("Neptune", new String[] {"Характер"});
-			        put("Pluto", new String[] {"Характер"});
-			        put("Proserpina", new String[] {"Характер"});
+//			        put("Neptune", new String[] {"Характер"});
+//			        put("Pluto", new String[] {"Характер"});
+//			        put("Proserpina", new String[] {"Характер"});
 			    }
 			};
 			List<SkyPointAspect> aspects = synastry.getAspects();
