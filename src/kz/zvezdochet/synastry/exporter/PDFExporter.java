@@ -495,13 +495,13 @@ public class PDFExporter {
 			PlanetSignService service = new PlanetSignService();
 			String general[] = {"personality", "emotions", "contact", "feelings"};
 			List<String> categories = new ArrayList<>(Arrays.asList(general));
-			if (0 == doctype) {
+			if (doctype < 1) {
 				String love[] = {"love", "family", "faithfulness", "sex"};
 				categories.addAll(Arrays.asList(love));
 			} else if (1 == doctype) {
 				String deal[] = {"thinking", "work", "profession", "activity"};
 				categories.addAll(Arrays.asList(deal));
-			} else if (2 == doctype) {
+			} else if (doctype > 1) {
 				String deal[] = {"thinking", "activity"};
 				categories.addAll(Arrays.asList(deal));
 			}
@@ -676,9 +676,10 @@ public class PDFExporter {
 //			    			}
 					    	if (object.getText() != null)
 					    		section.add(new Paragraph(PDFUtil.removeTags(object.getText(), font)));
-			    			PDFUtil.printGender(section, object, female ? "male" : "female");
+			    			PDFUtil.printGender(section, object, female ? "female" : "male");
 			    			PDFUtil.printGender(section, object, female ? "woman" : "man");
-			    			PDFUtil.printGender(section, object, doctype > 1 ? "family" : doctype > 0 ? "deal" : "love");
+			    			for (String gtype : genderTypes)
+			    				PDFUtil.printGender(section, object, gtype);
 					    }
 					}
 				}
@@ -2919,8 +2920,10 @@ public class PDFExporter {
 				li.add(anchor);
 
 				String pcode = planet.getCode();
-				if ((pcode.equals("Lilith") || pcode.equals("Kethu"))
-						&& (0 == doctype && Arrays.asList(new String[] {"V_2", "V_3", "VII"}).contains(house.getCode()))) {
+				if (pcode.equals("Lilith") || pcode.equals("Kethu")) {
+					if ((doctype < 1 && Arrays.asList(new String[] {"V_2", "V_3", "VII"}).contains(house.getCode()))
+							|| (1 == doctype && Arrays.asList(new String[] {"VI", "VI_3", "VII_2", "X_2", "X_3"}).contains(house.getCode()))
+							|| (doctype > 1 && Arrays.asList(new String[] {"III_3", "IV", "IV_2"}).contains(house.getCode())))
 					li.add(new Chunk(" (критично)", font));
 				}
 		        list.add(li);
