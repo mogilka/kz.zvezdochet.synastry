@@ -2313,9 +2313,9 @@ public class PDFExporter {
 					return phrase;
 			}
 
-			String sign = planet.getCode().equals("Lilith")
-					|| planet.getCode().equals("Kethu")
-				? "-" : "+";
+			boolean damaged = isDamaged(synastry, planet, reverse);
+			AspectType aspectType = damaged ? (AspectType)new AspectTypeService().find("NEGATIVE") : null;
+			String sign = damaged ? "-" : "+";
 			House house = (House)planet.getData();
 
 			String text = (reverse ? name2 : name1) + "-" + house.getSynastry()
@@ -2329,7 +2329,7 @@ public class PDFExporter {
 			phrase.add(Chunk.NEWLINE);
 
 			SynastryHouseService service = new SynastryHouseService();
-			SynastryHouseText dict = (SynastryHouseText)service.find(planet, house, null);
+			SynastryHouseText dict = (SynastryHouseText)service.find(planet, house, aspectType);
 			Event event = reverse ? synastry.getPartner() : synastry.getEvent();
 			if (dict != null) {
 				if (dict.getLevel() < 0) {
@@ -3005,5 +3005,64 @@ public class PDFExporter {
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * Проверка, является ли планета поражённой в контексте пары
+	 * @param synastry синастрия
+	 * @param planet планета
+	 * @param reverse true|false планета второго|первого партнёра
+	 * @return признак поражённости внутри синастрии
+	 */
+	private boolean isDamaged(Synastry synastry, Planet planet, boolean reverse) {
+		String[] bads = {"Lilith", "Kethu"};
+		String pcode = planet.getCode();
+		if (Arrays.asList(bads).contains(pcode))
+			return true;
+
+		boolean res = false;
+		Map<String, Integer> map = new HashMap<String, Integer>() {
+			private static final long serialVersionUID = 4739420811169120671L;
+			{
+		        put("POSITIVE", 0);
+		        put("POSITIVE_HIDDEN", 0);
+		        put("NEGATIVE", 0);
+		        put("NEGATIVE_HIDDEN", 0);
+		        put("NEUTRAL", 0);
+	        	put("NEUTRAL_KERNEL", 0);
+		        put("NEGATIVE_BELT", 0);
+		    }
+		};
+		String[] neutrals = {"NEUTRAL", "NEUTRAL_KERNEL", "NEGATIVE_BELT"};
+
+		List<SkyPointAspect> aspects = synastry.getAspects();
+		for (SkyPointAspect aspect : aspects) {
+			SkyPoint skyPoint = reverse ? aspect.getSkyPoint2() : aspect.getSkyPoint1();
+			if (!planet.getId().equals(skyPoint.getId()))
+				continue;
+
+			String tcode = aspect.getAspect().getType().getCode();
+			if (!map.containsKey(tcode))
+				continue;
+
+			SkyPoint skyPoint2 = reverse ? aspect.getSkyPoint1() : aspect.getSkyPoint2();
+			String pcode2 = skyPoint2.getCode();
+			if (Arrays.asList(neutrals).contains(tcode)) {
+				if (Arrays.asList(bads).contains(pcode2))
+					tcode = "NEGATIVE";
+				else if (pcode2.equals("Selena"))
+					tcode = "POSITIVE";
+			}
+			int val = map.get(tcode) + 1;
+			map.put(tcode, val);
+		}
+
+		//сравнение количества хороших и плохих аспектов
+		int good = map.get("POSITIVE");
+		int goodh =	map.get("POSITIVE_HIDDEN");
+		int bad = map.get("NEGATIVE");
+		if (bad > 0 && (0 == good + goodh))
+			res = true;
+		return res;
 	}
 }
