@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -1330,7 +1331,7 @@ public class PDFExporter {
 			Map<String, Double> planetMap = statistics.getPlanetElements();
 			Map<String, Double> planetMap2 = statistics2.getPlanetElements();
 
-			List<String> elements = new ArrayList<>();
+			Map<String, Double> elements = new HashMap<>();
 			Bar[] bars = new Bar[planetMap.size() + planetMap2.size()];
 			Iterator<Map.Entry<String, Double>> iterator = planetMap.entrySet().iterator();
 			int i = -1;
@@ -1338,8 +1339,8 @@ public class PDFExporter {
 		    while (iterator.hasNext()) {
 		    	i++;
 		    	Entry<String, Double> entry = iterator.next();
-		    	if (!elements.contains(entry.getKey()))
-		    		elements.add(entry.getKey());
+		    	double val = elements.containsKey(entry.getKey()) ? elements.get(entry.getKey()) : 0;
+	    		elements.put(entry.getKey(), val + entry.getValue());
 		    	Bar bar = new Bar();
 		    	kz.zvezdochet.bean.Element element = (kz.zvezdochet.bean.Element)service.find(entry.getKey());
 		    	bar.setName(element.getTemperament());
@@ -1354,8 +1355,8 @@ public class PDFExporter {
 		    while (iterator.hasNext()) {
 		    	i++;
 		    	Entry<String, Double> entry = iterator.next();
-		    	if (!elements.contains(entry.getKey()))
-		    		elements.add(entry.getKey());
+		    	double val = elements.containsKey(entry.getKey()) ? elements.get(entry.getKey()) : 0;
+	    		elements.put(entry.getKey(), val + entry.getValue());
 		    	Bar bar = new Bar();
 		    	kz.zvezdochet.bean.Element element = (kz.zvezdochet.bean.Element)service.find(entry.getKey());
 		    	bar.setName(element.getTemperament());
@@ -1366,15 +1367,18 @@ public class PDFExporter {
 		    }
 
 			//определение выраженной стихии
-		    Object els[] = elements.toArray();
-		    Arrays.sort(els);
+		    List<String> els = new ArrayList<String>();
+		    for (Map.Entry<String, Double> entry : elements.entrySet())
+		    	if (entry.getValue() > 0)
+		    		els.add(entry.getKey());
+		    Collections.sort(els);
 		    kz.zvezdochet.bean.Element element = null;
 		    for (Model model : service.getList()) {
 		    	kz.zvezdochet.bean.Element e = (kz.zvezdochet.bean.Element)model;
 		    	String[] codes = e.getCode().split("_");
-		    	if (codes.length == elements.size()) {
+		    	if (codes.length == els.size()) {
 			    	Arrays.sort(codes);
-		    		boolean match = Arrays.equals(codes, els);
+		    		boolean match = els.containsAll(Arrays.asList(codes));
 		    		if (match) {
 		    			element = e;
 		    			break;
@@ -2313,7 +2317,7 @@ public class PDFExporter {
 					return phrase;
 			}
 
-			boolean damaged = isDamaged(synastry, planet, reverse);
+			boolean damaged = isDamaged(synastry, planet, !reverse);
 			AspectType aspectType = damaged ? (AspectType)new AspectTypeService().find("NEGATIVE") : null;
 			String sign = damaged ? "-" : "+";
 			House house = (House)planet.getData();
@@ -3035,6 +3039,8 @@ public class PDFExporter {
 		};
 		String[] neutrals = {"NEUTRAL", "NEUTRAL_KERNEL", "NEGATIVE_BELT"};
 
+//		if (planet.getCode().equals("Mercury") && reverse)
+//			System.out.println(planet);
 		List<SkyPointAspect> aspects = synastry.getAspects();
 		for (SkyPointAspect aspect : aspects) {
 			SkyPoint skyPoint = reverse ? aspect.getSkyPoint2() : aspect.getSkyPoint1();
@@ -3061,7 +3067,8 @@ public class PDFExporter {
 		int good = map.get("POSITIVE");
 		int goodh =	map.get("POSITIVE_HIDDEN");
 		int bad = map.get("NEGATIVE");
-		if (bad > 0 && (0 == good + goodh))
+		int badh = map.get("NEGATIVE_HIDDEN");
+		if ((bad + badh > 0) && (0 == good + goodh))
 			res = true;
 		return res;
 	}
