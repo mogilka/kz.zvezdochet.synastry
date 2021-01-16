@@ -677,7 +677,8 @@ public class PDFExporter {
 //			    			}
 					    	if (object.getText() != null)
 					    		section.add(new Paragraph(PDFUtil.removeTags(object.getText(), font)));
-			    			PDFUtil.printGender(section, object, female ? "female" : "male");
+					    	if (doctype != 1)
+					    		PDFUtil.printGender(section, object, female ? "female" : "male");
 			    			PDFUtil.printGender(section, object, female ? "woman" : "man");
 			    			for (String gtype : genderTypes)
 			    				PDFUtil.printGender(section, object, gtype);
@@ -1064,19 +1065,22 @@ public class PDFExporter {
 					SynastryAspectText dict = (SynastryAspectText)model;
 					if (dict != null) {
 						phrase.add(new Paragraph(PDFUtil.removeTags(dict.getText(), font)));
-						Phrase ph = PDFUtil.printGenderCell(dict,
-							reverse ? partner.isFemale() : event.isFemale(),
-							reverse ? partner.isChild() : event.isChild(), false);
-						if (ph != null) {
-							phrase.add(Chunk.NEWLINE);
-							phrase.add(Chunk.NEWLINE);
-							phrase.add(ph);
-						}
-
-						for (String gtype : genderTypes) {
-			    			ph = PDFUtil.printGenderCell(dict, gtype);
-			    			if (ph != null)
+						if (doctype != 1) {
+							Phrase ph = PDFUtil.printGenderCell(dict,
+								reverse ? partner.isFemale() : event.isFemale(),
+								reverse ? partner.isChild() : event.isChild(), false);
+							if (ph != null) {
+								phrase.add(Chunk.NEWLINE);
+								phrase.add(Chunk.NEWLINE);
 								phrase.add(ph);
+							}
+						}
+						for (String gtype : genderTypes) {
+							Phrase ph = PDFUtil.printGenderCell(dict, gtype);
+			    			if (ph != null) {
+								phrase.add(Chunk.NEWLINE);
+								phrase.add(ph);
+			    			}
 						}	
 						Rule rule = EventRules.ruleSynastryAspect(aspect, event);
 						if (rule != null) {
@@ -1834,7 +1838,7 @@ public class PDFExporter {
 			}
 
 			ElementService service = new ElementService();
-			long[] pids = new long[] {19L, 20L, 23L, 24L, 25L};
+			long[] pids = (1 == doctype) ?  new long[] {19L, 20L, 23L, 25L} : new long[] {19L, 20L, 23L, 24L, 25L};
 			for (long pid : pids) {
    				Planet planet = event.getPlanets().get(pid);
    				Planet planet2 = partner.getPlanets().get(pid);
@@ -2139,6 +2143,8 @@ public class PDFExporter {
 		}
 	}
 
+	private String[] love_houses = new String[] {"V_2", "VI_2", "VII"};
+
 	/**
 	 * Генерация планет в домах
 	 * @param doc документ
@@ -2146,10 +2152,6 @@ public class PDFExporter {
 	 * @param synastry синастрия
 	 */
 	private void printPlanetHouses(Document doc, Chapter chapter, Synastry synastry) {
-//		String[] hcodes = new String[] {"I_3", "II", "II_2", "II_3", "III", "III_2", "IV_3", "V", "VI", "VI_3",
-//			"VII_2", "VII_3", "VIII", "VIII_3", "IX", "IX_2", "IX_3", "X", "X_2", "X_3", "XI", "XI_2", "XI_3", "XII"};
-
-//		System.out.println("chapter depth=" + chapter.getDepth() + " numberDepth=" + chapter.getNumberDepth());
 
 		List<Planet> planets = synastry.getPlanetList();
 		List<Planet> planets2 = synastry.getPlanet2List();
@@ -2160,8 +2162,8 @@ public class PDFExporter {
 			for (Planet planet : planets) {
 				House house = (House)planet.getData();
 				if (house != null) {
-//					if (1 == doctype && !Arrays.asList(hcodes).contains(house.getCode()))
-//						continue;
+					if (1 == doctype && Arrays.asList(love_houses).contains(house.getCode()))
+						continue;
 					hplanets.add(planet);
 				}
 			}
@@ -2169,8 +2171,8 @@ public class PDFExporter {
 			for (Planet planet : planets2) {
 				House house = (House)planet.getData();
 				if (house != null) {
-//					if (1 == doctype && !Arrays.asList(hcodes).contains(house.getCode()))
-//						continue;
+					if (1 == doctype && Arrays.asList(love_houses).contains(house.getCode()))
+						continue;
 					boolean rel = false;
 					for (Planet p : hplanets) {
 						if (planet.getId().equals(p.getId())
@@ -2725,6 +2727,9 @@ public class PDFExporter {
 				House house = (House)planet.getData();
 				if (null == house)
 					continue;
+				if (1 == doctype && Arrays.asList(love_houses).contains(house.getCode()))
+					continue;
+
 				SynastryHouseText dict = (SynastryHouseText)hservice.find(planet, house, null);
 				if (null == dict)
 					continue;
@@ -2739,6 +2744,9 @@ public class PDFExporter {
 				House house = (House)planet.getData();
 				if (null == house)
 					continue;
+				if (1 == doctype && Arrays.asList(love_houses).contains(house.getCode()))
+					continue;
+
 				SynastryHouseText dict = (SynastryHouseText)hservice.find(planet, house, null);
 				if (null == dict)
 					continue;
@@ -2764,7 +2772,7 @@ public class PDFExporter {
 	        if (neg > 0)
 		        section.add(new Paragraph("Это слабые стороны вашего союза, которые поставят отношения под угрозу, "
 		        	+ "т.е. станут причиной конфликта и могут оказаться критичными для дальнейшего общения. "
-		        	+ "Чем больше минусов, тем более нужно быть готовы к тому, что отношения не окажутся идиллией:", PDFUtil.getDangerFont()));
+		        	+ "Чем больше минусов, тем более нужно быть готовым к тому, что отношения не окажутся идиллией:", PDFUtil.getDangerFont()));
 		    else {
 		    	Paragraph p = new Paragraph();
 		    	p.add(new Chunk("Явные минусы в вашей паре отсутствуют, значит у вас отличная совместимость. "
