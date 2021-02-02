@@ -144,7 +144,7 @@ public class Synastry extends Model {
 		List<SkyPointAspect> data = new ArrayList<SkyPointAspect>();
 		makeAspects(event, partner, aspects, data);
 		partner.setAspectList(data);
-		makePlanets();
+		initPlanets();
 	}
 
 	/**
@@ -243,13 +243,9 @@ public class Synastry extends Model {
 	}
 
 	/**
-	 * Расчёт аспектов
-	 * @param first первый партнёр
-	 * @param second второй партнёр
-	 * @param aspects список аспектов
-	 * @param data массив аспектов партнёров
+	 * Инициализация планет
 	 */
-	private void makePlanets() {
+	public void initPlanets() {
 		planetList = new ArrayList<Planet>();
 		if (partner.isHousable()) {
 			Collection<Planet> planets = event.getPlanets().values();
