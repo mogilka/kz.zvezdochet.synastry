@@ -58,34 +58,55 @@ public class AgeCalcHandler extends Handler {
 			else
 				aspectype = selaspect.getCode();
 			
-			boolean reverse = agePart.getReverse();
-			int initage = agePart.getInitialAge();
-			int finage = agePart.getFinalAge() + 1;
+			int initage = agePart.getAge();
+			int initage2 = agePart.getAge2();
+			int years = agePart.getYears() + 1;
 
 			//инициализируем аспекты
 			try {
-				aspects = new AspectService().getList();
+				aspects = new AspectService().getMajorList();
 			} catch (DataAccessException e) {
 				e.printStackTrace();
 			}
 
-			for (int age = initage; age < finage; age++) {
-				for (Planet selp : reverse ? planets2 : planets1) {
-					//дирекции планеты к другим планетам
+			for (int age = initage; age < initage + years; age++) {
+				for (Planet selp : planets1) {
+					//дирекции планет первого партнёра к планетам второго
 					if (null == selhouse) {
 						if (selplanet != null && !selplanet.getId().equals(selp.getId()))
 							continue;
-						for (Planet selp2 : reverse ? planets1 : planets2)
-							calc(selp, selp2, age, reverse);
+						for (Planet selp2 : planets2)
+							calc(selp, selp2, age, age, false);
 					}
-					//дирекции планеты к куспидам домов
-					boolean housable = reverse ? event.isHousable() : partner.isHousable();
+					//дирекции планет первого партнёра к куспидам домов второго
+					boolean housable = partner.isHousable();
 					if (housable) {
-						for (Model model2 : reverse ? houses1 : houses2) {
+						for (Model model2 : houses2) {
 							if (selhouse != null && !selhouse.getId().equals(model2.getId()))
 								continue;
 							House selp2 = (House)model2;
-							calc(selp, selp2, age, reverse);
+							calc(selp, selp2, age, age, false);
+						}
+					}
+				}
+
+				int age2 = initage2 + years;
+				for (Planet selp : planets2) {
+					//дирекции планет второго партнёра к планетам первого
+					if (null == selhouse) {
+						if (selplanet != null && !selplanet.getId().equals(selp.getId()))
+							continue;
+						for (Planet selp2 : planets1)
+							calc(selp, selp2, age, age2, true);
+					}
+					//дирекции планет второго партнёра к куспидам домов первого
+					boolean housable = event.isHousable();
+					if (housable) {
+						for (Model model2 : houses1) {
+							if (selhouse != null && !selhouse.getId().equals(model2.getId()))
+								continue;
+							House selp2 = (House)model2;
+							calc(selp, selp2, age, age2, true);
 						}
 					}
 				}
@@ -104,13 +125,14 @@ public class AgeCalcHandler extends Handler {
 	 * Определение аспектной дирекции между небесными точками
 	 * @param point1 первая небесная точка
 	 * @param point2 вторая небесная точка
-	 * @param age возраст
+	 * @param age возраст первого партнёра
+	 * @param age2 возраст текущего партнёра
 	 * @param reverse признак расчёта планет партнёра
 	 */
-	private void calc(SkyPoint point1, SkyPoint point2, int age, boolean reverse) {
+	private void calc(SkyPoint point1, SkyPoint point2, int age, int age2, boolean reverse) {
 		try {
 			//находим угол между точками космограммы с учетом возраста
-			double one = CalcUtil.incrementCoord(point1.getLongitude(), age, true);
+			double one = CalcUtil.incrementCoord(point1.getLongitude(), age2, true);
 			double two = point2.getLongitude();
 			double res = CalcUtil.getDifference(one, two);
 
@@ -136,7 +158,7 @@ public class AgeCalcHandler extends Handler {
 				}
 			}
 		} catch (Exception e) {
-			DialogUtil.alertWarning(point1.getNumber() + ", " + point2.getNumber() + ", " + age);
+			DialogUtil.alertWarning(point1.getNumber() + ", " + point2.getNumber() + ", " + age2);
 			e.printStackTrace();
 		}
 	}

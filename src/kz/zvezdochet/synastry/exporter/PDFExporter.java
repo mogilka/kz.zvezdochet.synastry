@@ -49,18 +49,12 @@ import kz.zvezdochet.analytics.bean.Numerology;
 import kz.zvezdochet.analytics.bean.PlanetHouseText;
 import kz.zvezdochet.analytics.bean.PlanetSignText;
 import kz.zvezdochet.analytics.bean.Rule;
-import kz.zvezdochet.analytics.bean.SynastryAspectText;
-import kz.zvezdochet.analytics.bean.SynastryHouseText;
-import kz.zvezdochet.analytics.bean.SynastryText;
 import kz.zvezdochet.analytics.exporter.EventRules;
 import kz.zvezdochet.analytics.exporter.EventStatistics;
 import kz.zvezdochet.analytics.service.CategoryService;
 import kz.zvezdochet.analytics.service.HouseSignService;
 import kz.zvezdochet.analytics.service.NumerologyService;
 import kz.zvezdochet.analytics.service.PlanetSignService;
-import kz.zvezdochet.analytics.service.SynastryAspectService;
-import kz.zvezdochet.analytics.service.SynastryHouseService;
-import kz.zvezdochet.analytics.service.SynastrySignService;
 import kz.zvezdochet.bean.Aspect;
 import kz.zvezdochet.bean.AspectConfiguration;
 import kz.zvezdochet.bean.AspectType;
@@ -90,8 +84,14 @@ import kz.zvezdochet.service.PlanetService;
 import kz.zvezdochet.service.YinYangService;
 import kz.zvezdochet.synastry.Activator;
 import kz.zvezdochet.synastry.bean.Synastry;
+import kz.zvezdochet.synastry.bean.SynastryAspectText;
 import kz.zvezdochet.synastry.bean.SynastryConfiguration;
+import kz.zvezdochet.synastry.bean.SynastryHouseText;
+import kz.zvezdochet.synastry.bean.SynastryText;
+import kz.zvezdochet.synastry.service.SynastryAspectService;
 import kz.zvezdochet.synastry.service.SynastryConfigurationService;
+import kz.zvezdochet.synastry.service.SynastryHouseService;
+import kz.zvezdochet.synastry.service.SynastrySignService;
 import kz.zvezdochet.util.Cosmogram;
 
 /**
@@ -1611,7 +1611,7 @@ public class PDFExporter {
 		    }
 		    Bar[] bars = items.toArray(new Bar[items.size()]);
 			Section section = PDFUtil.printSection(chapter, "Аспекты отношений", null);
-			section.add(PDFUtil.printBars(writer, "Аспекты отношений", "Аспекты", "Баллы", bars, 500, 300, false, false, true));
+			section.add(PDFUtil.printBars(writer, "Аспекты отношений", null, "Аспекты", "Баллы", bars, 500, 300, false, false, true));
 
 		    int size = items.size();
 		    Map<String, Double> map = new HashMap<>();

@@ -16,7 +16,6 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Spinner;
 
 import kz.zvezdochet.bean.AspectType;
@@ -39,12 +38,13 @@ import kz.zvezdochet.service.PlanetService;
  * @author Natalie Didenko
  */
 public class AgePart extends ModelListView {
-	private Spinner spFrom;
-	private Spinner spTo;
+	private Spinner spAge;
+	private Spinner spAge2;
+	private Spinner spYears;
 	private ComboViewer cvPlanet;
 	private ComboViewer cvHouse;
 	private ComboViewer cvAspect;
-	private Button btReverse;
+	private Button btTerm;
 
 	@Inject
 	public AgePart() {}
@@ -60,14 +60,22 @@ public class AgePart extends ModelListView {
 		grFilter.setText("Поиск");
 
 		Label lb = new Label(grFilter, SWT.NONE);
-		lb.setText("Возраст");
-		spFrom = new Spinner(grFilter, SWT.BORDER);
-		spFrom.setMinimum(0);
-		spFrom.setMaximum(150);
+		lb.setText("Возраст 1");
+		spAge = new Spinner(grFilter, SWT.BORDER);
+		spAge.setMinimum(0);
+		spAge.setMaximum(150);
 
-		spTo = new Spinner(grFilter, SWT.BORDER);
-		spTo.setMinimum(0);
-		spTo.setMaximum(150);
+		lb = new Label(grFilter, SWT.NONE);
+		lb.setText("Возраст 2");
+		spAge2 = new Spinner(grFilter, SWT.BORDER);
+		spAge2.setMinimum(0);
+		spAge2.setMaximum(150);
+
+		lb = new Label(grFilter, SWT.NONE);
+		lb.setText("Период");
+		spYears = new Spinner(grFilter, SWT.BORDER);
+		spYears.setMinimum(0);
+		spYears.setMaximum(10);
 
 		lb = new Label(grFilter, SWT.NONE);
 		lb.setText("Сфера жизни");
@@ -78,23 +86,16 @@ public class AgePart extends ModelListView {
 		lb.setText("Аспекты");
 		cvAspect = new ComboViewer(grFilter, SWT.READ_ONLY | SWT.BORDER);
 
-		btReverse = new Button(grFilter, SWT.BORDER | SWT.CHECK);
+		btTerm = new Button(grFilter, SWT.BORDER | SWT.CHECK);
 		lb = new Label(grFilter, SWT.NONE);
-		lb.setText("Реверс");
-		lb.setToolTipText("Аспекты партнёра к персоне");
-		btReverse.addListener(SWT.Selection, new Listener() {
-			@Override
-			public void handleEvent(org.eclipse.swt.widgets.Event event) {
-				DialogUtil.alertInfo("Проверьте возраст");				
-			}
-		});
+		lb.setText("Термины");
 
-		GridLayoutFactory.swtDefaults().numColumns(10).applyTo(grFilter);
+		GridLayoutFactory.swtDefaults().numColumns(13).applyTo(grFilter);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(grFilter);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).
-			grab(true, false).applyTo(spFrom);
+			grab(true, false).applyTo(spAge);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).
-			grab(true, false).applyTo(spTo);
+			grab(true, false).applyTo(spYears);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).
 			grab(true, false).applyTo(cvPlanet.getCombo());
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).
@@ -102,7 +103,7 @@ public class AgePart extends ModelListView {
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).
 			grab(true, false).applyTo(cvAspect.getCombo());
 		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.CENTER).
-			grab(false, false).applyTo(btReverse);
+			grab(false, false).applyTo(btTerm);
 	}
 
 	@Override
@@ -142,12 +143,9 @@ public class AgePart extends ModelListView {
 	 */
 	public void setEvent(Event event) {
 		this.event = event;
-		int age = spFrom.getSelection();
+		int age = spAge.getSelection();
 		if (age < 1)
-			spFrom.setSelection(0);
-		age = spTo.getSelection();
-		if (age < 1)
-			spTo.setSelection(event.getAge());
+			spAge.setSelection(event.getAge());
 	}
 
 	@Override
@@ -184,10 +182,7 @@ public class AgePart extends ModelListView {
 
 	@Override
 	public boolean check(int mode) {
-		if (spFrom.getSelection() > spTo.getSelection()) {
-			DialogUtil.alertWarning("Укажите правильный период жизни");
-			return false;
-		} else if (null == event) {
+		if (null == event) {
 			DialogUtil.alertWarning("Персона не задана");
 			return false;
 		} else if (null == partner) {
@@ -198,19 +193,27 @@ public class AgePart extends ModelListView {
 	}
 
 	/**
-	 * Возвращает выбранный начальный возраст
+	 * Возвращает выбранный возраст первого партнёра
 	 * @return начальный возраст
 	 */
-	public int getInitialAge() {
-		return spFrom.getSelection();
+	public int getAge() {
+		return spAge.getSelection();
 	}
 
 	/**
-	 * Возвращает выбранный конечный возраст
-	 * @return конечный возраст
+	 * Возвращает выбранный возраст второго партнёра
+	 * @return начальный возраст
 	 */
-	public int getFinalAge() {
-		return spTo.getSelection();
+	public int getAge2() {
+		return spAge2.getSelection();
+	}
+
+	/**
+	 * Возвращает выбранный период лет
+	 * @return число лет прогноза
+	 */
+	public int getYears() {
+		return spYears.getSelection();
 	}
 
 	/**
@@ -255,14 +258,6 @@ public class AgePart extends ModelListView {
 		return null;
 	}
 
-	/**
-	 * Возвращает выбранное направление аспектов
-	 * @return true|false аспекты к партнёру|персоне
-	 */
-	public boolean getReverse() {
-		return btReverse.getSelection();
-	}
-
 	@Override
 	public Model createModel() {
 		return null;
@@ -283,5 +278,15 @@ public class AgePart extends ModelListView {
 	 */
 	public Event getPartner() {
 		return partner;
+	}
+
+	/**
+	 * Определяем тип отчёта по выделению пункта "Астрологические термины":
+	 * 	true - делаем отчёт гороскопа с указанием названий планет, аспектов и других терминов
+	 * 	false - пишем человекопонятные заменители вместо терминов
+	 * @return
+	 */
+	public boolean isTerm() {
+		return btTerm.getSelection();
 	}
 }
