@@ -26,8 +26,6 @@ import com.itextpdf.text.Section;
 import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfWriter;
 
-import kz.zvezdochet.analytics.bean.Rule;
-import kz.zvezdochet.analytics.exporter.EventRules;
 import kz.zvezdochet.bean.AspectType;
 import kz.zvezdochet.bean.Event;
 import kz.zvezdochet.bean.House;
@@ -69,8 +67,10 @@ public class AgeSaveHandler extends Handler {
 
 	@Execute
 	public void execute(@Active MPart activePart) {
+		updateStatus("Экспорт парного прогноза", false);
 		AgePart agePart = (AgePart)activePart.getObject();
 		if (!agePart.check(0)) return;
+
 		int initage = agePart.getAge();
 		int years = agePart.getYears();
 		List<SkyPointAspect> spas = (List<SkyPointAspect>)agePart.getData();
@@ -167,6 +167,7 @@ public class AgeSaveHandler extends Handler {
 
 				String code = spa.getAspect().getType().getCode();
 				if (code.equals("NEUTRAL") || code.equals("NEGATIVE") || code.equals("POSITIVE")) {
+					//формируем список событий для толкования
 					if (isHouse) {
 						if (code.equals("NEUTRAL")) {
 							List<SkyPointAspect> list = agemap.get(0);
@@ -176,6 +177,8 @@ public class AgeSaveHandler extends Handler {
 						List<SkyPointAspect> list = agemap.get(1);
 						list.add(spa);
 					}
+
+					//формируем статистику событий по всему периоду
 					double point = 0;
 					if (code.equals("NEUTRAL")) {
 						if (pcode.equals("Lilith") || pcode.equals("Kethu")) {
@@ -422,19 +425,18 @@ public class AgeSaveHandler extends Handler {
 				AspectType type = spa.getAspect().getType();
 				Planet planet = (Planet)spa.getSkyPoint1();
 				SkyPoint skyPoint = spa.getSkyPoint2();
+				boolean reverse = spa.isRetro();
 
 				if (skyPoint instanceof House) {
-					if (!spa.getAspect().getCode().equals("CONJUNCTION"))
-						continue;
 					House house = (House)skyPoint;
-					SynastryHouseText dirText = (SynastryHouseText)service.find(planet, house, type);
+					SynastryHouseText dirText = (SynastryHouseText)service.find(planet, house, null);
 
 					String text = "";
 					if (term)
 						text = planet.getName() + " " + type.getSymbol() + " " + house.getDesignation() + " дом";
 					else {
-						String hname = spa.isRetro() ? name1 : name2;
-						String pname = spa.isRetro() ? name2 : name1;
+						String hname = reverse ? name1 : name2;
+						String pname = reverse ? name2 : name1;
 	    				text = hname + "-" + house.getSynastry() + " " + type.getSymbol() + " " + pname + "-" + planet.getShortName();
 					}
 					section.addSection(new Paragraph(text, fonth5));
@@ -453,30 +455,43 @@ public class AgeSaveHandler extends Handler {
 					if (dirText != null) {
 						text = dirText.getDescription();
 						if (text != null) {
+					    	if (!reverse)
+						    	section.add(new Paragraph("Толкование следует воспринимать так, как будто оно адресовано к персоне «" + name2 + "»", PDFUtil.getWarningFont()));
 							String typeColor = type.getFontColor();
 							BaseColor color = PDFUtil.htmlColor2Base(typeColor);
 							section.add(new Paragraph(PDFUtil.removeTags(text, new Font(baseFont, 12, Font.NORMAL, color))));
-							PDFUtil.printGender(section, dirText, female, false, true);
+							section.add(Chunk.NEWLINE);
 						}
 					}
-					Rule rule = EventRules.ruleHouseDirection(spa, female);
-					if (rule != null)
-						section.add(new Paragraph(PDFUtil.removeTags(rule.getText(), font)));
 
 				} else if (skyPoint instanceof Planet) {
 					Planet planet2 = (Planet)skyPoint;
-					String text = term
-						? planet.getName() + " " + type.getSymbol() + " " + planet2.getName()
-						: planet.getShortName() + " " + type.getSymbol() + " " + planet2.getShortName();
+    				boolean preverse = planet.getNumber() > planet2.getNumber();
+    				String text = "";
+    				if (term)
+						text = planet.getName() + " " + type.getSymbol() + " " + planet2.getName();
+    				else {
+    					String pname = "", pname2 = "";
+	    				if (reverse) {
+							pname = preverse ? name1 + "-" + planet2.getShortName() : name2 + "-" + planet.getShortName();
+		    				pname2 = preverse ? name2 + "-" + planet.getShortName() : name1 + "-" + planet2.getShortName();
+	    				} else {
+							pname = preverse ? name2 + "-" + planet2.getShortName() : name1 + "-" + planet.getShortName();
+		    				pname2 = preverse ? name1 + "-" + planet.getShortName() : name2 + "-" + planet2.getShortName();
+	    				}
+						text = pname + " " + type.getSymbol() + " " + pname2;
+    				}
     				section.addSection(new Paragraph(text, fonth5));
-					List<Model> texts = servicea.finds(spa);
+
+    				if (29 == planet.getId() && 26 == planet2.getId())
+    					System.out.println(spa);
+					List<Model> texts = servicea.finds(spa, preverse);
 					if (!texts.isEmpty())
 						for (Model model : texts) {
 							SynastryAspectText dirText = (SynastryAspectText)model;
 							if (dirText != null) {
 								text = dirText.getDescription();
-								if ((null == text || text.isEmpty())
-										&& dirText.getAspect() != null)
+								if (null == text || text.isEmpty())
 									continue;
 							}
 
@@ -495,12 +510,18 @@ public class AgeSaveHandler extends Handler {
 			    				section.add(p);
 			    			}
 							if (dirText != null) {
-								text = dirText.getText();
+								text = dirText.getDescription();
 								if (text != null) {
+							    	if (null == dirText.getAspect().getId()
+							    			&& ((preverse && !reverse)
+							    				|| (reverse && planet.getNumber() < planet2.getNumber())))
+								    	section.add(new Paragraph("Толкование следует воспринимать так, как будто оно адресовано к персоне «" + name2 + "»", PDFUtil.getWarningFont()));
 					    			String typeColor = type.getFontColor();
 									BaseColor color = PDFUtil.htmlColor2Base(typeColor);
 									section.add(new Paragraph(PDFUtil.removeTags(text, new Font(baseFont, 12, Font.NORMAL, color))));
-									PDFUtil.printGender(section, dirText, female, false, true);
+//									for (String gtype : genderTypes)
+//										PDFUtil.printGender(section, dirText, gtype);
+									section.add(Chunk.NEWLINE);
 								}
 							}
 						}
