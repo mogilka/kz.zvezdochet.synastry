@@ -14,19 +14,6 @@ public class SynastryAspectText extends PlanetAspectText {
 
 	public SynastryAspectText() {}
 
-	/**
-	 * Толкование для синастрии
-	 */
-	private String description;
-
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
 	@Override
 	public ModelService getService() {
 		return new SynastryAspectService();

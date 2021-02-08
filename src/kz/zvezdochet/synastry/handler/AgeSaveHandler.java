@@ -34,6 +34,7 @@ import kz.zvezdochet.bean.SkyPoint;
 import kz.zvezdochet.bean.SkyPointAspect;
 import kz.zvezdochet.core.bean.Model;
 import kz.zvezdochet.core.handler.Handler;
+import kz.zvezdochet.core.ui.util.DialogUtil;
 import kz.zvezdochet.core.util.CoreUtil;
 import kz.zvezdochet.core.util.DateUtil;
 import kz.zvezdochet.core.util.PlatformUtil;
@@ -42,11 +43,11 @@ import kz.zvezdochet.export.handler.PageEventHandler;
 import kz.zvezdochet.export.util.PDFUtil;
 import kz.zvezdochet.service.HouseService;
 import kz.zvezdochet.synastry.Activator;
-import kz.zvezdochet.synastry.bean.SynastryAspectText;
-import kz.zvezdochet.synastry.bean.SynastryHouseText;
+import kz.zvezdochet.synastry.bean.DirectionAspectText;
+import kz.zvezdochet.synastry.bean.DirectionHouseText;
 import kz.zvezdochet.synastry.part.AgePart;
-import kz.zvezdochet.synastry.service.SynastryAspectService;
-import kz.zvezdochet.synastry.service.SynastryHouseService;
+import kz.zvezdochet.synastry.service.DirectionAspectService;
+import kz.zvezdochet.synastry.service.DirectionHouseService;
 
 /**
  * Сохранение дирекций синастрии в файл
@@ -55,6 +56,12 @@ import kz.zvezdochet.synastry.service.SynastryHouseService;
 public class AgeSaveHandler extends Handler {
 	private BaseFont baseFont;
 	private boolean term = false;
+
+	/**
+	 * Используемые типы толкований
+	 * love|deal|family любовный|партнёрский|семейный
+	 */
+	private String[] genderTypes = {};
 
 	public AgeSaveHandler() {
 		super();
@@ -71,8 +78,17 @@ public class AgeSaveHandler extends Handler {
 		AgePart agePart = (AgePart)activePart.getObject();
 		if (!agePart.check(0)) return;
 
+		final int choice = DialogUtil.alertQuestion("Вопрос", "Выберите тип гороскопа:", new String[] {"Любовный", "Партнёрский", "Семейный"});
+		if (choice > 1)
+			genderTypes = new String[] {"family"};
+		else if (choice > 0)
+			genderTypes = new String[] {"deal"};
+		else
+			genderTypes = new String[] {"love", "family"};
+
 		int initage = agePart.getAge();
 		int years = agePart.getYears();
+		@SuppressWarnings("unchecked")
 		List<SkyPointAspect> spas = (List<SkyPointAspect>)agePart.getData();
 		term = agePart.isTerm();
 
@@ -96,11 +112,16 @@ public class AgeSaveHandler extends Handler {
 			chapter.setNumberDepth(0);
 
 			//шапка
-	        int ages = years + 1;
+	        int ages = years;
 			String text = event.getCallname() + " – " + partner.getCallname();
 			text += ": прогноз на " + CoreUtil.getAgeString(ages);
 			Font font = PDFUtil.getRegularFont();
 			Paragraph p = new Paragraph(text, font);
+	        p.setAlignment(Element.ALIGN_CENTER);
+			chapter.add(p);
+
+			text = "Тип прогноза: " + (choice > 1 ? "семейный" : choice > 0 ? "партнёрский" : "любовный");
+			p = new Paragraph(text, font);
 	        p.setAlignment(Element.ALIGN_CENTER);
 			chapter.add(p);
 
@@ -119,9 +140,8 @@ public class AgeSaveHandler extends Handler {
 	        p.add(chunk);
 	        chapter.add(p);
 
-	        chapter.add(new Paragraph("Данный прогноз не содержит конкретных дат, "
-	        	+ "но описывает самые значительные тенденции ваших отношений в ближайшие " + CoreUtil.getAgeString(ages)
-        		+ " независимо от переездов и местоположения. Ориентир идёт на ваш возраст.", font));
+	        chapter.add(new Paragraph("Данный прогноз описывает самые значительные тенденции ваших отношений в ближайшие " + CoreUtil.getAgeString(ages)
+        		+ ". Ориентир идёт на ваш возраст.", font));
 			Font red = PDFUtil.getDangerFont();
 			chapter.add(new Paragraph("Максимальная погрешность прогноза ±2 месяца.", red));
 
@@ -232,20 +252,19 @@ public class AgeSaveHandler extends Handler {
 			chapter.add(new Paragraph("Примечание:", bold));
 			com.itextpdf.text.List list = new com.itextpdf.text.List(false, false, 10);
 	        ListItem li = new ListItem();
-	        li.add(new Chunk("Чёрным цветом выделены важные тенденции, которые указывают на основополагающие события периода, - это самое важное, что с вами произойдёт. "
+	        li.add(new Chunk("Чёрным цветом выделено самое важное, что с вами произойдёт. "
 	        	+ "Эти тенденции могут сохраняться в течение двух лет.", font));
 	        list.add(li);
 
 			Font green = PDFUtil.getSuccessFont();
 			li = new ListItem();
 	        li.add(new Chunk("Зелёным цветом выделены позитивные тенденции. "
-	        	+ "К ним относятся события, которые сами по себе удачно складываются " 
-	        	+ "и представляют собой благоприятные возможности.", green));
+	        	+ "К ним относятся события, которые сами по себе удачно сложатся.", green));
 	        list.add(li);
 
 			li = new ListItem();
 	        li.add(new Chunk("Красным цветом выделены негативные тенденции, которые вызовут конфликт. "
-	        	+ "От этих сфер жизни не нужно ждать многого, но, зная заранее о возможном напряжении, вы сможете его смягчить.", red));
+	        	+ "От этих сфер жизни не следует ждать многого, но, заранее зная о возможном напряжении, вы сможете его смягчить.", red));
 	        list.add(li);
 
 			li = new ListItem();
@@ -276,15 +295,17 @@ public class AgeSaveHandler extends Handler {
 				Section section = PDFUtil.printSection(chapter, "Диаграмма " + agestr, null);
 				list = new com.itextpdf.text.List(false, false, 10);
 				li = new ListItem();
-		        li.add(new Chunk("Показатели выше нуля указывают на успех и лёгкость", new Font(baseFont, 12, Font.NORMAL, new BaseColor(0, 102, 102))));
+		        li.add(new Chunk("Показатели выше нуля указывают на успех и лёгкость. "
+		        	+ "К ним относятся позитивные толкования, приведённые в данном разделе.", new Font(baseFont, 12, Font.NORMAL, new BaseColor(0, 102, 102))));
 		        list.add(li);
 		
 				li = new ListItem();
-		        li.add(new Chunk("Показатели на нуле указывают на нейтральность ситуации", font));
+		        li.add(new Chunk("Показатели на нуле указывают на нейтральность ситуации.", font));
 		        list.add(li);
 		
 				li = new ListItem();
-		        li.add(new Chunk("Показатели ниже нуля указывают на трудности и напряжение", new Font(baseFont, 12, Font.NORMAL, new BaseColor(102, 0, 51))));
+		        li.add(new Chunk("Показатели ниже нуля указывают на трудности и напряжение. "
+		        	+ "К ним относятся негативные толкования, приведённые в данном разделе.", new Font(baseFont, 12, Font.NORMAL, new BaseColor(102, 0, 51))));
 		        list.add(li);
 		        section.add(list);
 		        section.add(Chunk.NEWLINE);
@@ -302,7 +323,7 @@ public class AgeSaveHandler extends Handler {
 					bar.setCategory(age + "");
 					items[++i] = bar;
 				}
-				section.add(PDFUtil.printBars(writer, name2, "Сферы жизни партнёра, на которые вы повлияете в течение года", "Сферы жизни", "Баллы", items, 500, 300, false, false, false));
+				section.add(PDFUtil.printBars(writer, name2, "Сферы жизни партнёра, на которые вы повлияете в течение года", "Сферы жизни", "Баллы", items, 500, 250, false, false, false));
 
 				//второй партнёр
 				mapa = seriesa2.get(age);
@@ -317,7 +338,7 @@ public class AgeSaveHandler extends Handler {
 					bar.setCategory(age + "");
 					items[++i] = bar;
 				}
-				section.add(PDFUtil.printBars(writer, name1, "Ваши сферы жизни, на которые повлияет партнёр", "Сферы жизни", "Баллы", items, 500, 300, false, false, false));
+				section.add(PDFUtil.printBars(writer, name1, "Ваши сферы жизни, на которые повлияет партнёр", "Сферы жизни", "Баллы", items, 500, 250, false, false, false));
 				chapter.add(Chunk.NEXTPAGE);
 
 				for (Map.Entry<Integer, List<SkyPointAspect>> subentry : agemap.entrySet())
@@ -393,7 +414,6 @@ public class AgeSaveHandler extends Handler {
 			if (spas.isEmpty())
 				return null;
 
-			Font font = PDFUtil.getRegularFont();
 			Font grayfont = PDFUtil.getAnnotationFont(false);
 			String header = "";
 
@@ -418,8 +438,8 @@ public class AgeSaveHandler extends Handler {
 			boolean female = event.isFemale();
 			Font fonth5 = PDFUtil.getHeaderFont();
 
-			SynastryHouseService service = new SynastryHouseService();
-			SynastryAspectService servicea = new SynastryAspectService();
+			DirectionHouseService service = new DirectionHouseService();
+			DirectionAspectService servicea = new DirectionAspectService();
 
 			for (SkyPointAspect spa : spas) {
 				AspectType type = spa.getAspect().getType();
@@ -429,7 +449,7 @@ public class AgeSaveHandler extends Handler {
 
 				if (skyPoint instanceof House) {
 					House house = (House)skyPoint;
-					SynastryHouseText dirText = (SynastryHouseText)service.find(planet, house, null);
+					DirectionHouseText dirText = (DirectionHouseText)service.find(planet, house, type);
 
 					String text = "";
 					if (term)
@@ -453,13 +473,16 @@ public class AgeSaveHandler extends Handler {
 	    				section.add(p);
 					}
 					if (dirText != null) {
-						text = dirText.getDescription();
+						text = dirText.getText();
 						if (text != null) {
 					    	if (!reverse)
 						    	section.add(new Paragraph("Толкование следует воспринимать так, как будто оно адресовано к персоне «" + name2 + "»", PDFUtil.getWarningFont()));
 							String typeColor = type.getFontColor();
 							BaseColor color = PDFUtil.htmlColor2Base(typeColor);
 							section.add(new Paragraph(PDFUtil.removeTags(text, new Font(baseFont, 12, Font.NORMAL, color))));
+							PDFUtil.printGender(section, dirText, female, false, true);
+							for (String gtype : genderTypes)
+								PDFUtil.printGender(section, dirText, gtype);
 							section.add(Chunk.NEWLINE);
 						}
 					}
@@ -483,14 +506,16 @@ public class AgeSaveHandler extends Handler {
     				}
     				section.addSection(new Paragraph(text, fonth5));
 
-    				if (29 == planet.getId() && 26 == planet2.getId())
-    					System.out.println(spa);
+//    				if (25 == planet.getId() && 30 == planet2.getId())
+//    					System.out.println(age + ": " + spa);
+//    				if (30 == planet.getId() && 25 == planet2.getId())
+//    					System.out.println(age + ": " + spa);
 					List<Model> texts = servicea.finds(spa, preverse);
 					if (!texts.isEmpty())
 						for (Model model : texts) {
-							SynastryAspectText dirText = (SynastryAspectText)model;
+							DirectionAspectText dirText = (DirectionAspectText)model;
 							if (dirText != null) {
-								text = dirText.getDescription();
+								text = dirText.getText();
 								if (null == text || text.isEmpty())
 									continue;
 							}
@@ -510,7 +535,7 @@ public class AgeSaveHandler extends Handler {
 			    				section.add(p);
 			    			}
 							if (dirText != null) {
-								text = dirText.getDescription();
+								text = dirText.getText();
 								if (text != null) {
 							    	if (null == dirText.getAspect().getId()
 							    			&& ((preverse && !reverse)
@@ -519,8 +544,9 @@ public class AgeSaveHandler extends Handler {
 					    			String typeColor = type.getFontColor();
 									BaseColor color = PDFUtil.htmlColor2Base(typeColor);
 									section.add(new Paragraph(PDFUtil.removeTags(text, new Font(baseFont, 12, Font.NORMAL, color))));
-//									for (String gtype : genderTypes)
-//										PDFUtil.printGender(section, dirText, gtype);
+									PDFUtil.printGender(section, dirText, female, false, true);
+									for (String gtype : genderTypes)
+										PDFUtil.printGender(section, dirText, gtype);
 									section.add(Chunk.NEWLINE);
 								}
 							}

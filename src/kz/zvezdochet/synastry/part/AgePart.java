@@ -74,7 +74,7 @@ public class AgePart extends ModelListView {
 		lb = new Label(grFilter, SWT.NONE);
 		lb.setText("Период");
 		spYears = new Spinner(grFilter, SWT.BORDER);
-		spYears.setMinimum(0);
+		spYears.setMinimum(1);
 		spYears.setMaximum(10);
 
 		lb = new Label(grFilter, SWT.NONE);

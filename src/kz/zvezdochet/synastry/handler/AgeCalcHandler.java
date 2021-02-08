@@ -33,6 +33,7 @@ public class AgeCalcHandler extends Handler {
 	List<Model> aspects = null;
 	Event event;
 	Event partner;
+	int initage, finage;
 
 	@Execute
 	public void execute(@Active MPart activePart) {
@@ -50,17 +51,59 @@ public class AgeCalcHandler extends Handler {
 			Collection<House> houses2 = partner.getHouses().values();
 			
 			updateStatus("Расчёт дирекций на возраст", false);
+			List<Planet> selplanets1 = new ArrayList<Planet>();
 			Planet selplanet = agePart.getPlanet();
+			for (Planet planet : planets1) {
+				if (selplanet != null) {
+					if (selplanet.getId().equals(planet.getId())) {
+						selplanets1.add(planet);
+						break;
+					}
+				} else
+					selplanets1.add(planet);
+			}
+			List<Planet> selplanets2 = new ArrayList<Planet>();
+			for (Planet planet : planets2) {
+				if (selplanet != null) {
+					if (selplanet.getId().equals(planet.getId())) {
+						selplanets2.add(planet);
+						break;
+					}
+				} else
+					selplanets2.add(planet);
+			}
+
+			List<House> selhouses1 = new ArrayList<House>();
 			House selhouse = agePart.getHouse();
+			if (event.isHousable()) {
+				if (selhouse != null)
+					for (House house : houses1) {
+						if (selhouse.getId().equals(house.getId()))
+							selhouses1.add(house);
+					}
+				else
+					selhouses1.addAll(houses1);
+			}
+			List<House> selhouses2 = new ArrayList<House>();
+			if (partner.isHousable()) {
+				if (selhouse != null)
+					for (House house : houses2) {
+						if (selhouse.getId().equals(house.getId()))
+							selhouses2.add(house);
+					}
+				else
+					selhouses2.addAll(houses2);
+			}
+
 			AspectType selaspect = agePart.getAspect();
 			if (null == selaspect)
 				aspectype = null;
 			else
 				aspectype = selaspect.getCode();
 			
-			int initage = agePart.getAge();
+			initage = agePart.getAge();
+			finage = initage + agePart.getYears() - 1;
 			int initage2 = agePart.getAge2();
-			int years = agePart.getYears() + 1;
 
 			//инициализируем аспекты
 			try {
@@ -69,46 +112,56 @@ public class AgeCalcHandler extends Handler {
 				e.printStackTrace();
 			}
 
-			for (int age = initage; age < initage + years; age++) {
+			int i = -1;
+			for (int age = initage; age <= finage; age++) {
 				for (Planet selp : planets1) {
 					//дирекции планет первого партнёра к планетам второго
 					if (null == selhouse) {
-						if (selplanet != null && !selplanet.getId().equals(selp.getId()))
-							continue;
-						for (Planet selp2 : planets2)
-							calc(selp, selp2, age, age, false);
-					}
-					//дирекции планет первого партнёра к куспидам домов второго
-					boolean housable = partner.isHousable();
-					if (housable) {
-						for (Model model2 : houses2) {
-							if (selhouse != null && !selhouse.getId().equals(model2.getId()))
-								continue;
-							House selp2 = (House)model2;
-							calc(selp, selp2, age, age, false);
+						boolean match1 = (null == selplanet);
+						if (selplanet != null && selplanet.getId().equals(selp.getId()))
+							match1 = true;
+
+						for (Planet selp2 : planets2) {
+							boolean match2 = (null == selplanet);
+							if (selplanet != null && selp2.getId().equals(selplanet.getId()))
+								match2 = true;
+							if (match1 || match2)
+								calc(selp, selp2, age, age, false);
 						}
 					}
 				}
+				//дирекции планет первого партнёра к куспидам домов второго
+				boolean housable = partner.isHousable();
+				if (housable) {
+					for (House selp2 : selhouses2)
+						for (Planet selp : selplanets1)
+							calc(selp, selp2, age, age, false);
+				}
 
-				int age2 = initage2 + years;
+				int age2 = initage2 + (++i);
+//				System.out.println(age + "-" + age2);
 				for (Planet selp : planets2) {
 					//дирекции планет второго партнёра к планетам первого
 					if (null == selhouse) {
-						if (selplanet != null && !selplanet.getId().equals(selp.getId()))
-							continue;
-						for (Planet selp2 : planets1)
-							calc(selp, selp2, age, age2, true);
-					}
-					//дирекции планет второго партнёра к куспидам домов первого
-					boolean housable = event.isHousable();
-					if (housable) {
-						for (Model model2 : houses1) {
-							if (selhouse != null && !selhouse.getId().equals(model2.getId()))
-								continue;
-							House selp2 = (House)model2;
-							calc(selp, selp2, age, age2, true);
+						boolean match1 = (null == selplanet);
+						if (selplanet != null && selplanet.getId().equals(selp.getId()))
+							match1 = true;
+
+						for (Planet selp2 : planets1) {
+							boolean match2 = (null == selplanet);
+							if (selplanet != null && selp2.getId().equals(selplanet.getId()))
+								match2 = true;
+							if (match1 || match2)
+								calc(selp, selp2, age, age2, true);
 						}
 					}
+				}
+				//дирекции планет второго партнёра к куспидам домов первого
+				housable = event.isHousable();
+				if (housable) {
+					for (House selp2 : selhouses1)
+						for (Planet selp : selplanets1)
+							calc(selp, selp2, age, age2, true);
 				}
 			}
 			updateStatus("Расчёт дирекций завершён", false);
@@ -136,16 +189,42 @@ public class AgeCalcHandler extends Handler {
 			double two = point2.getLongitude();
 			double res = CalcUtil.getDifference(one, two);
 
+			//искусственно устанавливаем нарастающую оппозицию,
+			//чтобы она синхронизировалась с соответствующим ей соединением в этом возрасте
+			if (point2 instanceof House) {
+				if (res >= 179 && res < 180)
+					++res;
+			} else if (point1.getCode().equals("Kethu") || point2.getCode().equals("Kethu")) {
+				++res;
+			}
+
 			//определяем, является ли аспект стандартным
 			for (Model realasp : aspects) {
 				Aspect a = (Aspect)realasp;
 				if (aspectype != null && !aspectype.equals(a.getType().getCode()))
 					continue;
 
-				if (a.getPlanetid() > 0 && a.getPlanetid() != point1.getId())
+				if (a.getPlanetid() > 0)
 					continue;
 
 				if (a.isExact(res)) {
+					String acode = a.getCode();
+                    if (acode.equals("OPPOSITION")) {
+    	                if (point1.getCode().equals("Rakhu") || point2.getCode().equals("Rakhu"))
+	                        continue;
+    	                if (point1.getCode().equals("Kethu") || point2.getCode().equals("Kethu"))
+	                        continue;
+                    }
+
+					if (point2 instanceof House && CalcUtil.compareAngles(one, two)) {
+						++res;
+						--age;
+					}
+					if (age < 0)
+						continue;
+					if (age < initage || age > finage)
+						continue;
+
 					SkyPointAspect aspect = new SkyPointAspect();
 					aspect.setSkyPoint1(point1);
 					aspect.setSkyPoint2(point2);

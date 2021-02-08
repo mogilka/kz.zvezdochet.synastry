@@ -29,17 +29,4 @@ public class SynastryHouseText extends PlanetHouseText {
 	public void setLevel(int level) {
 		this.level = level;
 	}
-
-	/**
-	 * Толкование для синастрии
-	 */
-	private String description;
-
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
 }

@@ -4,7 +4,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import kz.zvezdochet.analytics.service.PlanetHouseService;
 import kz.zvezdochet.bean.AspectType;
 import kz.zvezdochet.bean.House;
 import kz.zvezdochet.bean.Planet;
@@ -12,33 +11,25 @@ import kz.zvezdochet.core.bean.Model;
 import kz.zvezdochet.core.service.DataAccessException;
 import kz.zvezdochet.core.tool.Connector;
 import kz.zvezdochet.service.AspectTypeService;
-import kz.zvezdochet.synastry.bean.SynastryHouseText;
+import kz.zvezdochet.synastry.bean.DirectionHouseText;
 
 /**
- * Сервис планет в синастрических домах
+ * Сервис дирекций синастрических домов
  * @author Natalie Didenko
  */
-public class SynastryHouseService extends PlanetHouseService {
+public class DirectionHouseService extends SynastryHouseService {
 
-	public SynastryHouseService() {
-		tableName = "synastryhouses";
+	public DirectionHouseService() {
+		tableName = "synastrydirections";
 	}
 
 	@Override
 	public Model create() {
-		return new SynastryHouseText();
-	}
-
-	@Override
-	public SynastryHouseText init(ResultSet rs, Model model) throws DataAccessException, SQLException {
-		SynastryHouseText dict = (model != null) ? (SynastryHouseText)model : (SynastryHouseText)create();
-		dict = (SynastryHouseText)super.init(rs, model);
-		dict.setLevel(rs.getInt("level"));
-		return dict;
+		return new DirectionHouseText();
 	}
 
 	/**
-	 * Поиск толкования планеты в доме
+	 * Поиск дирекции планеты к дому
 	 * @param planet планета
 	 * @param house астрологический дом
 	 * @param aspectType тип аспекта
@@ -51,19 +42,16 @@ public class SynastryHouseService extends PlanetHouseService {
 		String sql;
 
 		AspectTypeService service = new AspectTypeService();
-		if (null == aspectType) {
-			if (planet.getCode().equals("Lilith") || planet.getCode().equals("Kethu"))
+		if (aspectType.getCode().equals("NEUTRAL")
+				&& (planet.getCode().equals("Lilith")
+					|| planet.getCode().equals("Kethu")))
 				aspectType = (AspectType)service.find("NEGATIVE");
-			else
-				aspectType = (AspectType)service.find("POSITIVE");
-		}		
 		try {
 			sql = "select * from " + tableName + 
 				" where typeid = " + aspectType.getId() +
 				" and planetid = " + planet.getId() +
 				" and houseid = " + house.getId();
 			ps = Connector.getInstance().getConnection().prepareStatement(sql);
-//			System.out.println(planet + " " + house);
 			rs = ps.executeQuery();
 			if (rs.next())
 				return init(rs, create());

@@ -29,8 +29,7 @@ public class SynastryAspectService extends PlanetAspectService {
 	@Override
 	public SynastryAspectText init(ResultSet rs, Model model) throws DataAccessException, SQLException {
 		SynastryAspectText dict = (model != null) ? (SynastryAspectText)model : (SynastryAspectText)create();
-		dict = (SynastryAspectText)super.init(rs, model);
-		dict.setDescription(rs.getString("description"));
+		dict = (SynastryAspectText)super.init(rs, dict);
 		dict.setLevel(rs.getInt("level"));
 		return dict;
 	}
@@ -70,13 +69,14 @@ public class SynastryAspectService extends PlanetAspectService {
 					" and (planet1id = ? and planet2id = ?)" +
 					" and (aspectid is null" +
 						" or aspectid = ?)"
-				+ "order by aspectid";
+				+ " order by aspectid";
 			ps = Connector.getInstance().getConnection().prepareStatement(sql);
 			ps.setLong(1, type.getId());
 			ps.setLong(2, planet.getId());
 			ps.setLong(3, planet2.getId());
 			ps.setLong(4, null == acode ? java.sql.Types.NULL : aspect.getAspect().getId());
-//			System.out.println(ps);
+//			if (29 == planet.getId() && 26 == planet2.getId())
+//				System.out.println(ps);
 			rs = ps.executeQuery();
 			while (rs.next())
 		        list.add(init(rs, null));
