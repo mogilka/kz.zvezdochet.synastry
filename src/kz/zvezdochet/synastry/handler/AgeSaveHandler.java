@@ -63,6 +63,12 @@ public class AgeSaveHandler extends Handler {
 	 */
 	private String[] genderTypes = {};
 
+	/**
+	 * Тип гороскопа совместимости
+	 * 0|1|2 любовный|партнёрский|семейный
+	 */
+	private int doctype = 0;
+
 	public AgeSaveHandler() {
 		super();
 		try {
@@ -78,10 +84,10 @@ public class AgeSaveHandler extends Handler {
 		AgePart agePart = (AgePart)activePart.getObject();
 		if (!agePart.check(0)) return;
 
-		final int choice = DialogUtil.alertQuestion("Вопрос", "Выберите тип гороскопа:", new String[] {"Любовный", "Партнёрский", "Семейный"});
-		if (choice > 1)
+		doctype = DialogUtil.alertQuestion("Вопрос", "Выберите тип гороскопа:", new String[] {"Любовный", "Партнёрский", "Семейный"});
+		if (doctype > 1)
 			genderTypes = new String[] {"family"};
-		else if (choice > 0)
+		else if (doctype > 0)
 			genderTypes = new String[] {"deal"};
 		else
 			genderTypes = new String[] {"love", "family"};
@@ -120,7 +126,7 @@ public class AgeSaveHandler extends Handler {
 	        p.setAlignment(Element.ALIGN_CENTER);
 			chapter.add(p);
 
-			text = "Тип прогноза: " + (choice > 1 ? "семейный" : choice > 0 ? "партнёрский" : "любовный");
+			text = "Тип прогноза: " + (doctype > 1 ? "семейный" : doctype > 0 ? "партнёрский" : "любовный");
 			p = new Paragraph(text, font);
 	        p.setAlignment(Element.ALIGN_CENTER);
 			chapter.add(p);
@@ -141,7 +147,7 @@ public class AgeSaveHandler extends Handler {
 	        chapter.add(p);
 
 	        chapter.add(new Paragraph("Данный прогноз описывает самые значительные тенденции ваших отношений в ближайшие " + CoreUtil.getAgeString(ages)
-        		+ ". Ориентир идёт на ваш возраст.", font));
+        		+ ". Здесь описаны события, которые не произошли бы у вас в жизни без вашего партнёра. В качестве ориентира периодов указан ваш возраст.", font));
 			Font red = PDFUtil.getDangerFont();
 			chapter.add(new Paragraph("Максимальная погрешность прогноза ±2 месяца.", red));
 
@@ -162,20 +168,20 @@ public class AgeSaveHandler extends Handler {
 			for (SkyPointAspect spa : spas) {
 				Planet planet = (Planet)spa.getSkyPoint1();
 				String pcode = planet.getCode();
+				String pcode2 = spa.getSkyPoint2().getCode();
 				boolean isHouse = spa.getSkyPoint2() instanceof House;
 
 				if (spa.getAspect().getCode().equals("OPPOSITION")) {
 					if (isHouse) {
 						if	(pcode.equals("Kethu") || pcode.equals("Rakhu"))
 							continue;
-					} else {
-						Planet planet2 = (Planet)spa.getSkyPoint2();
-						String pcode2 = planet2.getCode();
-						if	(pcode.equals("Kethu") || pcode.equals("Rakhu")
-								|| pcode2.equals("Kethu") || pcode2.equals("Rakhu"))
+					} else if (pcode.equals("Rakhu") || pcode2.equals("Rakhu"))
 							continue;
-					}
 				}
+				if (!isHouse
+						&& !spa.getAspect().getCode().equals("CONJUNCTION")
+						&& (pcode.equals("Kethu") || pcode2.equals("Kethu")))
+					continue;
 
 				int age = (int)spa.getAge();
 				TreeMap<Integer, List<SkyPointAspect>> agemap = map.get(age);
@@ -253,18 +259,19 @@ public class AgeSaveHandler extends Handler {
 			com.itextpdf.text.List list = new com.itextpdf.text.List(false, false, 10);
 	        ListItem li = new ListItem();
 	        li.add(new Chunk("Чёрным цветом выделено самое важное, что с вами произойдёт. "
-	        	+ "Эти тенденции могут сохраняться в течение двух лет.", font));
+	        	+ "Эти тенденции могут сохраняться в течение двух лет. А всё остальное продлится не более трёх месяцев.", font));
 	        list.add(li);
 
 			Font green = PDFUtil.getSuccessFont();
 			li = new ListItem();
-	        li.add(new Chunk("Зелёным цветом выделены позитивные тенденции. "
-	        	+ "К ним относятся события, которые сами по себе удачно сложатся.", green));
+	        li.add(new Chunk("Зелёным цветом выделены позитивные тенденции, которые нужно использовать для гармонизации отношений. "
+	        	+ "К этим тенденциям относятся события, которые сами по себе удачно сложатся (без больших усилий).", green));
 	        list.add(li);
 
 			li = new ListItem();
-	        li.add(new Chunk("Красным цветом выделены негативные тенденции, которые вызовут конфликт. "
-	        	+ "От этих сфер жизни не следует ждать многого, но, заранее зная о возможном напряжении, вы сможете его смягчить.", red));
+	        li.add(new Chunk("Красным цветом выделены негативные тенденции, которые вызовут конфликт и потребуют большого расхода энергии. "
+	        	+ "От этих сфер жизни не следует ждать слишком многого. "
+	        	+ "Это признак того, что вам обоим необходим отдых друг от друга, переосмысление и мобилизация ресурсов для решения проблемы.", red));
 	        list.add(li);
 
 			li = new ListItem();
@@ -323,7 +330,7 @@ public class AgeSaveHandler extends Handler {
 					bar.setCategory(age + "");
 					items[++i] = bar;
 				}
-				section.add(PDFUtil.printBars(writer, name2, "Сферы жизни партнёра, на которые вы повлияете в течение года", "Сферы жизни", "Баллы", items, 500, 250, false, false, false));
+				section.add(PDFUtil.printBars(writer, name2, "Сферы жизни партнёра, на которые вы повлияете в течение года", "Сферы жизни", "Баллы", items, 500, 280, false, false, false));
 
 				//второй партнёр
 				mapa = seriesa2.get(age);
@@ -338,7 +345,7 @@ public class AgeSaveHandler extends Handler {
 					bar.setCategory(age + "");
 					items[++i] = bar;
 				}
-				section.add(PDFUtil.printBars(writer, name1, "Ваши сферы жизни, на которые повлияет партнёр", "Сферы жизни", "Баллы", items, 500, 250, false, false, false));
+				section.add(PDFUtil.printBars(writer, name1, "Ваши сферы жизни, на которые повлияет партнёр", "Сферы жизни", "Баллы", items, 500, 280, false, false, false));
 				chapter.add(Chunk.NEXTPAGE);
 
 				for (Map.Entry<Integer, List<SkyPointAspect>> subentry : agemap.entrySet())
@@ -427,7 +434,7 @@ public class AgeSaveHandler extends Handler {
 				p = new Paragraph("В данном разделе описаны яркие события вашей пары, "
 					+ "которые произойдут в возрасте " + agestr + ", надолго запомнятся и повлекут за собой перемены", grayfont);
 			} else if (1 == code) {
-				header += "Проявления личности в " + agestr;
+				header += "Проявления пары в " + agestr;
 				p = new Paragraph("В данном разделе описаны ваши взаимные проявления, которые станут особенно яркими в возрасте " + agestr, grayfont);
 			}
 			Section section = PDFUtil.printSection(chapter, header, null);
@@ -480,10 +487,13 @@ public class AgeSaveHandler extends Handler {
 							String typeColor = type.getFontColor();
 							BaseColor color = PDFUtil.htmlColor2Base(typeColor);
 							section.add(new Paragraph(PDFUtil.removeTags(text, new Font(baseFont, 12, Font.NORMAL, color))));
+							section.add(Chunk.NEWLINE);
 							PDFUtil.printGender(section, dirText, female, false, true);
 							for (String gtype : genderTypes)
 								PDFUtil.printGender(section, dirText, gtype);
-							section.add(Chunk.NEWLINE);
+							if (doctype < 1) {
+								PDFUtil.printGender(section, dirText, event.isFemale() ? "man" : "woman");
+							}
 						}
 					}
 
@@ -544,10 +554,10 @@ public class AgeSaveHandler extends Handler {
 					    			String typeColor = type.getFontColor();
 									BaseColor color = PDFUtil.htmlColor2Base(typeColor);
 									section.add(new Paragraph(PDFUtil.removeTags(text, new Font(baseFont, 12, Font.NORMAL, color))));
+									section.add(Chunk.NEWLINE);
 									PDFUtil.printGender(section, dirText, female, false, true);
 									for (String gtype : genderTypes)
 										PDFUtil.printGender(section, dirText, gtype);
-									section.add(Chunk.NEWLINE);
 								}
 							}
 						}

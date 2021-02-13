@@ -52,27 +52,25 @@ public class AgeCalcHandler extends Handler {
 			
 			updateStatus("Расчёт дирекций на возраст", false);
 			List<Planet> selplanets1 = new ArrayList<Planet>();
+			List<Planet> selplanets2 = new ArrayList<Planet>();
 			Planet selplanet = agePart.getPlanet();
-			for (Planet planet : planets1) {
-				if (selplanet != null) {
+			if (selplanet != null) {
+				for (Planet planet : planets1) {
 					if (selplanet.getId().equals(planet.getId())) {
 						selplanets1.add(planet);
 						break;
 					}
-				} else
-					selplanets1.add(planet);
-			}
-			List<Planet> selplanets2 = new ArrayList<Planet>();
-			for (Planet planet : planets2) {
-				if (selplanet != null) {
+				}
+				for (Planet planet : planets2) {
 					if (selplanet.getId().equals(planet.getId())) {
 						selplanets2.add(planet);
 						break;
 					}
-				} else
-					selplanets2.add(planet);
+				}
+			} else {
+				selplanets1.addAll(planets1);
+				selplanets2.addAll(planets2);
 			}
-
 			List<House> selhouses1 = new ArrayList<House>();
 			House selhouse = agePart.getHouse();
 			if (event.isHousable()) {
@@ -113,6 +111,7 @@ public class AgeCalcHandler extends Handler {
 			}
 
 			int i = -1;
+			boolean housable2 = partner.isHousable(), housable1 = event.isHousable();
 			for (int age = initage; age <= finage; age++) {
 				for (Planet selp : planets1) {
 					//дирекции планет первого партнёра к планетам второго
@@ -131,10 +130,9 @@ public class AgeCalcHandler extends Handler {
 					}
 				}
 				//дирекции планет первого партнёра к куспидам домов второго
-				boolean housable = partner.isHousable();
-				if (housable) {
-					for (House selp2 : selhouses2)
-						for (Planet selp : selplanets1)
+				if (housable2) {
+					for (Planet selp : selplanets1)
+						for (House selp2 : selhouses2)
 							calc(selp, selp2, age, age, false);
 				}
 
@@ -157,10 +155,9 @@ public class AgeCalcHandler extends Handler {
 					}
 				}
 				//дирекции планет второго партнёра к куспидам домов первого
-				housable = event.isHousable();
-				if (housable) {
-					for (House selp2 : selhouses1)
-						for (Planet selp : selplanets1)
+				if (housable1) {
+					for (Planet selp : selplanets2)
+						for (House selp2 : selhouses1)
 							calc(selp, selp2, age, age2, true);
 				}
 			}
