@@ -279,7 +279,6 @@ public class SynastryPart extends ModelListView implements ICalculable {
 		Table table = (Table)controls[0];
 		table.removeAll();
 		if (partner != null) {
-			folder.setSelection(1);
 			Collection<Planet> planets = partner.getPlanets().values();
 			for (Planet planet : planets) {
 				TableItem item = new TableItem(table, SWT.NONE);
@@ -293,8 +292,7 @@ public class SynastryPart extends ModelListView implements ICalculable {
 			}
 			for (int i = 0; i < table.getColumnCount(); i++)
 				table.getColumn(i).pack();
-		} else
-			folder.setSelection(0);
+		}
 			
 		//дома
 		controls = grHouses.getChildren();
