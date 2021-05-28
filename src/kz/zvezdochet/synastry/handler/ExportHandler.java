@@ -24,7 +24,7 @@ public class ExportHandler extends Handler {
 			SynastryPart synastryPart = (SynastryPart)activePart.getObject();
 			final Synastry synastry = (Synastry)synastryPart.getModel();
 
-			final int choice = DialogUtil.alertQuestion("Вопрос", "Выберите тип гороскопа:", new String[] {"Любовный", "Партнёрский", "Семейный"});
+			final int choice = DialogUtil.alertQuestion("Вопрос", "Выберите тип гороскопа:", new String[] {"Полный", "Любовный", "Партнёрский", "Семейный"});
 			updateStatus("Сохранение синастрии в файл", false);
 
 			final Display display = Display.getDefault();

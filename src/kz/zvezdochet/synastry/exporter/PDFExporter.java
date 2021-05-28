@@ -117,7 +117,7 @@ public class PDFExporter {
 	private boolean term = false;
 	/**
 	 * Тип гороскопа совместимости
-	 * 0|1|2 любовный|партнёрский|семейный
+	 * 0|1|2|3 полный|любовный|партнёрский|семейный
 	 */
 	private int doctype = 0;
 	/**
@@ -129,6 +129,10 @@ public class PDFExporter {
 	 * Имена партнёров
 	 */
 	private String name1, name2;
+	/**
+	 * Признак разнополых партнёров
+	 */
+	boolean heterosexual = true;
 
 	public PDFExporter(Display display) {
 		this.display = display;
@@ -145,7 +149,7 @@ public class PDFExporter {
 	/**
 	 * Генерация отчёта синастрии
 	 * @param synastry синастрия
-	 * @param choice любовный|деловой
+	 * @param choice полный|любовный|партнёрский|семейный
 	 */
 	public void generate(Synastry synastry, int choice) {
 		Event event = synastry.getEvent();
@@ -156,14 +160,17 @@ public class PDFExporter {
 
 		name1 = event.getCallname();
 		name2 = partner.getCallname();
+		heterosexual = event.isFemale() != partner.isFemale();
 
 		doctype = choice;
-		if (doctype > 1)
+		if (doctype > 2)
 			genderTypes = new String[] {"family"};
-		else if (doctype > 0)
+		else if (doctype > 1)
 			genderTypes = new String[] {"deal"};
-		else
+		else if (doctype > 0)
 			genderTypes = new String[] {"love", "family"};
+		else
+			genderTypes = heterosexual ? new String[] {"love", "family", "deal"} : new String[] {"deal"};
 
 		Document doc = new Document();
 		try {
@@ -186,7 +193,7 @@ public class PDFExporter {
 			PDFUtil.printHeader(p, "Парный гороскоп", null);
 			chapter.add(p);
 
-			String text = "Тип гороскопа: " + (doctype > 1 ? "семейный" : doctype > 0 ? "партнёрский" : "любовный");
+			String text = "Тип гороскопа: " + (doctype > 2 ? "семейный" : doctype > 1 ? "партнёрский" : doctype > 0 ? "любовный" : "полный");
 			p = new Paragraph(text, font);
 	        p.setAlignment(Element.ALIGN_CENTER);
 			chapter.add(p);
@@ -296,7 +303,7 @@ public class PDFExporter {
 			doc.add(chapter);
 
 			//идеальная пара
-			if (0 == doctype) {
+			if (1 == doctype) {
 				chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Ваша идеальная пара", null));
 				chapter.setNumberDepth(0);
 				printIdeal(doc, chapter, event, partner);
@@ -306,7 +313,7 @@ public class PDFExporter {
 			//совместимость по знакам Зодиака: характеры, любовь, секс, коммуникация, эмоции
 			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Общий типаж пары", null));
 			chapter.setNumberDepth(0);
-			chapter.add(new Paragraph("Типаж пары – это общая тенденция развития отношений такого человека, как вы, с таким человеком, как ваш партнёр", PDFUtil.getWarningFont()));
+			chapter.add(new Paragraph("Типаж пары – это общая тенденция развития отношений между вами как представителями двух разных поколений", PDFUtil.getWarningFont()));
 
 			//совместимость по Зороастрийскому календарю
 			printZoroastr(chapter, synastry, event, partner);
@@ -333,7 +340,7 @@ public class PDFExporter {
 			doc.add(chapter);
 
 			//аспекты
-			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Совместимость", null));
+			chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Совместимость", "compatibility"));
 			chapter.setNumberDepth(0);
 			chapter.add(new Paragraph("В предыдущих разделах была дана общая характеристика каждого из вас и примерная картина отношений. "
 				+ "Теперь речь пойдёт о том, как вы в реальности поведёте себя друг с другом независимо от описанных выше характеристик:", font));
@@ -499,22 +506,37 @@ public class PDFExporter {
 			else
 				return;
 
+			Paragraph p = new Paragraph("Психотипы – это обобщённые образы каждого из вас. "
+				+ "Здесь вы описаны как представители своего поколения, а не как уникальные личности. "
+				+ "Более точная и персонализированная характеристика ваших отношений приведена в разделах ", font);
+			Anchor anchor = new Anchor("Совместимость", fonta);
+			anchor.setReference("#compatibility");
+			p.add(anchor);
+			p.add(new Chunk(" и ", font));
+			anchor = new Anchor("Взаимовлияние", fonta);
+			anchor.setReference("#planethouses");
+			p.add(anchor);
+			chapter.add(p);
 			chapter.add(new Paragraph("Толкования в левой колонке адресованы вам, толкования в правой колонке – вашему партнёру", PDFUtil.getWarningFont()));
 
 			PlanetSignService service = new PlanetSignService();
 			String general[] = {"personality", "emotions", "contact", "feelings"};
 			List<String> categories = new ArrayList<>(Arrays.asList(general));
-			if (doctype < 1) {
-				String love[] = {"love", "family", "faithfulness", "sex"};
-				categories.addAll(Arrays.asList(love));
-			} else if (1 == doctype) {
-				String deal[] = {"thinking", "work", "profession", "activity"};
-				categories.addAll(Arrays.asList(deal));
-			} else if (doctype > 1) {
+			if (doctype > 2) {
 				String deal[] = {"thinking", "activity"};
 				categories.addAll(Arrays.asList(deal));
+			} else if (doctype > 1) {
+				String deal[] = {"thinking", "work", "profession", "activity"};
+				categories.addAll(Arrays.asList(deal));
+			} else if (doctype > 0) {
+				String love[] = {"love", "family", "faithfulness", "sex"};
+				categories.addAll(Arrays.asList(love));
+			} else {
+				String love[] = heterosexual
+					? new String[] {"thinking", "work", "profession", "activity", "love", "family", "faithfulness", "sex"}
+					: new String[] {"thinking", "work", "profession", "activity"};
+				categories.addAll(Arrays.asList(love));
 			}
-
 			CategoryService catService = new CategoryService();
 			List<Model> cats = catService.getList();
 			for (Model m : cats) {
@@ -637,12 +659,14 @@ public class PDFExporter {
 		try {
 			//только для мужчины и женщины
 			boolean female = event.isFemale();
-			boolean unisex = event.isFemale() && partner.isFemale();
 			if (event.getPlanets() != null && partner.getPlanets() != null) {
 				SynastrySignService service = new SynastrySignService();
 				String[] general = {"Sun", "Mercury"};
 				List<String> planets = new ArrayList<>(Arrays.asList(general));
 				if (doctype < 1) {
+					String love[] = heterosexual ? new String[] {"Venus", "Mars"} : new String[] {"Venus"};
+					planets.addAll(Arrays.asList(love));
+				} else if (doctype < 2) {
 					String love[] = {"Venus", "Mars"};
 					planets.addAll(Arrays.asList(love));
 				}
@@ -686,13 +710,14 @@ public class PDFExporter {
 //			    			}
 					    	if (object.getText() != null)
 					    		section.add(new Paragraph(PDFUtil.removeTags(object.getText(), font)));
-					    	if (!unisex) {
-						    	if (doctype > 0)
+					    	if (heterosexual) {
+						    	if (doctype > 1)
 						    		PDFUtil.printGender(section, object, female ? "female" : "male");
 				    			PDFUtil.printGender(section, object, female ? "woman" : "man");
+
+				    			for (String gtype : genderTypes)
+				    				PDFUtil.printGender(section, object, gtype);
 					    	}
-			    			for (String gtype : genderTypes)
-			    				PDFUtil.printGender(section, object, gtype);
 					    }
 					}
 				}
@@ -1079,7 +1104,7 @@ public class PDFExporter {
 					SynastryAspectText dict = (SynastryAspectText)model;
 					if (dict != null) {
 						phrase.add(new Paragraph(PDFUtil.removeTags(dict.getText(), font)));
-						if (doctype != 1) {
+						if (doctype != 2) {
 							Phrase ph = PDFUtil.printGenderCell(dict,
 								reverse ? partner.isFemale() : event.isFemale(),
 								reverse ? partner.isChild() : event.isChild(), false);
@@ -1879,7 +1904,7 @@ public class PDFExporter {
 			}
 
 			ElementService service = new ElementService();
-			long[] pids = (1 == doctype) ?  new long[] {19L, 20L, 23L, 25L} : new long[] {19L, 20L, 23L, 24L, 25L};
+			long[] pids = (2 == doctype) ?  new long[] {19L, 20L, 23L, 25L} : new long[] {19L, 20L, 23L, 24L, 25L};
 			for (long pid : pids) {
    				Planet planet = event.getPlanets().get(pid);
    				Planet planet2 = partner.getPlanets().get(pid);
@@ -1892,7 +1917,7 @@ public class PDFExporter {
 		    		if (element.getSynastry() != null) {
 				    	String text = term
 				    		? planet.getName() + " (" + element.getName() + ")"
-				    		: (doctype > 0 && 25 == pid ? planet.getShortName() : planet.getSynastry());
+				    		: (doctype > 1 && 25 == pid ? planet.getShortName() : planet.getSynastry());
 
 						Phrase phrase = new Phrase();
 						phrase.add(new Chunk(text, fonth5));
@@ -2049,7 +2074,7 @@ public class PDFExporter {
 	 */
 	private void printAkins(Document doc, Chapter chapter, Synastry synastry) {
 		try {
-			if (doctype > 0)
+			if (doctype != 1)
 				return;
 
 			Section section = PDFUtil.printSection(chapter, "Реальность", null);
@@ -2385,21 +2410,24 @@ public class PDFExporter {
 					phrase.add(Chunk.NEWLINE);
 				}
 				phrase.add(new Paragraph(PDFUtil.removeTags(dict.getText(), font)));
-				Phrase ph = PDFUtil.printGenderCell(dict, event.isFemale(), event.isChild(), false);
-				if (ph != null) {
-					phrase.add(Chunk.NEWLINE);
-					phrase.add(Chunk.NEWLINE);
-					phrase.add(ph);
-				}
-				for (String gtype : genderTypes) {
-					ph = PDFUtil.printGenderCell(dict, gtype);
+				if (heterosexual) {
+					Phrase ph = PDFUtil.printGenderCell(dict, event.isFemale(), event.isChild(), false);
 					if (ph != null) {
+						phrase.add(Chunk.NEWLINE);
 						phrase.add(Chunk.NEWLINE);
 						phrase.add(ph);
 					}
 				}
-				if (doctype < 1) {
-					ph = PDFUtil.printGenderCell(dict, event.isFemale() ? "woman" : "man");
+				if (1 == doctype) {
+					for (String gtype : genderTypes) {
+						Phrase ph = PDFUtil.printGenderCell(dict, gtype);
+						if (ph != null) {
+							phrase.add(Chunk.NEWLINE);
+							phrase.add(ph);
+						}
+					}
+
+					Phrase ph = PDFUtil.printGenderCell(dict, event.isFemale() ? "woman" : "man");
 					if (ph != null)
 						phrase.add(ph);
 
@@ -2543,7 +2571,7 @@ public class PDFExporter {
 			        put("Чувства", 0);
 			        put("Забота", 0);
 //			        put("Дружба", 0);
-		        	put((0 == doctype) ? "Секс" : "Конкуренция", 0);
+		        	put((1 == doctype) ? "Секс" : "Конкуренция", 0);
 //			        put("Равноправие", 0);
 			    }
 			};
@@ -2555,7 +2583,7 @@ public class PDFExporter {
 			        put("Чувства", 0);
 			        put("Забота", 0);
 //			        put("Дружба", 0);
-		        	put((0 == doctype) ? "Секс" : "Конкуренция", 0);
+		        	put((1 == doctype) ? "Секс" : "Конкуренция", 0);
 //			        put("Равноправие", 0);
 			    }
 			};
@@ -2568,7 +2596,7 @@ public class PDFExporter {
 //			        put("Kethu", new String[] {"Характер"});
 			        put("Mercury", new String[] {"Общение"});
 			        put("Venus", new String[] {"Чувства"});
-			        put("Mars", (doctype < 1) ? new String[] {"Секс"} : new String[] {"Конкуренция"});
+			        put("Mars", (1 == doctype) ? new String[] {"Секс"} : new String[] {"Конкуренция"});
 //			        put("Selena", new String[] {"Характер"});
 //			        put("Lilith", new String[] {"Характер"});
 //			        put("Jupiter", new String[] {"Характер"});
@@ -2865,15 +2893,16 @@ public class PDFExporter {
 					if (a != null && a.getId() != null)
 						continue;
 
+					int level = dict.getLevel();
 					ListItem li = new ListItem();
-					String text = (reverse ? name2 : name1) + "-" + planet1.getShortName() + " " + 
+					String text = (reverse ? name2 : name1) + "-" + (level < 0 ? planet1.getBadName() : planet1.getGoodName()) + " " + 
 						aspect.getAspect().getType().getSymbol() + " " + 
-						(reverse ? name1 : name2) + "-" + planet2.getShortName();
+						(reverse ? name1 : name2) + "-" + (level < 0 ? planet2.getBadName() : planet2.getGoodName());
 
 					Anchor anchor = new Anchor(text, fonta);
 		            anchor.setReference("#" + aspect.getCode());
 			        li.add(anchor);
-			        if (aspect.getAspect().getType().getCode().equals("NEGATIVE"))
+			        if (level < 0)
 				        if (planet1.getId().equals(planet2.getId()))
 				        	li.add(new Chunk(" (критично)", font));
 			        list.add(li);
@@ -2894,70 +2923,70 @@ public class PDFExporter {
 	 */
 	private void printIdeal(Document doc, Chapter chapter, Event event, Event partner) {
 		try {
-			if (doctype < 1) {
-				Section section = PDFUtil.printSection(chapter, "Ожидание", null);
-				String code = event.isFemale() ? "male" : "female";
-				String code2 = partner.isFemale() ? "male" : "female";
-				CategoryService catService = new CategoryService();
-				Category category = (Category)catService.find(code);
-				Category category2 = (Category)catService.find(code2);
+			if (doctype != 1)
+				return;
+			Section section = PDFUtil.printSection(chapter, "Ожидание", null);
+			String code = event.isFemale() ? "male" : "female";
+			String code2 = partner.isFemale() ? "male" : "female";
+			CategoryService catService = new CategoryService();
+			Category category = (Category)catService.find(code);
+			Category category2 = (Category)catService.find(code2);
 
-				Planet planet = event.getPlanets().get(category.getObjectId());
-				Planet planet2 = partner.getPlanets().get(category2.getObjectId());
-				Sign sign1 = planet.getSign();
-				Sign sign2 = planet2.getSign();
+			Planet planet = event.getPlanets().get(category.getObjectId());
+			Planet planet2 = partner.getPlanets().get(category2.getObjectId());
+			Sign sign1 = planet.getSign();
+			Sign sign2 = planet2.getSign();
 	
-		        PdfPTable table = new PdfPTable(2);
-		        table.setTotalWidth(doc.getPageSize().getWidth() - PDFUtil.PAGEBORDERWIDTH * 2);
-		        table.setLockedWidth(true);
-		        table.setWidths(new float[] { 50, 50 });
-		        table.setSpacingBefore(20);
+	        PdfPTable table = new PdfPTable(2);
+	        table.setTotalWidth(doc.getPageSize().getWidth() - PDFUtil.PAGEBORDERWIDTH * 2);
+	        table.setLockedWidth(true);
+	        table.setWidths(new float[] { 50, 50 });
+	        table.setSpacingBefore(20);
 	
-				PdfPCell cell = null;
-				Event[] events = new Event[] {event, partner};
+			PdfPCell cell = null;
+			Event[] events = new Event[] {event, partner};
 	
-				for (Event e : events) {
-					cell = new PdfPCell(new Phrase(e.getCallname(), font));
-					PDFUtil.setCellBorderWidths(cell, 0, 0, .5F, 0);
-					cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+			for (Event e : events) {
+				cell = new PdfPCell(new Phrase(e.getCallname(), font));
+				PDFUtil.setCellBorderWidths(cell, 0, 0, .5F, 0);
+				cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+				table.addCell(cell);
+			}
+			table.setHeaderRows(1);
+	
+			Phrase phrase = new Phrase();
+			List<String> texts1 = new ArrayList<>();
+			List<String> texts2 = new ArrayList<>();
+			PlanetSignService service = new PlanetSignService();
+			PlanetSignText text = service.find(category, sign1);
+			if (text != null) {
+    			String t = text.getText();
+   				texts1 = PDFUtil.splitHtml(t);
+			}
+			PlanetSignText text2 = service.find(category2, sign2);
+			if (text2 != null)
+				texts2 = PDFUtil.splitHtml(text2.getText());
+
+			int tcount = texts1.size() + texts2.size();
+			if (tcount > 0) {
+				for (int i = 0; i < tcount; i++) {
+					phrase = new Phrase();
+					if (texts1.size() > i)
+						phrase = PDFUtil.removeTags(texts1.get(i), font);
+					cell = new PdfPCell(phrase);
+					PDFUtil.setCellBorderWidths(cell, 0, .5F, 0, 0);
+					table.addCell(cell);
+
+					phrase = new Phrase();
+					if (texts2.size() > i)
+						phrase = PDFUtil.removeTags(texts2.get(i), font);
+					cell = new PdfPCell(phrase);
+					cell.setBorder(Rectangle.NO_BORDER);
 					table.addCell(cell);
 				}
-				table.setHeaderRows(1);
-	
-				Phrase phrase = new Phrase();
-				List<String> texts1 = new ArrayList<>();
-				List<String> texts2 = new ArrayList<>();
-				PlanetSignService service = new PlanetSignService();
-				PlanetSignText text = service.find(category, sign1);
-				if (text != null) {
-	    			String t = text.getText();
-    				texts1 = PDFUtil.splitHtml(t);
-				}
-				PlanetSignText text2 = service.find(category2, sign2);
-				if (text2 != null)
-   					texts2 = PDFUtil.splitHtml(text2.getText());
-
-				int tcount = texts1.size() + texts2.size();
-				if (tcount > 0) {
-					for (int i = 0; i < tcount; i++) {
-						phrase = new Phrase();
-						if (texts1.size() > i)
-							phrase = PDFUtil.removeTags(texts1.get(i), font);
-						cell = new PdfPCell(phrase);
-						PDFUtil.setCellBorderWidths(cell, 0, .5F, 0, 0);
-						table.addCell(cell);
-
-						phrase = new Phrase();
-						if (texts2.size() > i)
-							phrase = PDFUtil.removeTags(texts2.get(i), font);
-						cell = new PdfPCell(phrase);
-						cell.setBorder(Rectangle.NO_BORDER);
-						table.addCell(cell);
-					}
-				}
-				section.add(table);
-				section.add(Chunk.NEXTPAGE);
 			}
+			section.add(table);
+			section.add(Chunk.NEXTPAGE);
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
@@ -2987,9 +3016,9 @@ public class PDFExporter {
 
 				String pcode = planet.getCode();
 				if (pcode.equals("Lilith") || pcode.equals("Kethu")) {
-					if ((doctype < 1 && Arrays.asList(new String[] {"V_2", "V_3", "VII"}).contains(house.getCode()))
-							|| (1 == doctype && Arrays.asList(new String[] {"VI", "VI_3", "VII_2", "X_2", "X_3"}).contains(house.getCode()))
-							|| (doctype > 1 && Arrays.asList(new String[] {"III_3", "IV", "IV_2"}).contains(house.getCode())))
+					if ((doctype > 0 && Arrays.asList(new String[] {"V_2", "V_3", "VII"}).contains(house.getCode()))
+							|| (doctype > 1 && Arrays.asList(new String[] {"VI", "VI_3", "VII_2", "X_2", "X_3"}).contains(house.getCode()))
+							|| (doctype > 2 && Arrays.asList(new String[] {"III_3", "IV", "IV_2"}).contains(house.getCode())))
 					li.add(new Chunk(" (критично)", font));
 				}
 		        list.add(li);
