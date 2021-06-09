@@ -303,7 +303,7 @@ public class PDFExporter {
 			doc.add(chapter);
 
 			//идеальная пара
-			if (1 == doctype) {
+			if (doctype < 2) {
 				chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Ваша идеальная пара", null));
 				chapter.setNumberDepth(0);
 				printIdeal(doc, chapter, event, partner);
@@ -795,6 +795,9 @@ public class PDFExporter {
 				if (aspect.getAspect().getPoints() < 2)
 					continue;
 
+//				if (29 == aspect.getSkyPoint1().getId() && 24 == aspect.getSkyPoint2().getId())
+//					System.out.println();
+
 				Planet planet1 = (Planet)aspect.getSkyPoint2();
 				if (!planet1.isMain())
 					continue;
@@ -826,7 +829,8 @@ public class PDFExporter {
 					boolean rel = false;
 					for (SkyPointAspect a : positive1) {
 						if (a.getSkyPoint1().getId().equals(planet1.getId())
-								&& a.getSkyPoint2().getId().equals(planet2.getId())) {
+								&& a.getSkyPoint2().getId().equals(planet2.getId())
+								&& aspect.getAspect().getTypeid() == a.getAspect().getTypeid()) {
 							relative.add(a);
 							positive1.remove(a);
 							rel = true;
@@ -2074,7 +2078,7 @@ public class PDFExporter {
 	 */
 	private void printAkins(Document doc, Chapter chapter, Synastry synastry) {
 		try {
-			if (doctype != 1)
+			if (doctype > 1)
 				return;
 
 			Section section = PDFUtil.printSection(chapter, "Реальность", null);
@@ -2418,7 +2422,7 @@ public class PDFExporter {
 						phrase.add(ph);
 					}
 				}
-				if (1 == doctype) {
+				if (doctype < 2) {
 					for (String gtype : genderTypes) {
 						Phrase ph = PDFUtil.printGenderCell(dict, gtype);
 						if (ph != null) {
@@ -2570,9 +2574,7 @@ public class PDFExporter {
 			        put("Общение", 0);
 			        put("Чувства", 0);
 			        put("Забота", 0);
-//			        put("Дружба", 0);
-		        	put((1 == doctype) ? "Секс" : "Конкуренция", 0);
-//			        put("Равноправие", 0);
+		        	put((doctype < 2) ? "Влечение" : "Конкуренция", 0);
 			    }
 			};
 			Map<String, Integer> map2 = new HashMap<String, Integer>() {
@@ -2582,9 +2584,7 @@ public class PDFExporter {
 			        put("Общение", 0);
 			        put("Чувства", 0);
 			        put("Забота", 0);
-//			        put("Дружба", 0);
-		        	put((1 == doctype) ? "Секс" : "Конкуренция", 0);
-//			        put("Равноправие", 0);
+		        	put((doctype < 2) ? "Влечение" : "Конкуренция", 0);
 			    }
 			};
 			Map<String, String[]> planets = new HashMap<String, String[]>() {
@@ -2592,20 +2592,9 @@ public class PDFExporter {
 				{
 			        put("Sun", new String[] {"Характер"});
 			        put("Moon", new String[] {"Забота"});
-//			        put("Rakhu", new String[] {"Характер"});
-//			        put("Kethu", new String[] {"Характер"});
 			        put("Mercury", new String[] {"Общение"});
 			        put("Venus", new String[] {"Чувства"});
-			        put("Mars", (1 == doctype) ? new String[] {"Секс"} : new String[] {"Конкуренция"});
-//			        put("Selena", new String[] {"Характер"});
-//			        put("Lilith", new String[] {"Характер"});
-//			        put("Jupiter", new String[] {"Характер"});
-//			        put("Saturn", new String[] {"Характер"});
-//			        put("Chiron", new String[] {"Равноправие"});
-//			        put("Uranus", new String[] {"Дружба"});
-//			        put("Neptune", new String[] {"Характер"});
-//			        put("Pluto", new String[] {"Характер"});
-//			        put("Proserpina", new String[] {"Характер"});
+			        put("Mars", (doctype < 2) ? new String[] {"Влечение"} : new String[] {"Конкуренция"});
 			    }
 			};
 			List<SkyPointAspect> aspects = synastry.getAspects();
@@ -2923,7 +2912,7 @@ public class PDFExporter {
 	 */
 	private void printIdeal(Document doc, Chapter chapter, Event event, Event partner) {
 		try {
-			if (doctype != 1)
+			if (doctype > 1)
 				return;
 			Section section = PDFUtil.printSection(chapter, "Ожидание", null);
 			String code = event.isFemale() ? "male" : "female";
