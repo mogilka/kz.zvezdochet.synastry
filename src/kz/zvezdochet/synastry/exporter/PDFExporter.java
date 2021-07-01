@@ -772,8 +772,8 @@ public class PDFExporter {
 				if (!synastry.getPartner().isHousable() && planet2.getCode().equals("Moon"))
 					continue;
 
-//				if (25 == aspect.getSkyPoint1().getId() && 30 == aspect.getSkyPoint2().getId())
-//				System.out.println();
+//				if (24 == aspect.getSkyPoint1().getId() && 29 == aspect.getSkyPoint2().getId())
+//					System.out.println();
 
 				if (aspect.getAspect().getCode().equals("OPPOSITION")
 						&& (planet2.getCode().equals("Rakhu")
@@ -1064,6 +1064,9 @@ public class PDFExporter {
 			AspectType type = aspect.checkType(false);
 			Planet planet1 = (Planet)(reverse ? aspect.getSkyPoint2() : aspect.getSkyPoint1());
 			Planet planet2 = (Planet)(reverse ? aspect.getSkyPoint1() : aspect.getSkyPoint2());
+
+			if (24 == planet1.getId() && 29 == planet2.getId())
+				System.out.println();
 
 			boolean negative = aspect.isNegative();
 			String text = sectionum + " " + (reverse ? name2 : name1) + "-" + (negative ? planet1.getBadName() : planet1.getGoodName()) + " " + 
