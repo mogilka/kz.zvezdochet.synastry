@@ -114,7 +114,7 @@ public class PDFExporter {
 	/**
 	 * Признак использования астрологических терминов
 	 */
-	private boolean term = false;
+	private boolean term = true;
 	/**
 	 * Тип гороскопа совместимости
 	 * 0|1|2|3 полный|любовный|партнёрский|семейный
@@ -2587,31 +2587,31 @@ public class PDFExporter {
 			Map<String, Integer> map1 = new HashMap<String, Integer>() {
 				private static final long serialVersionUID = 4739420822269120671L;
 				{
-			        put("Характер", 0);
-			        put("Общение", 0);
-			        put("Чувства", 0);
-			        put("Забота", 0);
-		        	put((doctype < 2) ? "Влечение" : "Конкуренция", 0);
+			        put("Характер" + (term ? "\n(Солнце)" : ""), 0);
+			        put("Общение" + (term ? "\n(Меркурий)" : ""), 0);
+			        put("Чувства" + (term ? "\n(Венера)" : ""), 0);
+			        put("Забота" + (term ? "\n(Луна)" : ""), 0);
+		        	put(((doctype < 2) ? "Влечение" : "Конкуренция") + (term ? "\n(Марс)" : ""), 0);
 			    }
 			};
 			Map<String, Integer> map2 = new HashMap<String, Integer>() {
 				private static final long serialVersionUID = -7246716343066391656L;
 				{
-			        put("Характер", 0);
-			        put("Общение", 0);
-			        put("Чувства", 0);
-			        put("Забота", 0);
-		        	put((doctype < 2) ? "Влечение" : "Конкуренция", 0);
+			        put("Характер" + (term ? "\n(Солнце)" : ""), 0);
+			        put("Общение" + (term ? "\n(Меркурий)" : ""), 0);
+			        put("Чувства" + (term ? "\n(Венера)" : ""), 0);
+			        put("Забота" + (term ? "\n(Луна)" : ""), 0);
+		        	put(((doctype < 2) ? "Влечение" : "Конкуренция") + (term ? "\n(Марс)" : ""), 0);
 			    }
 			};
 			Map<String, String[]> planets = new HashMap<String, String[]>() {
 				private static final long serialVersionUID = 4739420822269120672L;
 				{
-			        put("Sun", new String[] {"Характер"});
-			        put("Moon", new String[] {"Забота"});
-			        put("Mercury", new String[] {"Общение"});
-			        put("Venus", new String[] {"Чувства"});
-			        put("Mars", (doctype < 2) ? new String[] {"Влечение"} : new String[] {"Конкуренция"});
+			        put("Sun", new String[] {"Характер" + (term ? "\n(Солнце)" : "")});
+			        put("Moon", new String[] {"Забота" + (term ? "\n(Луна)" : "")});
+			        put("Mercury", new String[] {"Общение" + (term ? "\n(Меркурий)" : "")});
+			        put("Venus", new String[] {"Чувства" + (term ? "\n(Венера)" : "")});
+			        put("Mars", (doctype < 2) ? new String[] {"Влечение" + (term ? "\n(Марс)" : "")} : new String[] {"Конкуренция" + (term ? "\n(Марс)" : "")});
 			    }
 			};
 			List<SkyPointAspect> aspects = synastry.getAspects();
@@ -2901,9 +2901,13 @@ public class PDFExporter {
 
 					int level = dict.getLevel();
 					ListItem li = new ListItem();
-					String text = (reverse ? name2 : name1) + "-" + (level < 0 ? planet1.getBadName() : planet1.getGoodName()) + " " + 
+					String pname = term ? planet1.getName()
+						: (level < 0 ? planet1.getBadName() : planet1.getGoodName());
+					String pname2 = term ? planet2.getName()
+						: (level < 0 ? planet2.getBadName() : planet2.getGoodName());
+					String text = (reverse ? name2 : name1) + "-" + pname + " " + 
 						aspect.getAspect().getType().getSymbol() + " " + 
-						(reverse ? name1 : name2) + "-" + (level < 0 ? planet2.getBadName() : planet2.getGoodName());
+						(reverse ? name1 : name2) + "-" + pname2;
 
 					Anchor anchor = new Anchor(text, fonta);
 		            anchor.setReference("#" + aspect.getCode());
@@ -3012,7 +3016,7 @@ public class PDFExporter {
 					continue;
 				boolean reverse = planet.isDone();
 				ListItem li = new ListItem();
-				String text = (reverse ? name2 : name1) + "-" + planet.getShortName() +
+				String text = (reverse ? name2 : name1) + "-" + (term ? planet.getName() : planet.getShortName()) +
 					" – " + 
 					(reverse ? name1 : name2) + "-" + house.getSynastry();
 
