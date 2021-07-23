@@ -473,7 +473,7 @@ public class AgeSaveHandler extends Handler {
 							: "к куспиду";
 
 						p = new Paragraph();
-	    				p.add(new Chunk(planet.getMark("house"), grayfont));
+	    				p.add(new Chunk(planet.getMark("house", term), grayfont));
 			    		p.add(new Chunk(spa.getAspect().getName() + " ", grayfont));
 	    				p.add(new Chunk(planet.getSymbol() + "d", PDFUtil.getHeaderAstroFont()));
 			    		p.add(new Chunk(" " + pretext + " " + house.getDesignation(), grayfont));

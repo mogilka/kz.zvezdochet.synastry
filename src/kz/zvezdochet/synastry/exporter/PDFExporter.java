@@ -562,12 +562,31 @@ public class PDFExporter {
     			if (!categories.contains(category.getCode()))
     				continue;
 
-				Section section = PDFUtil.printSection(chapter, category.getName(), null);
-
    				Planet planet = event.getPlanets().get(category.getObjectId());
    				Planet planet2 = partner.getPlanets().get(category.getObjectId());
 				Sign sign1 = planet.getSign();
 				Sign sign2 = planet2.getSign();
+
+				Section section = PDFUtil.printSection(chapter, category.getName(), null);
+    			if (term) {
+    				Font afont = PDFUtil.getAnnotationFont(false);
+    				Font hafont = PDFUtil.getHeaderAstroFont();
+    				p = new Paragraph();
+    				p.add(new Chunk(planet.getSymbol(), PDFUtil.getHeaderAstroFont()));
+    				p.add(new Chunk(" " + name1 + "-" + planet.getName() + " в созвездии " + planet.getSign().getName() + " ", afont));
+    				p.add(new Chunk(planet.getSign().getSymbol(), hafont));
+    				String mark = planet.getMark("sign", term);
+    				p.add(new Chunk(mark.isEmpty() ? "" : " (" + mark + ")", afont));
+    				section.add(p);
+
+    				p = new Paragraph();
+    				p.add(new Chunk(planet2.getSymbol(), PDFUtil.getHeaderAstroFont()));
+    				p.add(new Chunk(" " + name2 + "-" + planet2.getName() + " в созвездии " + planet2.getSign().getName() + " ", afont));
+    				p.add(new Chunk(planet2.getSign().getSymbol(), hafont));
+    				String mark2 = planet2.getMark("sign", term);
+    				p.add(new Chunk(mark2.isEmpty() ? "" : " (" + mark2 + ")", afont));
+    				section.add(p);
+    			}
 
 				if (sign1.getId().equals(sign2.getId())) {
    					section.add(new Paragraph("По критерию «" + category.getName() + "» вы с партнёром очень похожи, и данная характеристика подходит вам обоим:", PDFUtil.getSuccessFont()));
@@ -698,11 +717,28 @@ public class PDFExporter {
 				    	Section section = PDFUtil.printSection(chapter, planet1.getSynastry(), null);
 				    	boolean reverse = planet1.getSign().getId() > planet2.getSign().getId();
 				    	String header = reverse
-				    		? partner.getCallname() + "-" + planet2.getSign().getShortname() +
-					    		" + " + event.getCallname() + "-" + planet1.getSign().getShortname()
-						    : event.getCallname() + "-" + planet1.getSign().getShortname() +
-				    			" + " + partner.getCallname() + "-" + planet2.getSign().getShortname();
+				    		? name2 + "-" + planet2.getSign().getShortname() +
+					    		" + " + name1 + "-" + planet1.getSign().getShortname()
+						    : name1 + "-" + planet1.getSign().getShortname() +
+				    			" + " + name2 + "-" + planet2.getSign().getShortname();
 				    	section.add(new Paragraph(header, fonth5));
+
+		    			if (term) {
+		    				Font afont = PDFUtil.getAnnotationFont(false);
+		    				Font hafont = PDFUtil.getHeaderAstroFont();
+		    				Paragraph p = new Paragraph();
+		    				p.add(new Chunk(planet1.getSymbol(), PDFUtil.getHeaderAstroFont()));
+		    				p.add(new Chunk(" " + name1 + "-" + planet1.getName() + " в созвездии " + planet1.getSign().getName() + " ", afont));
+		    				p.add(new Chunk(planet1.getSign().getSymbol(), hafont));
+		    				section.add(p);
+
+		    				p = new Paragraph();
+		    				p.add(new Chunk(planet2.getSymbol(), PDFUtil.getHeaderAstroFont()));
+		    				p.add(new Chunk(" " + name2 + "-" + planet2.getName() + " в созвездии " + planet2.getSign().getName() + " ", afont));
+		    				p.add(new Chunk(planet2.getSign().getSymbol(), hafont));
+		    				section.add(p);
+		    				section.add(Chunk.NEWLINE);
+		    			}
 				    	if (reverse)
 					    	section.add(new Paragraph("Толкование следует воспринимать так, как будто оно адресовано вашему партнёру", PDFUtil.getDangerFont()));
 
@@ -908,25 +944,22 @@ public class PDFExporter {
 					Planet planet2 = (Planet)aspect.getSkyPoint2();
 
 					boolean negative = aspect.isNegative();
-					String text = (negative ? planet1.getBadName() : planet1.getGoodName()) + " " +
+					String text = (term ? planet1.getName() : (negative ? planet1.getBadName() : planet1.getGoodName())) + " " +
 						type.getSymbol() + " " +
-						(negative ? planet2.getBadName() : planet2.getGoodName());
+						(term ? planet2.getName() : (negative ? planet2.getBadName() : planet2.getGoodName()));
 					Anchor anchorTarget = new Anchor(text, fonth5);
 					anchorTarget.setName(aspect.getCode());
 					Paragraph p = new Paragraph("", fonth5);
 					p.add(anchorTarget);
 					section.addSection(p);
 	
-					String code = aspect.getAspect().getCode();
 					if (term) {
-						section.add(new Chunk(" " + planet1.getSymbol(), PDFUtil.getHeaderAstroFont()));
-	
-	    				if (code.equals("CONJUNCTION") || code.equals("OPPOSITION"))
-	    					section.add(new Chunk(aspect.getAspect().getSymbol(), PDFUtil.getHeaderAstroFont()));
-	    				else
-	    					section.add(new Chunk(type.getSymbol(), fonth5));
-	
-	    				section.add(new Chunk(planet2.getSymbol(), PDFUtil.getHeaderAstroFont()));
+						Font hafont = PDFUtil.getHeaderAstroFont();
+						Font afont = PDFUtil.getAnnotationFont(false);
+						section.add(new Chunk(aspect.getAspect().getName() + " планеты " + planet1.getName() + " ", afont));
+						section.add(new Chunk(" " + planet1.getSymbol(), hafont));
+						section.add(new Chunk((aspect.getAspect().getCode().equals("CONJUNCTION") ? " с планетой " : " к планете ") + planet2.getName() + " ", afont));
+						section.add(new Chunk(planet2.getSymbol(), hafont));
 					}
 	
 					List<Model> dicts = aspect.getTexts();
@@ -1069,27 +1102,25 @@ public class PDFExporter {
 				System.out.println();
 
 			boolean negative = aspect.isNegative();
-			String text = sectionum + " " + (reverse ? name2 : name1) + "-" + (negative ? planet1.getBadName() : planet1.getGoodName()) + " " + 
+			String text = sectionum + " " + (reverse ? name2 : name1) + "-" + (term ? planet1.getName() : (negative ? planet1.getBadName() : planet1.getGoodName())) + " " + 
 				type.getSymbol() + " " + 
-				(reverse ? name1 : name2) + "-" + (negative ? planet2.getBadName() : planet2.getGoodName());
+				(reverse ? name1 : name2) + "-" + (term ? planet2.getName() : (negative ? planet2.getBadName() : planet2.getGoodName()));
         	Anchor anchorTarget = new Anchor(text, fonth5);
         	anchorTarget.setName(aspect.getCode());
         	phrase.add(anchorTarget);
 			phrase.add(Chunk.NEWLINE);
 			phrase.add(Chunk.NEWLINE);
 
-			String code = aspect.getAspect().getCode();
 			if (term) {
-				phrase.add(new Chunk(" " + planet1.getSymbol(), PDFUtil.getHeaderAstroFont()));
-	
-				if (code.equals("CONJUNCTION") || code.equals("OPPOSITION"))
-					phrase.add(new Chunk(aspect.getAspect().getSymbol(), PDFUtil.getHeaderAstroFont()));
-				else
-					phrase.add(new Chunk(type.getSymbol(), fonth5));
-	
-				phrase.add(new Chunk(planet2.getSymbol(), PDFUtil.getHeaderAstroFont()));
+				Font hafont = PDFUtil.getHeaderAstroFont();
+				Font afont = PDFUtil.getAnnotationFont(false);
+				phrase.add(new Chunk(aspect.getAspect().getName() + " планеты " + planet1.getName() + " ", afont));
+				phrase.add(new Chunk(" " + planet1.getSymbol(), hafont));
+				phrase.add(new Chunk((aspect.getAspect().getCode().equals("CONJUNCTION") ? " с планетой " : " к планете ") + planet2.getName() + " ", afont));
+				phrase.add(new Chunk(planet2.getSymbol(), hafont));
+				phrase.add(Chunk.NEWLINE);
 			}
-
+    		
 			if (aspect.getAspect().getId() != null
 					&& !aspectType.equals("RELATIVE")) {
 				Font markFont = PDFUtil.getWarningFont();
@@ -1876,7 +1907,7 @@ public class PDFExporter {
 	        table.setWidths(new float[] { 16, 42, 42 });
 	        table.setSpacingBefore(20);
 
-			PdfPCell cell = new PdfPCell(new Phrase(term ? "Планета" : "Сфера", font));
+			PdfPCell cell = new PdfPCell(new Phrase(term ? "Планета, сфера" : "Сфера", font));
 			table.addCell(cell);
 
 			cell = new PdfPCell(new Phrase(name1, font));
@@ -1889,7 +1920,7 @@ public class PDFExporter {
 				Planet planet = items[j];
 				Planet planet2 = items2[j];
 
-				cell = new PdfPCell(new Phrase(term ? planet.getName() : planet.getSynastry(), font));
+				cell = new PdfPCell(new Phrase(term ? planet.getName() + " (" + planet.getSynastry() + ")" : planet.getSynastry(), font));
 				table.addCell(cell);
 
 				table.addCell(printTemperamentCell(planet, font, bold));
@@ -1918,6 +1949,7 @@ public class PDFExporter {
 			}
 
 			ElementService service = new ElementService();
+			Font afont = PDFUtil.getAnnotationFont(false);
 			long[] pids = (2 == doctype) ?  new long[] {19L, 20L, 23L, 25L} : new long[] {19L, 20L, 23L, 24L, 25L};
 			for (long pid : pids) {
    				Planet planet = event.getPlanets().get(pid);
@@ -1929,12 +1961,15 @@ public class PDFExporter {
 				kz.zvezdochet.bean.Element element = (kz.zvezdochet.bean.Element)service.find(code);
 			    if (element != null) {
 		    		if (element.getSynastry() != null) {
-				    	String text = term
-				    		? planet.getName() + " (" + element.getName() + ")"
-				    		: (doctype > 1 && 25 == pid ? planet.getShortName() : planet.getSynastry());
+				    	String text = (doctype > 1 && 25 == pid ? planet.getShortName() : planet.getSynastry());
+				    	if (term)
+							text += " (" + planet.getName() + ")";
 
 						Phrase phrase = new Phrase();
 						phrase.add(new Chunk(text, fonth5));
+						phrase.add(Chunk.NEWLINE);
+						if (term)
+							phrase.add(new Chunk(name1 + "-" + element.getName() + "-" + name2, afont));
 						phrase.add(Chunk.NEWLINE);
 	    				phrase.add(Chunk.NEWLINE);
 		    			phrase.add(PDFUtil.printTextCell(element.getSynastry()));
@@ -1973,12 +2008,15 @@ public class PDFExporter {
 					element = (kz.zvezdochet.bean.Element)service.find(code);
 				    if (element != null) {
 			    		if (element.getSynastry() != null) {
-					    	String text = term
-					    		? planet.getName() + " (" + element.getName() + ")"
-					    		: planet.getSynastry();
+					    	String text = planet.getSynastry();
+					    	if (term)
+								text += " (" + planet.getName() + ")";
 
 							Phrase phrase = new Phrase();
 							phrase.add(new Chunk(text, fonth5));
+							phrase.add(Chunk.NEWLINE);
+							if (term)
+								phrase.add(new Chunk(name2 + "-" + element.getName() + "-" + name1, afont));
 							phrase.add(Chunk.NEWLINE);
 		    				phrase.add(Chunk.NEWLINE);
 		    				phrase.add(PDFUtil.printTextCell(element.getSynastry()));
@@ -2052,10 +2090,11 @@ public class PDFExporter {
 			return phrase;
 
 		try {
+			Font afont = PDFUtil.getAnnotationFont(false);
 			if (reverse)
-				phrase.add(new Paragraph("Типаж человека, которого ваш партнёр притягивает к себе:", PDFUtil.getAnnotationFont(false)));
+				phrase.add(new Paragraph("Типаж человека, которого ваш партнёр притягивает к себе:", afont));
 			else
-				phrase.add(new Paragraph("Типаж человека, которого вы притягиваете к себе:", PDFUtil.getAnnotationFont(false)));
+				phrase.add(new Paragraph("Типаж человека, которого вы притягиваете к себе:", afont));
 			phrase.add(Chunk.NEWLINE);
 			phrase.add(Chunk.NEWLINE);
 
@@ -2284,9 +2323,9 @@ public class PDFExporter {
 
 					Paragraph p = new Paragraph("", fonth5);
 	    			if (term) {
-						String mark = planet.getMark("house");
+						String mark = planet.getMark("house", term);
 						if (mark.length() > 0) {
-		    				p.add(new Chunk(mark, fonth5));
+		    				p.add(new Chunk(mark + " ", fonth5));
 		    				p.add(new Chunk(planet.getSymbol() + " ", PDFUtil.getHeaderAstroFont()));
 						}
 	    				p.add(new Chunk(" " + planet.getName() + " в " + house.getDesignation() + " доме", fonth5));
@@ -2416,11 +2455,22 @@ public class PDFExporter {
         	anchorTarget.setName(planet.getAnchor());
         	phrase.add(anchorTarget);
 			phrase.add(Chunk.NEWLINE);
+
+			Event event = reverse ? synastry.getPartner() : synastry.getEvent();
+			Event partner = reverse ? synastry.getEvent() : synastry.getPartner();
+
+			if (term) {
+				Font afont = PDFUtil.getAnnotationFont(false);
+				Phrase ph = new Phrase("", afont);
+   				ph.add(new Chunk(" " + planet.getSymbol() + " ", PDFUtil.getHeaderAstroFont()));
+				ph.add(new Chunk(" " + (reverse ? name1 : name2) + "-" + planet.getName() + " в " + (reverse ? (partner.isFemale() ? "его " : "её ") : "вашем ") + house.getDesignation() + " доме", afont));
+				phrase.add(ph);
+			}
+			phrase.add(Chunk.NEWLINE);
 			phrase.add(Chunk.NEWLINE);
 
 			SynastryHouseService service = new SynastryHouseService();
 			SynastryHouseText dict = (SynastryHouseText)service.find(planet, house, aspectType);
-			Event event = reverse ? synastry.getPartner() : synastry.getEvent();
 			if (dict != null) {
 				if (dict.getLevel() < 0) {
 					phrase.add(new Paragraph("Уровень критичности: высокий", PDFUtil.getDangerFont()));
@@ -2587,31 +2637,31 @@ public class PDFExporter {
 			Map<String, Integer> map1 = new HashMap<String, Integer>() {
 				private static final long serialVersionUID = 4739420822269120671L;
 				{
-			        put("Характер" + (term ? "\n(Солнце)" : ""), 0);
-			        put("Общение" + (term ? "\n(Меркурий)" : ""), 0);
-			        put("Чувства" + (term ? "\n(Венера)" : ""), 0);
-			        put("Забота" + (term ? "\n(Луна)" : ""), 0);
-		        	put(((doctype < 2) ? "Влечение" : "Конкуренция") + (term ? "\n(Марс)" : ""), 0);
+			        put("Характер", 0);
+			        put("Общение", 0);
+			        put("Чувства", 0);
+			        put("Забота", 0);
+		        	put((doctype < 2) ? "Влечение" : "Конкуренция", 0);
 			    }
 			};
 			Map<String, Integer> map2 = new HashMap<String, Integer>() {
 				private static final long serialVersionUID = -7246716343066391656L;
 				{
-			        put("Характер" + (term ? "\n(Солнце)" : ""), 0);
-			        put("Общение" + (term ? "\n(Меркурий)" : ""), 0);
-			        put("Чувства" + (term ? "\n(Венера)" : ""), 0);
-			        put("Забота" + (term ? "\n(Луна)" : ""), 0);
-		        	put(((doctype < 2) ? "Влечение" : "Конкуренция") + (term ? "\n(Марс)" : ""), 0);
+			        put("Характер", 0);
+			        put("Общение", 0);
+			        put("Чувства", 0);
+			        put("Забота", 0);
+		        	put((doctype < 2) ? "Влечение" : "Конкуренция", 0);
 			    }
 			};
 			Map<String, String[]> planets = new HashMap<String, String[]>() {
 				private static final long serialVersionUID = 4739420822269120672L;
 				{
-			        put("Sun", new String[] {"Характер" + (term ? "\n(Солнце)" : "")});
-			        put("Moon", new String[] {"Забота" + (term ? "\n(Луна)" : "")});
-			        put("Mercury", new String[] {"Общение" + (term ? "\n(Меркурий)" : "")});
-			        put("Venus", new String[] {"Чувства" + (term ? "\n(Венера)" : "")});
-			        put("Mars", (doctype < 2) ? new String[] {"Влечение" + (term ? "\n(Марс)" : "")} : new String[] {"Конкуренция" + (term ? "\n(Марс)" : "")});
+			        put("Sun", new String[] {"Характер"});
+			        put("Moon", new String[] {"Забота"});
+			        put("Mercury", new String[] {"Общение"});
+			        put("Venus", new String[] {"Чувства"});
+			        put("Mars", (doctype < 2) ? new String[] {"Влечение"} : new String[] {"Конкуренция"});
 			    }
 			};
 			List<SkyPointAspect> aspects = synastry.getAspects();
@@ -2946,7 +2996,7 @@ public class PDFExporter {
 			Planet planet2 = partner.getPlanets().get(category2.getObjectId());
 			Sign sign1 = planet.getSign();
 			Sign sign2 = planet2.getSign();
-	
+
 	        PdfPTable table = new PdfPTable(2);
 	        table.setTotalWidth(doc.getPageSize().getWidth() - PDFUtil.PAGEBORDERWIDTH * 2);
 	        table.setLockedWidth(true);
@@ -2965,6 +3015,25 @@ public class PDFExporter {
 			table.setHeaderRows(1);
 	
 			Phrase phrase = new Phrase();
+			if (term) {
+				Font afont = PDFUtil.getAnnotationFont(false);
+				Font hafont = PDFUtil.getHeaderAstroFont();
+				phrase.add(new Chunk(planet.getSymbol(), PDFUtil.getHeaderAstroFont()));
+				phrase.add(new Chunk(" " + planet.getName() + " в созвездии " + planet.getSign().getName() + " ", afont));
+				phrase.add(new Chunk(planet.getSign().getSymbol(), hafont));
+				cell = new PdfPCell(phrase);
+				PDFUtil.setCellBorderWidths(cell, 0, .5F, 0, 0);
+				table.addCell(cell);
+
+				phrase = new Phrase();
+				phrase.add(new Chunk(planet2.getSymbol(), PDFUtil.getHeaderAstroFont()));
+				phrase.add(new Chunk(" " + planet2.getName() + " в созвездии " + planet2.getSign().getName() + " ", afont));
+				phrase.add(new Chunk(planet2.getSign().getSymbol(), hafont));
+				cell = new PdfPCell(phrase);
+				cell.setBorder(Rectangle.NO_BORDER);
+				table.addCell(cell);
+			}
+
 			List<String> texts1 = new ArrayList<>();
 			List<String> texts2 = new ArrayList<>();
 			PlanetSignService service = new PlanetSignService();
@@ -3208,6 +3277,7 @@ public class PDFExporter {
 			    p.setSpacingAfter(10);
 			    section.add(p);
 
+			    Font afont = PDFUtil.getAnnotationFont(true);
 			    for (Map.Entry<String, List<AspectConfiguration>> entry : map.entrySet()) {
 			    	//заголовок
 			    	confs = entry.getValue();
@@ -3227,9 +3297,8 @@ public class PDFExporter {
 								text += " Стихия: " + element.getName();
 						}
 						if (!text.isEmpty())
-							text = "Конфигурация аспектов: " + text + ". ";
-	    				text += conf.getDescription();
-	    				section.add(new Paragraph(text, PDFUtil.getAnnotationFont(true)));
+							text = "Конфигурация аспектов: " + text;
+	    				section.add(new Paragraph(text, afont));
 					}
 					
 					//изображения
@@ -3348,7 +3417,7 @@ public class PDFExporter {
 			cell.setBorder(Rectangle.NO_BORDER);
 			text = "";
 			for (Planet planet : conf.getVertex()) {
-				text += term ? planet.getName() : name + "-" + (conf.isVertexPositive() ? planet.getGoodName() : planet.getBadName());
+				text += name + "-" + (term ? planet.getName() : (conf.isVertexPositive() ? planet.getGoodName() : planet.getBadName()));
 				Planet pl = reverse ? planets2.get(planet.getId()) : planets.get(planet.getId());
 				Object data = pl.getData();
 				if (data != null) {
@@ -3389,7 +3458,7 @@ public class PDFExporter {
 			cell.setBorder(Rectangle.NO_BORDER);
 			text = "";
 			for (Planet planet : conf.getLeftFoot()) {
-				text += term ? planet.getName() : name2 + "-" + (conf.isLeftFootPositive() ? planet.getGoodName() : planet.getBadName());
+				text += name2 + "-" + (term ? planet.getName() : (conf.isLeftFootPositive() ? planet.getGoodName() : planet.getBadName()));
 				Planet pl = reverse ? planets.get(planet.getId()) : planets2.get(planet.getId());
 				Object data = pl.getData();
 				if (data != null) {
@@ -3414,7 +3483,7 @@ public class PDFExporter {
 			cell.setBorder(Rectangle.NO_BORDER);
 			text = "";
 			for (Planet planet : conf.getRightFoot()) {
-				text += term ? planet.getName() : name2 + "-" + (conf.isRightFootPositive() ? planet.getGoodName() : planet.getBadName());
+				text += name2 + "-" + (term ? planet.getName() : (conf.isRightFootPositive() ? planet.getGoodName() : planet.getBadName()));
 				Planet pl = reverse ? planets.get(planet.getId()) : planets2.get(planet.getId());
 				Object data = pl.getData();
 				if (data != null) {
@@ -3464,7 +3533,7 @@ public class PDFExporter {
 	        //верх
 			String text = "";
 			for (Planet planet : conf.getLeftHand()) {
-				text += term ? planet.getName() : name + "-" + (conf.isLeftHandPositive() ? planet.getGoodName() : planet.getBadName());
+				text += name + "-" + (term ? planet.getName() : (conf.isLeftHandPositive() ? planet.getGoodName() : planet.getBadName()));
 				Planet pl = reverse ? planets2.get(planet.getId()) : planets.get(planet.getId());
 				Object data = pl.getData();
 				if (data != null) {
@@ -3487,7 +3556,7 @@ public class PDFExporter {
 
 			text = "";
 			for (Planet planet : conf.getRightHand()) {
-				text += term ? planet.getName() : name2 + "-" + (conf.isRightHandPositive() ? planet.getGoodName() : planet.getBadName());
+				text += name2 + "-" + (term ? planet.getName() : (conf.isRightHandPositive() ? planet.getGoodName() : planet.getBadName()));
 				Planet pl = reverse ? planets.get(planet.getId()) : planets2.get(planet.getId());
 				Object data = pl.getData();
 				if (data != null) {
@@ -3526,7 +3595,7 @@ public class PDFExporter {
 			//низ
 			text = "";
 			for (Planet planet : conf.getLeftFoot()) {
-				text += term ? planet.getName() : name2 + "-" + (conf.isLeftFootPositive() ? planet.getGoodName() : planet.getBadName());
+				text += name2 + "-" + (term ? planet.getName() : (conf.isLeftFootPositive() ? planet.getGoodName() : planet.getBadName()));
 				Planet pl = reverse ? planets.get(planet.getId()) : planets2.get(planet.getId());
 				Object data = pl.getData();
 				if (data != null) {
@@ -3549,7 +3618,7 @@ public class PDFExporter {
 
 			text = "";
 			for (Planet planet : conf.getRightFoot()) {
-				text += term ? planet.getName() : name + "-" + (conf.isRightFootPositive() ? planet.getGoodName() : planet.getBadName());
+				text += name + "-" + (term ? planet.getName() : (conf.isRightFootPositive() ? planet.getGoodName() : planet.getBadName()));
 				Planet pl = reverse ? planets2.get(planet.getId()) : planets.get(planet.getId());
 				Object data = pl.getData();
 				if (data != null) {
@@ -3620,7 +3689,7 @@ public class PDFExporter {
 
 			String text = "";
 			for (Planet planet : conf.getVertex()) {
-				text += term ? planet.getName() : name + "-" + (conf.isVertexPositive() ? planet.getGoodName() : planet.getBadName());
+				text += name + "-" + (term ? planet.getName() : (conf.isVertexPositive() ? planet.getGoodName() : planet.getBadName()));
 				Planet pl = reverse ? planets2.get(planet.getId()) : planets.get(planet.getId());
 				Object data = pl.getData();
 				if (data != null) {
@@ -3644,7 +3713,7 @@ public class PDFExporter {
 			//основание
 			text = "";
 			for (Planet planet : conf.getLeftFoot()) {
-				text += term ? planet.getName() : name2 + "-" + (conf.isLeftFootPositive() ? planet.getGoodName() : planet.getBadName());
+				text += name2 + "-" + (term ? planet.getName() : (conf.isLeftFootPositive() ? planet.getGoodName() : planet.getBadName()));
 				Planet pl = reverse ? planets.get(planet.getId()) : planets2.get(planet.getId());
 				Object data = pl.getData();
 				if (data != null) {
@@ -3675,7 +3744,7 @@ public class PDFExporter {
 
 			text = "";
 			for (Planet planet : conf.getRightFoot()) {
-				text += term ? planet.getName() : name2 + "-" + (conf.isRightFootPositive() ? planet.getGoodName() : planet.getBadName());
+				text += name2 + "-" + (term ? planet.getName() : (conf.isRightFootPositive() ? planet.getGoodName() : planet.getBadName()));
 				Planet pl = reverse ? planets.get(planet.getId()) : planets2.get(planet.getId());
 				Object data = pl.getData();
 				if (data != null) {
@@ -3699,7 +3768,7 @@ public class PDFExporter {
 
 			text = "";
 			for (Planet planet : conf.getBase()) {
-				text += term ? planet.getName() : name + "-" + (conf.isBasePositive() ? planet.getGoodName() : planet.getBadName());
+				text += name + "-" + (term ? planet.getName() : (conf.isBasePositive() ? planet.getGoodName() : planet.getBadName()));
 				Planet pl = reverse ? planets2.get(planet.getId()) : planets.get(planet.getId());
 				Object data = pl.getData();
 				if (data != null) {
