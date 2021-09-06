@@ -114,7 +114,7 @@ public class PDFExporter {
 	/**
 	 * Признак использования астрологических терминов
 	 */
-	private boolean term = true;
+	private boolean term = false;
 	/**
 	 * Тип гороскопа совместимости
 	 * 0|1|2|3 полный|любовный|партнёрский|семейный
@@ -150,8 +150,9 @@ public class PDFExporter {
 	 * Генерация отчёта синастрии
 	 * @param synastry синастрия
 	 * @param choice полный|любовный|партнёрский|семейный
+	 * @param term true - с астрологическими терминами
 	 */
-	public void generate(Synastry synastry, int choice) {
+	public void generate(Synastry synastry, int choice, boolean term) {
 		Event event = synastry.getEvent();
 		Event partner = synastry.getPartner();
 		event.initData(true);
@@ -161,6 +162,7 @@ public class PDFExporter {
 		name1 = event.getCallname();
 		name2 = partner.getCallname();
 		heterosexual = event.isFemale() != partner.isFemale();
+		this.term = term;
 
 		doctype = choice;
 		if (doctype > 2)
@@ -756,7 +758,7 @@ public class PDFExporter {
 					    	if (heterosexual) {
 						    	if (doctype > 1)
 						    		PDFUtil.printGender(section, object, female ? "female" : "male");
-				    			PDFUtil.printGender(section, object, female ? "woman" : "man");
+				    			PDFUtil.printGender(section, object, female ? "man" : "woman");
 
 				    			for (String gtype : genderTypes)
 				    				PDFUtil.printGender(section, object, gtype);
@@ -3254,6 +3256,7 @@ public class PDFExporter {
 		    List<AspectConfiguration> confs = null;
 		    AspectConfigurationService service = new AspectConfigurationService();
 			AspectConfiguration conf = null;
+			ElementService elementService = new ElementService();
 
 		    List<SynastryConfiguration> econfs = new SynastryConfigurationService().findBySynastry(synastry.getId());
 		    for (SynastryConfiguration econf : econfs) {
@@ -3292,7 +3295,7 @@ public class PDFExporter {
 						if (conf.getDegree() != null)
 							text += conf.getDegree() + ". ";
 						if (conf.getElementid() > 0) {
-							kz.zvezdochet.bean.Element element = (kz.zvezdochet.bean.Element)new ElementService().find(conf.getElementid());
+							kz.zvezdochet.bean.Element element = (kz.zvezdochet.bean.Element)elementService.find(conf.getElementid());
 							if (element != null)
 								text += " Стихия: " + element.getName();
 						}
