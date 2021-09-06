@@ -23,12 +23,14 @@ import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
@@ -74,6 +76,7 @@ public class SynastryPart extends ModelListView implements ICalculable {
 	private Group grPlanets;
 	private Group grHouses;
 	private Group grAspectType;
+	private Button btTerm;
 
 	/**
 	 * Режим расчёта синастрии.
@@ -102,7 +105,7 @@ public class SynastryPart extends ModelListView implements ICalculable {
 		for (Tab tab : tabs) {
 			CTabItem item = new CTabItem(folder, SWT.CLOSE);
 			item.setText(tab.name);
-			item.setImage(tab.image);
+//			item.setImage(tab.image);
 			item.setControl(tab.control);
 		}
 		folder.pack();
@@ -184,7 +187,9 @@ public class SynastryPart extends ModelListView implements ICalculable {
 		//настройки расчёта
 		Tab tab = new Tab();
 		tab.name = "Настройки";
-		tab.image = AbstractUIPlugin.imageDescriptorFromPlugin("kz.zvezdochet.runner", "icons/configure.gif").createImage();
+		Image image = AbstractUIPlugin.imageDescriptorFromPlugin("kz.zvezdochet.runner", "icons/configure.gif").createImage();
+		tab.image = image;
+		image.dispose();
 		Group group = new Group(folder, SWT.NONE);
 		group.setText("Общие");
 		group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
@@ -194,7 +199,9 @@ public class SynastryPart extends ModelListView implements ICalculable {
 		//планеты
 		tab = new Tab();
 		tab.name = "Планеты";
-		tab.image = AbstractUIPlugin.imageDescriptorFromPlugin("kz.zvezdochet", "icons/planet.gif").createImage();
+		image = AbstractUIPlugin.imageDescriptorFromPlugin("kz.zvezdochet", "icons/planet.gif").createImage();
+		tab.image = image;
+		image.dispose();
 		grPlanets = new Group(folder, SWT.NONE);
 		Object[] titles = { "Планета", "Координата #1", "Координата #2"	};
 		Table table = new Table(grPlanets, SWT.BORDER | SWT.V_SCROLL);
@@ -214,7 +221,9 @@ public class SynastryPart extends ModelListView implements ICalculable {
 		//дома
 		tab = new Tab();
 		tab.name = "Дома";
-		tab.image = AbstractUIPlugin.imageDescriptorFromPlugin("kz.zvezdochet", "icons/home.gif").createImage();
+		image = AbstractUIPlugin.imageDescriptorFromPlugin("kz.zvezdochet", "icons/home.gif").createImage();
+		tab.image = image;
+		image.dispose();
 		grHouses = new Group(folder, SWT.NONE);
 		String[] titles2 = {"Дом", "Координата #1", "Координата #2"};
 		table = new Table(grHouses, SWT.BORDER | SWT.V_SCROLL);
@@ -234,7 +243,9 @@ public class SynastryPart extends ModelListView implements ICalculable {
 		//аспекты
 		tab = new Tab();
 		tab.name = "Аспекты";
-		tab.image = AbstractUIPlugin.imageDescriptorFromPlugin("kz.zvezdochet", "icons/aspect.gif").createImage();
+		image = AbstractUIPlugin.imageDescriptorFromPlugin("kz.zvezdochet", "icons/aspect.gif").createImage();
+		tab.image = image;
+		image.dispose();
 		grAspectType = new Group(folder, SWT.NONE);
 		grAspectType.setLayout(new GridLayout());
 		List<Model> types = new ArrayList<Model>();
@@ -248,7 +259,9 @@ public class SynastryPart extends ModelListView implements ICalculable {
 			if (type.getImage() != null) {
 				final Button bt = new Button(grAspectType, SWT.BORDER | SWT.CHECK);
 				bt.setText(type.getName());
-				bt.setImage(AbstractUIPlugin.imageDescriptorFromPlugin("kz.zvezdochet", "icons/aspect/" + type.getImage()).createImage());
+				image = AbstractUIPlugin.imageDescriptorFromPlugin("kz.zvezdochet", "icons/aspect/" + type.getImage()).createImage();
+				bt.setImage(image);
+				image.dispose();
 				bt.setSelection(true);
 				bt.setData("type", type.getCode());
 				bt.addSelectionListener(new SelectionListener() {
@@ -264,7 +277,6 @@ public class SynastryPart extends ModelListView implements ICalculable {
 		}
 		tab.control = grAspectType;
 		tabs[3] = tab;
-		
 		return tabs;
 	}
 
@@ -343,6 +355,12 @@ public class SynastryPart extends ModelListView implements ICalculable {
 				}
 			}
 		});
+
+		btTerm = new Button(grFilter, SWT.BORDER | SWT.CHECK);
+		Label lb = new Label(grFilter, SWT.NONE);
+		lb.setText("Термины");
+		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.CENTER).
+		grab(false, false).applyTo(btTerm);
 	}
 
 	@Override
@@ -370,8 +388,8 @@ public class SynastryPart extends ModelListView implements ICalculable {
 		try {
 			//сразу сохраняем партнёра в базу
 			Synastry synastry = (Synastry)model;
-			new SynastryService().save(synastry);
-		} catch (DataAccessException e) {
+			synastry.save();
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -392,8 +410,18 @@ public class SynastryPart extends ModelListView implements ICalculable {
 
 	@Override
 	public Model getModel(int mode, boolean sync) throws Exception {
-		Synastry synastry = (Synastry)new SynastryService().find(synpartner.getId(), ((Event)getModel()).getId());
+		Synastry synastry = (Synastry)super.getModel();
 		synastry.init(true);
 		return synastry;
+	}
+
+	/**
+	 * Определяем тип отчёта по выделению пункта "Астрологические термины":
+	 * 	true - делаем отчёт гороскопа с указанием названий планет, аспектов и других терминов
+	 * 	false - пишем человекопонятные заменители вместо терминов
+	 * @return
+	 */
+	public boolean isTerm() {
+		return btTerm.getSelection();
 	}
 }

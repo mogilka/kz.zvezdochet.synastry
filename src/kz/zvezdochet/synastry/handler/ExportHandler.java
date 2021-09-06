@@ -23,6 +23,7 @@ public class ExportHandler extends Handler {
 			updateStatus("Экспорт синастрии", false);
 			SynastryPart synastryPart = (SynastryPart)activePart.getObject();
 			final Synastry synastry = (Synastry)synastryPart.getModel();
+			final boolean term = synastryPart.isTerm();
 
 			final int choice = DialogUtil.alertQuestion("Вопрос", "Выберите тип гороскопа:", new String[] {"Полный", "Любовный", "Партнёрский", "Семейный"});
 			updateStatus("Сохранение синастрии в файл", false);
@@ -31,7 +32,7 @@ public class ExportHandler extends Handler {
     		BusyIndicator.showWhile(display, new Runnable() {
     			@Override
     			public void run() {
-    				new PDFExporter(display).generate(synastry, choice);
+    				new PDFExporter(display).generate(synastry, choice, term);
     			}
     		});
 			//TODO показывать диалог, что документ сформирован
