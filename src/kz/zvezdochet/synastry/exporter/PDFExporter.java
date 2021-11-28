@@ -1675,7 +1675,7 @@ public class PDFExporter {
 
 		    	boolean exists = false;
 		    	for (Bar b : items) {
-		    		if (b.getName().equals(name)) {
+		    		if (b.getName().equals(mtype.getKeyword())) {
 		    			exists = true;
 				    	b.setValue(b.getValue() + value);
 		    			break;
@@ -3352,6 +3352,10 @@ public class PDFExporter {
 
 					//описание из справочника
 					if (term || null == descr) {
+						p = new Paragraph();
+						PDFUtil.printHr(p, 0, null);
+						section.add(p);
+
 				    	String text = conf.getSynastry();
 				    	if (text != null)
 				    		section.add(new Paragraph(PDFUtil.removeTags(text, font)));
