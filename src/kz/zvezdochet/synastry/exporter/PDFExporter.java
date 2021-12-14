@@ -2169,9 +2169,9 @@ public class PDFExporter {
 			}
 
 			//Венера и Марс в знаках
-			long pid = event.isFemale() ? 24 : 25;
+			long pid = event.isFemale() ? 25 : 24;
 			Planet planet =  event.getPlanets().get(pid);
-			pid = partner.isFemale() ? 24 : 25;
+			pid = partner.isFemale() ? 25 : 24;
 			Planet planet2 = partner.getPlanets().get(pid);
 			Sign sign1 = planet.getSign();
 			Sign sign2 = planet2.getSign();
