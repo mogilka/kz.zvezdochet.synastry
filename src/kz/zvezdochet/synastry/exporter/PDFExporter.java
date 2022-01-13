@@ -803,7 +803,8 @@ public class PDFExporter {
 					continue;
 
 				Planet planet1 = (Planet)aspect.getSkyPoint1();
-				if (!planet1.isMain())
+				if (!planet1.isMain()
+						&& !aspect.getAspect().getCode().equals("CONJUNCTION"))
 					continue;
 
 				Planet planet2 = (Planet)aspect.getSkyPoint2();
@@ -849,7 +850,8 @@ public class PDFExporter {
 //					System.out.println();
 
 				Planet planet1 = (Planet)aspect.getSkyPoint2();
-				if (!planet1.isMain())
+				if (!planet1.isMain()
+						&& !aspect.getAspect().getCode().equals("CONJUNCTION"))
 					continue;
 
 				Planet planet2 = (Planet)aspect.getSkyPoint1();
@@ -1024,6 +1026,7 @@ public class PDFExporter {
 				        + "а значит не возникнет бурных, неконтролируемых эмоций, которые накалят обстановку", font);
 					p.setSpacingAfter(10);
 					section.add(p);
+					section.add(new Paragraph("Толкования в левой колонке адресованы вам, толкования в правой колонке – вашему партнёру", PDFUtil.getWarningFont()));
 				} else {
 					Paragraph p = new Paragraph("Ниже приведены положительные факторы вашего союза. "
 						+ "Используйте их себе в помощь и для укрепления отношений.", PDFUtil.getSuccessFont());
@@ -1105,9 +1108,10 @@ public class PDFExporter {
 			AspectType type = aspect.checkType(false);
 			Planet planet1 = (Planet)(reverse ? aspect.getSkyPoint2() : aspect.getSkyPoint1());
 			Planet planet2 = (Planet)(reverse ? aspect.getSkyPoint1() : aspect.getSkyPoint2());
+			String acode = aspect.getAspect().getCode();
 
-			if (24 == planet1.getId() && 29 == planet2.getId())
-				System.out.println();
+//			if (24 == planet1.getId() && 29 == planet2.getId())
+//				System.out.println();
 
 			boolean negative = aspect.isNegative();
 			String text = sectionum + " " + (reverse ? name2 : name1) + "-" + (term ? planet1.getName() : (negative ? planet1.getBadName() : planet1.getGoodName())) + " " + 
@@ -1124,7 +1128,7 @@ public class PDFExporter {
 				Font afont = PDFUtil.getAnnotationFont(false);
 				phrase.add(new Chunk(aspect.getAspect().getName() + " планеты " + planet1.getName() + " ", afont));
 				phrase.add(new Chunk(" " + planet1.getSymbol(), hafont));
-				phrase.add(new Chunk((aspect.getAspect().getCode().equals("CONJUNCTION") ? " с планетой " : " к планете ") + planet2.getName() + " ", afont));
+				phrase.add(new Chunk((acode.equals("CONJUNCTION") ? " с планетой " : " к планете ") + planet2.getName() + " ", afont));
 				phrase.add(new Chunk(planet2.getSymbol(), hafont));
 				phrase.add(Chunk.NEWLINE);
 
@@ -1148,15 +1152,38 @@ public class PDFExporter {
 					phrase.add(Chunk.NEWLINE);
 				}
 			}
-    		
+
 			List<Model> dicts = aspect.getTexts();
 			Event event = reverse ? synastry.getPartner() : synastry.getEvent();
 			Event partner = reverse ? synastry.getEvent() : synastry.getPartner();
 			if (dicts != null) {
+				Font markFont = aspect.isNegative() ? PDFUtil.getDangerFont() : PDFUtil.getSuccessFont();
 				for (Model model : dicts) {
 					SynastryAspectText dict = (SynastryAspectText)model;
 					if (dict != null) {
 						phrase.add(new Paragraph(PDFUtil.removeTags(dict.getText(), font)));
+
+						if (acode.equals("CONJUNCTION") && (event.isHousable() || partner.isHousable())) {
+							phrase.add(Chunk.NEWLINE);
+							phrase.add(Chunk.NEWLINE);
+							Paragraph p = new Paragraph("Каких сфер жизни это коснётся: ", markFont);
+							boolean both = false;
+							if (planet1.getHouse() != null) {
+								p.add(new Chunk((reverse ? name2 : name1) + "-" + planet1.getHouse().getName(), markFont));
+								both = true;
+							}
+							if (planet2.getHouse() != null)
+								p.add(new Chunk((both ? ", " : "") +
+									(reverse ? name1 : name2) + "-" + planet2.getHouse().getName(), markFont));
+							phrase.add(p);
+						}
+
+						Rule rule = EventRules.ruleSynastryAspect(aspect, event);
+						if (rule != null) {
+							phrase.add(Chunk.NEWLINE);
+							phrase.add(new Paragraph(PDFUtil.removeTags(rule.getText(), font)));
+						}
+
 						if (doctype != 2) {
 							Phrase ph = PDFUtil.printGenderCell(dict,
 								reverse ? partner.isFemale() : event.isFemale(),
@@ -1178,11 +1205,6 @@ public class PDFExporter {
 								phrase.add(ph);
 			    			}
 						}	
-						Rule rule = EventRules.ruleSynastryAspect(aspect, event);
-						if (rule != null) {
-							phrase.add(Chunk.NEWLINE);
-							phrase.add(new Paragraph(PDFUtil.removeTags(rule.getText(), font)));
-						}
 						phrase.add(Chunk.NEWLINE);
 					}
 				}
@@ -1826,7 +1848,7 @@ public class PDFExporter {
 					} else if (code.equals("CREATIVE")) {
 						color = new BaseColor(0, 102, 51);
 						lifont = new Font(baseFont, 12, Font.NORMAL, color);
-						text = "Уровень свободы зашкаливает, так что у вас обоих в распоряжении будет достаточно возможностей, чтобы преобразить отношения";
+						text = "Уровень свободы зашкаливает, так что у вас обоих в распоряжении достаточно возможностей, чтобы преобразить отношения";
 						phrase = new Phrase(text, lifont);
 					} else if (code.equals("NEGATIVE")) {
 						text = "Уровень конфликтов зашкаливает, значит отток энергии будет сильным. Учитесь управлять конфликтами и преуменьшать риски. Не превращайте каждую трудность и непонимание в проблему, ищите позитив в вашем общении с партнёром. Старайтесь по возможности разряжать обстановку, а не накалять её";
@@ -2492,12 +2514,13 @@ public class PDFExporter {
 					phrase.add(Chunk.NEWLINE);
 				}
 				phrase.add(new Paragraph(PDFUtil.removeTags(dict.getText(), font)));
+				boolean appendix = false;
+
 				if (heterosexual) {
 					Phrase ph = PDFUtil.printGenderCell(dict, event.isFemale(), event.isChild(), false);
 					if (ph != null) {
-						phrase.add(Chunk.NEWLINE);
-						phrase.add(Chunk.NEWLINE);
 						phrase.add(ph);
+						appendix = true;
 					}
 				}
 				if (doctype < 2) {
@@ -2506,6 +2529,7 @@ public class PDFExporter {
 						if (ph != null) {
 							phrase.add(Chunk.NEWLINE);
 							phrase.add(ph);
+							appendix = true;
 						}
 					}
 
@@ -2513,20 +2537,27 @@ public class PDFExporter {
 //						System.out.println(planet.getId() + " - " + house.getId());
 
 					Phrase ph = PDFUtil.printGenderCell(dict, event.isFemale() ? "woman" : "man");
-					if (ph != null)
+					if (ph != null) {
 						phrase.add(ph);
-
+						appendix = true;
+					}
 					ph = null;
 					ph = PDFUtil.printGenderCell(dict, "children");
 					if (ph != null) {
 						phrase.add(Chunk.NEWLINE);
 						phrase.add(Chunk.NEWLINE);
 						phrase.add(ph);
+						appendix = true;
 					}
 				}
 				List<Rule> rules = EventRules.ruleSynastryPlanetHouse(planet, house, event.isFemale());
 				for (Rule rule : rules) {
 					phrase.add(new Paragraph(PDFUtil.removeTags(rule.getText(), font)));
+					phrase.add(Chunk.NEWLINE);
+					appendix = true;
+				}
+				if (!appendix) {
+					phrase.add(Chunk.NEWLINE);
 					phrase.add(Chunk.NEWLINE);
 				}
 			}
@@ -2754,6 +2785,7 @@ public class PDFExporter {
 	 * @param event событие
 	 * @return фраза
 	 */
+	@SuppressWarnings("unused")
 	private Phrase printAkin(Event event) {
 		Phrase phrase = new Phrase();
 		try {
@@ -2889,6 +2921,10 @@ public class PDFExporter {
 					positiveh.add(planet);
 				else if (dict.getLevel() < 0)
 					negativeh.add(planet);
+
+				boolean damaged = isDamaged(synastry, planet, false);
+				if (damaged && !planet.isBad())
+					negativeh.add(planet);
 			}
 
 			//дома первого партнёра
@@ -2905,6 +2941,10 @@ public class PDFExporter {
 				if (dict.getLevel() > 0)
 					positiveh.add(planet);
 				else if (dict.getLevel() < 0)
+					negativeh.add(planet);
+
+				boolean damaged = isDamaged(synastry, planet, true);
+				if (damaged && !planet.isBad())
 					negativeh.add(planet);
 			}
 
@@ -2932,6 +2972,10 @@ public class PDFExporter {
 					"Частично об этом написано в разделе ", green));
 				Anchor anchor = new Anchor("Взаимовлияние", fonta);
 				anchor.setReference("#planethouses");
+				p.add(anchor);
+		    	p.add(new Chunk(" и ", green));
+				anchor = new Anchor("Фигуры гороскопа", fonta);
+				anchor.setReference("#aspectconfiguration");
 				p.add(anchor);
 				section.add(p);
 		    }
@@ -3202,7 +3246,7 @@ public class PDFExporter {
 	 * @param reverse true|false планета второго|первого партнёра
 	 * @return признак поражённости внутри синастрии
 	 */
-	private boolean isDamaged(Synastry synastry, Planet planet, boolean reverse) {
+	private boolean isDamaged(Synastry synastry, SkyPoint planet, boolean reverse) {
 		String[] bads = {"Lilith", "Kethu"};
 		String pcode = planet.getCode();
 		if (Arrays.asList(bads).contains(pcode))
@@ -3240,7 +3284,7 @@ public class PDFExporter {
 			if (Arrays.asList(neutrals).contains(tcode)) {
 				if (Arrays.asList(bads).contains(pcode2))
 					tcode = "NEGATIVE";
-				else if (pcode2.equals("Selena"))
+				else
 					tcode = "POSITIVE";
 			}
 			int val = map.get(tcode) + 1;
