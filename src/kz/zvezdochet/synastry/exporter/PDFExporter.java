@@ -1169,12 +1169,12 @@ public class PDFExporter {
 							Paragraph p = new Paragraph("Каких сфер жизни это коснётся: ", markFont);
 							boolean both = false;
 							if (planet1.getHouse() != null) {
-								p.add(new Chunk((reverse ? name2 : name1) + "-" + planet1.getHouse().getName(), markFont));
+								p.add(new Chunk((reverse ? name2 : name1) + "-" + planet1.getHouse().getSynastry(), markFont));
 								both = true;
 							}
 							if (planet2.getHouse() != null)
 								p.add(new Chunk((both ? ", " : "") +
-									(reverse ? name1 : name2) + "-" + planet2.getHouse().getName(), markFont));
+									(reverse ? name1 : name2) + "-" + planet2.getHouse().getSynastry(), markFont));
 							phrase.add(p);
 						}
 
