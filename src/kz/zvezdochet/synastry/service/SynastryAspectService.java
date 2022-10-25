@@ -13,7 +13,6 @@ import kz.zvezdochet.bean.SkyPointAspect;
 import kz.zvezdochet.core.bean.Model;
 import kz.zvezdochet.core.service.DataAccessException;
 import kz.zvezdochet.core.tool.Connector;
-import kz.zvezdochet.service.AspectTypeService;
 import kz.zvezdochet.synastry.bean.SynastryAspectText;
 
 /**
@@ -56,13 +55,6 @@ public class SynastryAspectService extends PlanetAspectService {
 			Planet planet = reverse ? (Planet)aspect.getSkyPoint2() : (Planet)aspect.getSkyPoint1();
 			Planet planet2 = reverse ? (Planet)aspect.getSkyPoint1() : (Planet)aspect.getSkyPoint2();
 			AspectType type = aspect.checkType(false);
-			if (aspect.getAspect().getType().getCode().equals("NEUTRAL")
-					&& !planet2.getCode().equals("Kethu")
-					&& !planet2.getCode().equals("Lilith")) {
-				if (planet.isLilithed()	|| planet2.isLilithed()) {
-					type = (AspectType)new AspectTypeService().find("NEGATIVE");
-				}
-			}
 			String acode = aspect.getAspect().getCode();
 
 			sql = "select * from " + tableName + 

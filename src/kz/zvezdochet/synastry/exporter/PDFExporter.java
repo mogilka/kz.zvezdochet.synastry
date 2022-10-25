@@ -46,6 +46,7 @@ import com.itextpdf.text.pdf.PdfWriter;
 import kz.zvezdochet.analytics.bean.Category;
 import kz.zvezdochet.analytics.bean.HouseSignText;
 import kz.zvezdochet.analytics.bean.Numerology;
+import kz.zvezdochet.analytics.bean.PlanetHouseRule;
 import kz.zvezdochet.analytics.bean.PlanetHouseText;
 import kz.zvezdochet.analytics.bean.PlanetSignText;
 import kz.zvezdochet.analytics.bean.Rule;
@@ -89,6 +90,7 @@ import kz.zvezdochet.synastry.bean.SynastryHouseText;
 import kz.zvezdochet.synastry.bean.SynastryText;
 import kz.zvezdochet.synastry.service.SynastryAspectService;
 import kz.zvezdochet.synastry.service.SynastryConfigurationService;
+import kz.zvezdochet.synastry.service.SynastryHouseRuleService;
 import kz.zvezdochet.synastry.service.SynastryHouseService;
 import kz.zvezdochet.synastry.service.SynastrySignService;
 import kz.zvezdochet.util.Cosmogram;
@@ -466,6 +468,7 @@ public class PDFExporter {
 				e1.printStackTrace();
 			}
 		    image.dispose();
+		    gc.dispose();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -814,7 +817,7 @@ public class PDFExporter {
 				if (!synastry.getPartner().isHousable() && planet2.getCode().equals("Moon"))
 					continue;
 
-//				if (24 == aspect.getSkyPoint1().getId() && 29 == aspect.getSkyPoint2().getId())
+//				if (24 == planet1.getId() && 27 == planet2.getId())
 //					System.out.println();
 
 				if (aspect.getAspect().getCode().equals("OPPOSITION")
@@ -2199,6 +2202,8 @@ public class PDFExporter {
 		List<Planet> planets2 = synastry.getPlanet2List();
 		List<Planet> hplanets = new ArrayList<>();
 		List<Planet> hplanets2 = new ArrayList<>();
+		Map<Long, Planet> hplanets_1 = new HashMap<>();
+		Map<Long, Planet> hplanets_2 = new HashMap<>();
 		List<Planet> relative = new ArrayList<>();
 		try {
 			for (Planet planet : planets) {
@@ -2207,6 +2212,7 @@ public class PDFExporter {
 					if (!isRelevant(house))
 						continue;
 					hplanets.add(planet);
+					hplanets_1.put(planet.getId(), planet);
 				}
 			}
 
@@ -2228,6 +2234,7 @@ public class PDFExporter {
 					if (!rel) {
 						planet.setData(house);
 						hplanets2.add(planet);
+						hplanets_2.put(planet.getId(), planet);
 					}
 				}					
 			}
@@ -2281,7 +2288,7 @@ public class PDFExporter {
     		section.add(Chunk.NEWLINE);
 
     		for (Planet planet : hplanets2)
-				printPlanetHouse(section, synastry, planet, false);
+				printPlanetHouse(section, synastry, planet, false, hplanets_2);
 			section.add(Chunk.NEXTPAGE);
 
 			section = PDFUtil.printSection(chapter, "Ваше влияние на партнёра", null);
@@ -2289,7 +2296,7 @@ public class PDFExporter {
 	    	section.add(Chunk.NEWLINE);
 
 			for (Planet planet : hplanets)
-				printPlanetHouse(section, synastry, planet, true);
+				printPlanetHouse(section, synastry, planet, true, hplanets_1);
 			section.add(Chunk.NEXTPAGE);
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -2302,8 +2309,9 @@ public class PDFExporter {
 	 * @param synastry синастрия
 	 * @param planet планета
 	 * @param reverse true - толкование для партнёра
+	 * @param hplanets планеты в доме
 	 */
-	private void printPlanetHouse(Section section, Synastry synastry, Planet planet, boolean reverse) {
+	private void printPlanetHouse(Section section, Synastry synastry, Planet planet, boolean reverse, Map<Long, Planet> hplanets) {
 		try {
 			if (planet.getCode().equals("Moon")) {
 				boolean housable = reverse ? synastry.getEvent().isHousable() : synastry.getPartner().isHousable();
@@ -2364,6 +2372,40 @@ public class PDFExporter {
 				for (Rule rule : rules) {
 					section.add(new Paragraph(PDFUtil.removeTags(rule.getText(), font)));
 					section.add(Chunk.NEWLINE);
+				}
+
+				//правила домов
+				SynastryHouseRuleService phruleService = new SynastryHouseRuleService();
+				List<PlanetHouseRule> houseRules = phruleService.find(planet, house);
+				Map<Long, Planet> eplanets = hplanets; //TODO reverse
+
+				Font fonth6 = PDFUtil.getSubheaderFont();
+				Font grayfont = PDFUtil.getAnnotationFont(false);
+
+				for (PlanetHouseRule rule : houseRules) {
+					AspectType rtype = rule.getAspectType();
+					Planet planet2 = rule.getPlanet2();
+					House house2 = rule.getHouse2();
+
+					if (null == rtype) {
+						//2 планеты в доме с аспектом или без
+						Planet p2 = eplanets.get(planet2.getId());
+						House h2 = (House)p2.getData();
+						if (house2.getId().equals(h2.getId())) {
+							String header = (reverse ? name2 : name1) + "-" + house.getSynastry() +
+								" + " + 
+								(reverse ? name1 : name2) + "-" + planet2.getShortName();
+							section.add(new Paragraph(header, fonth6));
+			    			if (term) {
+			    				section.add(new Paragraph("Планеты " + planet.getName() + " и " + planet2.getName() +
+			    					(house.isAngled() ? " на " + house.getDesignation() :
+			    						" в секторе «" + house.getName() + "» " + house.getDesignation() + " дома"), grayfont));
+			    			}
+							section.add(new Paragraph(PDFUtil.removeTags(rule.getText(), font)));
+			    			for (String gtype : genderTypes)
+			    				PDFUtil.printGender(section, rule, gtype);
+						}
+					}
 				}
 				section.add(Chunk.NEWLINE);
 			}
