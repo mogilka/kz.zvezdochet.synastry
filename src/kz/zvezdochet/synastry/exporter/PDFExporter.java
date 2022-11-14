@@ -730,6 +730,7 @@ public class PDFExporter {
 					if (planet1 != null && planet2 != null) {
 				    	Section section = PDFUtil.printSection(chapter, planet1.getSynastry(), null);
 				    	boolean reverse = planet1.getSign().getId() > planet2.getSign().getId();
+				    	boolean equal = planet1.getSign().getId().equals(planet2.getSign().getId());
 				    	String header = reverse
 				    		? name2 + "-" + planet2.getSign().getShortname() +
 					    		" + " + name1 + "-" + planet1.getSign().getShortname()
@@ -751,10 +752,11 @@ public class PDFExporter {
 		    				section.add(p);
 		    				section.add(Chunk.NEWLINE);
 		    			}
-				    	if (reverse)
-					    	section.add(new Paragraph("Толкование следует воспринимать так, как будто оно адресовано вашему партнёру", dfont));
-				    	else
-				    		section.add(new Paragraph("Толкование следует воспринимать так, как будто оно адресовано вам", wfont));
+		    			if (!equal)
+					    	if (reverse)
+						    	section.add(new Paragraph("Толкование следует воспринимать так, как будто оно адресовано вашему партнёру", dfont));
+					    	else
+					    		section.add(new Paragraph("Толкование следует воспринимать так, как будто оно адресовано вам", wfont));
 
 				    	SynastryText object = service.find(planet1, planet1.getSign(), planet2.getSign(), reverse);
 				    	if (object != null) {
@@ -807,13 +809,14 @@ public class PDFExporter {
 					continue;
 
 				Planet planet1 = (Planet)aspect.getSkyPoint1();
-				if (!planet1.isMain()
+				Planet planet2 = (Planet)aspect.getSkyPoint2();
+				boolean reverse = planet2.getNumber() < planet1.getNumber();
+				if (!planet1.isMain() && !planet2.isMain()
 						&& !aspect.getAspect().getCode().equals("CONJUNCTION"))
 					continue;
 
 				if (!synastry.getEvent().isHousable() && planet1.getCode().equals("Moon"))
 					continue;
-				Planet planet2 = (Planet)aspect.getSkyPoint2();
 				if (!synastry.getPartner().isHousable() && planet2.getCode().equals("Moon"))
 					continue;
 
@@ -826,7 +829,7 @@ public class PDFExporter {
 					continue;
 
 				boolean posit = true;
-				aspect.setReverse(planet2.getNumber() < planet1.getNumber());
+				aspect.setReverse(reverse);
 
 				List<Model> dicts = service.finds(aspect, aspect.isReverse());
 				if (dicts != null && !dicts.isEmpty()) {
@@ -1013,7 +1016,7 @@ public class PDFExporter {
 			Planet planet2 = (Planet)(reverse ? aspect.getSkyPoint1() : aspect.getSkyPoint2());
 			String acode = aspect.getAspect().getCode();
 
-//			if (24 == planet1.getId() && 29 == planet2.getId())
+//			if (25 == planet1.getId() && 27 == planet2.getId())
 //				System.out.println();
 
 			boolean negative = aspect.isNegative();
@@ -1066,14 +1069,14 @@ public class PDFExporter {
 					if (dict != null) {
 						section.add(new Paragraph(PDFUtil.removeTags(dict.getText(), font)));
 
-						if (acode.equals("CONJUNCTION") && (event.isHousable() || partner.isHousable())) {
+						if (acode.equals("CONJUNCTION")) {
 							p = new Paragraph("Каких сфер жизни это коснётся: ", markFont);
 							boolean both = false;
-							if (planet1.getHouse() != null) {
+							if (event.isHousable() && planet1.getHouse() != null) {
 								p.add(new Chunk((reverse ? name2 : name1) + "-" + planet1.getHouse().getSynastry(), markFont));
 								both = true;
 							}
-							if (planet2.getHouse() != null)
+							if (partner.isHousable() && planet2.getHouse() != null)
 								p.add(new Chunk((both ? ", " : "") +
 									(reverse ? name1 : name2) + "-" + planet2.getHouse().getSynastry(), markFont));
 							section.add(p);
@@ -1087,8 +1090,8 @@ public class PDFExporter {
 
 						if (doctype != 2) {
 							PDFUtil.printGender(section, dict,
-								reverse ? partner.isFemale() : event.isFemale(),
-								reverse ? partner.isChild() : event.isChild(), false);
+								reverse ? event.isFemale() : partner.isFemale(),
+								reverse ? event.isChild() : partner.isChild(), false);
 
 							PDFUtil.printGender(section, dict, event.isFemale() ? "woman" : "man");
 						}
@@ -2197,7 +2200,6 @@ public class PDFExporter {
 	 * @param synastry синастрия
 	 */
 	private void printPlanetHouses(Document doc, Chapter chapter, Synastry synastry) {
-
 		List<Planet> planets = synastry.getPlanetList();
 		List<Planet> planets2 = synastry.getPlanet2List();
 		List<Planet> hplanets = new ArrayList<>();
@@ -2291,13 +2293,15 @@ public class PDFExporter {
 				printPlanetHouse(section, synastry, planet, false, hplanets_2);
 			section.add(Chunk.NEXTPAGE);
 
-			section = PDFUtil.printSection(chapter, "Ваше влияние на партнёра", null);
-	    	section.add(new Paragraph("Толкование следует воспринимать так, как будто оно адресовано вашему партнёру", wfont));
-	    	section.add(Chunk.NEWLINE);
-
-			for (Planet planet : hplanets)
-				printPlanetHouse(section, synastry, planet, true, hplanets_1);
-			section.add(Chunk.NEXTPAGE);
+			if (synastry.getPartner().isRectified()) {
+				section = PDFUtil.printSection(chapter, "Ваше влияние на партнёра", null);
+		    	section.add(new Paragraph("Толкование следует воспринимать так, как будто оно адресовано вашему партнёру", wfont));
+		    	section.add(Chunk.NEWLINE);
+	
+				for (Planet planet : hplanets)
+					printPlanetHouse(section, synastry, planet, true, hplanets_1);
+				section.add(Chunk.NEXTPAGE);
+			}
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
