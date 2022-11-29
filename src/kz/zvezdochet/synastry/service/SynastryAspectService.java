@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import kz.zvezdochet.analytics.service.PlanetAspectService;
 import kz.zvezdochet.bean.AspectType;
@@ -22,7 +23,8 @@ import kz.zvezdochet.synastry.bean.SynastryAspectText;
 public class SynastryAspectService extends PlanetAspectService {
 
 	public SynastryAspectService() {
-		tableName = "synastryaspects";
+		String lang = Locale.getDefault().getLanguage();
+		tableName = lang.equals("ru") ? "synastryaspects" : "us_synastryaspects";
 	}
 
 	@Override

@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
@@ -23,6 +24,7 @@ import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.widgets.Display;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.osgi.service.prefs.Preferences;
 
 import com.itextpdf.text.Anchor;
 import com.itextpdf.text.BaseColor;
@@ -71,6 +73,7 @@ import kz.zvezdochet.core.bean.ITextGender;
 import kz.zvezdochet.core.bean.Model;
 import kz.zvezdochet.core.bean.TextGender;
 import kz.zvezdochet.core.util.CalcUtil;
+import kz.zvezdochet.core.util.Constants;
 import kz.zvezdochet.core.util.CoreUtil;
 import kz.zvezdochet.core.util.DateUtil;
 import kz.zvezdochet.core.util.PlatformUtil;
@@ -135,6 +138,11 @@ public class PDFExporter {
 	 */
 	boolean heterosexual = true;
 
+	/**
+	 * Язык файла
+	 */
+	private String lang = "ru";
+
 	public PDFExporter(Display display) {
 		this.display = display;
 		try {
@@ -142,6 +150,10 @@ public class PDFExporter {
 			font = PDFUtil.getRegularFont();
 			fonta = PDFUtil.getLinkFont();
 			fonth5 = PDFUtil.getHeaderFont();
+
+			Preferences preferences = InstanceScope.INSTANCE.getNode("kz.zvezdochet");
+			Preferences recent = preferences.node(Constants.PREF_LANG);
+			lang = recent.get(Constants.PREF_LANG, "ru");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -160,8 +172,8 @@ public class PDFExporter {
 		partner.initData(true);
 		synastry.init(true);
 
-		name1 = event.getCallname();
-		name2 = partner.getCallname();
+		name1 = event.getCallname(lang);
+		name2 = partner.getCallname(lang);
 		heterosexual = event.isFemale() != partner.isFemale();
 		this.term = term;
 
@@ -181,11 +193,13 @@ public class PDFExporter {
 
 			String filename = PlatformUtil.getPath(Activator.PLUGIN_ID, "/out/synastry.pdf").getPath();
 			PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(filename));
-	        writer.setPageEvent(new PageEventHandler());
+			PageEventHandler handler = new PageEventHandler();
+			handler.setLang(lang);
+	        writer.setPageEvent(handler);
 	        doc.open();
 
 	        //metadata
-	        PDFUtil.getMetaData(doc, "Парный гороскоп");
+	        PDFUtil.getMetaData(doc, "Парный гороскоп", lang);
 
 	        //раздел
 			Chapter chapter = new ChapterAutoNumber("Общая информация");
@@ -202,7 +216,7 @@ public class PDFExporter {
 			chapter.add(p);
 
 			//первый партнёр
-			text = (event.isCelebrity() ? event.getName() : event.getCallname()) + " - ";
+			text = (event.isCelebrity() ? event.getName(lang) : event.getCallname(lang)) + " - ";
 			text += DateUtil.fulldtf.format(event.getBirth());
 			p = new Paragraph(text, font);
 	        p.setAlignment(Element.ALIGN_CENTER);
@@ -213,7 +227,7 @@ public class PDFExporter {
 				place = new Place().getDefault();
 			text = (event.getZone() >= 0 ? "UTC+" : "") + event.getZone() +
 				" " + (event.getDst() >= 0 ? "DST+" : "") + event.getDst() + 
-				" " + place.getName() +
+				" " + place.getName(lang) +
 				" " + place.getLatitude() + "°" +
 				", " + place.getLongitude() + "°";
 			p = new Paragraph(text, font);
@@ -221,7 +235,7 @@ public class PDFExporter {
 			chapter.add(p);
 
 			//второй партнёр
-			text = (partner.isCelebrity() ? partner.getName() : partner.getCallname()) + " - ";
+			text = (partner.isCelebrity() ? partner.getName(lang) : partner.getCallname(lang)) + " - ";
 			text += DateUtil.fulldtf.format(partner.getBirth());
 			p = new Paragraph(text, font);
 	        p.setAlignment(Element.ALIGN_CENTER);
@@ -232,7 +246,7 @@ public class PDFExporter {
 				place = new Place().getDefault();
 			text = (partner.getZone() >= 0 ? "UTC+" : "") + partner.getZone() +
 				" " + (partner.getDst() >= 0 ? "DST+" : "") + partner.getDst() + 
-				" " + place.getName() +
+				" " + place.getName(lang) +
 				" " + place.getLatitude() + "°" +
 				", " + place.getLongitude() + "°";
 			p = new Paragraph(text, font);
@@ -250,8 +264,8 @@ public class PDFExporter {
 	        p.setAlignment(Element.ALIGN_CENTER);
 			p.setSpacingAfter(20);
 	        p.add(new Chunk("Автор: ", fontgray));
-	        Chunk chunk = new Chunk(PDFUtil.AUTHOR, new Font(baseFont, 10, Font.UNDERLINE, PDFUtil.FONTCOLOR));
-	        chunk.setAnchor(PDFUtil.WEBSITE);
+	        Chunk chunk = new Chunk(PDFUtil.getAuthor(lang), new Font(baseFont, 10, Font.UNDERLINE, PDFUtil.FONTCOLOR));
+	        chunk.setAnchor(PDFUtil.getWebsite(lang));
 	        p.add(chunk);
 	        chapter.add(p);
 
@@ -436,7 +450,7 @@ public class PDFExporter {
 			printAbbreviation(chapter);
 			doc.add(chapter);
 			doc.add(Chunk.NEWLINE);
-	        doc.add(PDFUtil.printCopyright());
+	        doc.add(PDFUtil.printCopyright(lang));
 		} catch(Exception e) {
 			e.printStackTrace();
 		} finally {
@@ -583,7 +597,7 @@ public class PDFExporter {
     				p.add(new Chunk(planet.getSymbol(), PDFUtil.getHeaderAstroFont()));
     				p.add(new Chunk(" " + name1 + "-" + planet.getName() + " в созвездии " + planet.getSign().getName() + " ", afont));
     				p.add(new Chunk(planet.getSign().getSymbol(), hafont));
-    				String mark = planet.getMark("sign", term);
+    				String mark = planet.getMark("sign", term, lang);
     				p.add(new Chunk(mark.isEmpty() ? "" : " (" + mark + ")", afont));
     				section.add(p);
 
@@ -591,7 +605,7 @@ public class PDFExporter {
     				p.add(new Chunk(planet2.getSymbol(), PDFUtil.getHeaderAstroFont()));
     				p.add(new Chunk(" " + name2 + "-" + planet2.getName() + " в созвездии " + planet2.getSign().getName() + " ", afont));
     				p.add(new Chunk(planet2.getSign().getSymbol(), hafont));
-    				String mark2 = planet2.getMark("sign", term);
+    				String mark2 = planet2.getMark("sign", term, lang);
     				p.add(new Chunk(mark2.isEmpty() ? "" : " (" + mark2 + ")", afont));
     				section.add(p);
     			}
@@ -604,8 +618,8 @@ public class PDFExporter {
 	    					section.add(PDFUtil.removeTags(text.getText(), font));
 						//гендерные толкования
 			    		if (heterosexual) {
-			    			PDFUtil.printGender(section, text, event.isFemale(), event.isChild(), false);
-			    			PDFUtil.printGender(section, text, partner.isFemale(), partner.isChild(), false);
+			    			PDFUtil.printGender(section, text, event.isFemale(), event.isChild(), false, lang);
+			    			PDFUtil.printGender(section, text, partner.isFemale(), partner.isChild(), false, lang);
 			    		}
 					}
 				} else {
@@ -619,7 +633,7 @@ public class PDFExporter {
 					Event[] events = new Event[] {event, partner};
 	
 	    			for (Event e : events) {
-	    				cell = new PdfPCell(new Phrase(e.getCallname(), font));
+	    				cell = new PdfPCell(new Phrase(e.getCallname(lang), font));
 	    				PDFUtil.setCellBorderWidths(cell, 0, 0, .5F, 0);
 	    				cell.setHorizontalAlignment(Element.ALIGN_CENTER);
 	    				table.addCell(cell);
@@ -664,13 +678,13 @@ public class PDFExporter {
 					}
 					//гендерные толкования
 					if (text != null) {
-		    			phrase = PDFUtil.printGenderCell(text, event.isFemale(), event.isChild(), false);
+		    			phrase = PDFUtil.printGenderCell(text, event.isFemale(), event.isChild(), false, lang);
 		   				cell = new PdfPCell(phrase);
 						PDFUtil.setCellBorderWidths(cell, 0, .5F, 0, 0);
 						table.addCell(cell);
 					}				
 					if (text2 != null) {
-		    			phrase = PDFUtil.printGenderCell(text2, partner.isFemale(), partner.isChild(), false);
+		    			phrase = PDFUtil.printGenderCell(text2, partner.isFemale(), partner.isChild(), false, lang);
 		   				cell = new PdfPCell(phrase);
 		   				cell.setBorder(Rectangle.NO_BORDER);
 		   				table.addCell(cell);
@@ -771,11 +785,11 @@ public class PDFExporter {
 					    		section.add(new Paragraph(PDFUtil.removeTags(object.getText(), font)));
 					    	if (heterosexual) {
 						    	if (doctype > 1)
-						    		PDFUtil.printGender(section, object, female ? "female" : "male");
-				    			PDFUtil.printGender(section, object, female ? "woman" : "man");
+						    		PDFUtil.printGender(section, object, female ? "female" : "male", lang);
+				    			PDFUtil.printGender(section, object, female ? "woman" : "man", lang);
 
 				    			for (String gtype : genderTypes)
-				    				PDFUtil.printGender(section, object, gtype);
+				    				PDFUtil.printGender(section, object, gtype, lang);
 					    	}
 					    }
 					}
@@ -1055,7 +1069,7 @@ public class PDFExporter {
 						else if (markPoints > 0)
 							markFont = PDFUtil.getSuccessFont();
 					}					
-					section.add(new Paragraph(aspect.getMark() + " " + aspect.getMarkDescr(), markFont));
+					section.add(new Paragraph(aspect.getMark() + " " + aspect.getMarkDescr(lang), markFont));
 				}
 			}
 
@@ -1091,12 +1105,12 @@ public class PDFExporter {
 						if (doctype != 2) {
 							PDFUtil.printGender(section, dict,
 								reverse ? event.isFemale() : partner.isFemale(),
-								reverse ? event.isChild() : partner.isChild(), false);
+								reverse ? event.isChild() : partner.isChild(), false, lang);
 
-							PDFUtil.printGender(section, dict, event.isFemale() ? "woman" : "man");
+							PDFUtil.printGender(section, dict, event.isFemale() ? "woman" : "man", lang);
 						}
 						for (String gtype : genderTypes) {
-							PDFUtil.printGender(section, dict, gtype);
+							PDFUtil.printGender(section, dict, gtype, lang);
 						}	
 					}
 					section.add(Chunk.NEWLINE);
@@ -1159,13 +1173,13 @@ public class PDFExporter {
 				Color scolor = planet.getColor();
 				cell = new PdfPCell();
 		        String descr = "";
-				if (planet.isLord())
+				if (planet.isDominant())
 					descr += "влд ";
 
-				if (planet.isKing())
+				if (planet.isBenefic())
 					descr += "крл ";
 
-				if (planet.isBelt())
+				if (planet.isCombustion())
 					descr += "пояс ";
 				else if (planet.isKernel())
 					descr += "ядро ";
@@ -1178,7 +1192,7 @@ public class PDFExporter {
 				if (planet.isLilithed())
 					descr += "сбз ";
 
-				if (planet.isBroken() || planet.inMine())
+				if (planet.isBroken() || planet.isUnaspected())
 					descr += "слб ";
 
 				if (planet.isRetrograde())
@@ -1193,13 +1207,13 @@ public class PDFExporter {
 				scolor = sign.getElement().getDimColor();
 		        cell = new PdfPCell();
 		        descr = "";
-				if (planet.isSignHome())
+				if (planet.isSignDomicile())
 					descr = "(обт)";
-				else if (planet.isSignExaltated())
+				else if (planet.isSignExaltation())
 					descr = "(экз)";
-				else if (planet.isSignDeclined())
+				else if (planet.isSignFall())
 					descr = "(пдн)";
-				else if (planet.isSignExile())
+				else if (planet.isSignDetriment())
 					descr = "(изг)";
 
 				cell.addElement(new Phrase(sign.getName() + " " + descr, new Font(baseFont, fontsize, Font.NORMAL, new BaseColor(scolor.getRed(), scolor.getGreen(), scolor.getBlue()))));
@@ -1239,13 +1253,13 @@ public class PDFExporter {
 					scolor = house.getElement().getDimColor();
 					cell = new PdfPCell();
 			        descr = "";
-					if (planet.isHouseHome())
+					if (planet.isHouseDomicile())
 						descr = "(обт)";
-					else if (planet.isHouseExaltated())
+					else if (planet.isHouseExaltation())
 						descr = "(экз)";
-					else if (planet.isHouseDeclined())
+					else if (planet.isHouseFall())
 						descr = "(пдн)";
-					else if (planet.isHouseExile())
+					else if (planet.isHouseDetriment())
 						descr = "(изг)";
 	
 					cell.addElement(new Phrase(house.getName() + " " + descr, new Font(baseFont, fontsize, Font.NORMAL, new BaseColor(scolor.getRed(), scolor.getGreen(), scolor.getBlue()))));
@@ -1774,10 +1788,10 @@ public class PDFExporter {
 
 			section = PDFUtil.printSection(chapter, "Ваши аспекты в данной паре", null);
 			section.add(new Paragraph("Диаграммы показывают, в какой сфере вы испытаете с партнёром больше лёгкости, свободы, переживаний, стресса и испытаний:", font));
-		    com.itextpdf.text.Image image = PDFUtil.printMultiStackChart(writer, synastry.getEvent().getCallname(), "Планеты", "Баллы", pmap, 500, 180, false);
+		    com.itextpdf.text.Image image = PDFUtil.printMultiStackChart(writer, synastry.getEvent().getCallname(lang), "Планеты", "Баллы", pmap, 500, 180, false);
 			section.add(image);
 
-			image = PDFUtil.printMultiStackChart(writer, synastry.getPartner().getCallname(), "Планеты", "Баллы", pmap2, 500, 180, true);
+			image = PDFUtil.printMultiStackChart(writer, synastry.getPartner().getCallname(lang), "Планеты", "Баллы", pmap2, 500, 180, true);
 			section.add(image);
 			section.add(Chunk.NEWLINE);
 			list = new com.itextpdf.text.List(false, false, 10);
@@ -1870,7 +1884,7 @@ public class PDFExporter {
 			Event[] events = new Event[] {event, partner};
 
 			for (Event e : events) {
-				cell = new PdfPCell(new Phrase(e.getCallname(), font));
+				cell = new PdfPCell(new Phrase(e.getCallname(lang), font));
 				PDFUtil.setCellBorderWidths(cell, 0, 0, .5F, 0);
 				cell.setHorizontalAlignment(Element.ALIGN_CENTER);
 				table.addCell(cell);
@@ -1904,7 +1918,7 @@ public class PDFExporter {
 		    			phrase.add(PDFUtil.printTextCell(element.getSynastry()));
 
 		    			for (String gtype : genderTypes) {
-			    			Phrase ph = PDFUtil.printGenderCell(element, gtype);
+			    			Phrase ph = PDFUtil.printGenderCell(element, gtype, lang);
 			    			if (ph != null) {
 								phrase.add(Chunk.NEWLINE);
 								phrase.add(Chunk.NEWLINE);
@@ -1951,7 +1965,7 @@ public class PDFExporter {
 		    				phrase.add(PDFUtil.printTextCell(element.getSynastry()));
 
 		    				for (String gtype : genderTypes) {
-				    			Phrase ph = PDFUtil.printGenderCell(element, gtype);
+				    			Phrase ph = PDFUtil.printGenderCell(element, gtype, lang);
 				    			if (ph != null) {
 									phrase.add(Chunk.NEWLINE);
 									phrase.add(Chunk.NEWLINE);
@@ -2076,7 +2090,7 @@ public class PDFExporter {
 			Event[] events = new Event[] {event, partner};
 
 			for (Event e : events) {
-				cell = new PdfPCell(new Phrase(e.getCallname(), font));
+				cell = new PdfPCell(new Phrase(e.getCallname(lang), font));
 				PDFUtil.setCellBorderWidths(cell, 0, 0, .5F, 0);
 				cell.setHorizontalAlignment(Element.ALIGN_CENTER);
 				table.addCell(cell);
@@ -2185,7 +2199,7 @@ public class PDFExporter {
 					section.add(new Paragraph("Разница в годах цикла: " + CoreUtil.getAgeString(years), fonth5));
 					section.add(new Paragraph(PDFUtil.removeTags(dict.getZoroastrsyn(), font)));
 					for (String gtype : genderTypes)
-						PDFUtil.printGender(section, dict, gtype);
+						PDFUtil.printGender(section, dict, gtype, lang);
 				}
 			}
 		} catch(Exception e) {
@@ -2252,7 +2266,7 @@ public class PDFExporter {
 
 					Paragraph p = new Paragraph("", fonth5);
 	    			if (term) {
-						String mark = planet.getMark("house", term);
+						String mark = planet.getMark("house", term, lang);
 						if (mark.length() > 0) {
 		    				p.add(new Chunk(mark + " ", fonth5));
 		    				p.add(new Chunk(planet.getSymbol() + " ", PDFUtil.getHeaderAstroFont()));
@@ -2359,18 +2373,18 @@ public class PDFExporter {
 				section.add(new Paragraph(PDFUtil.removeTags(dict.getText(), font)));
 
 				if (heterosexual) {
-					PDFUtil.printGender(section, dict, event.isFemale(), event.isChild(), false);
+					PDFUtil.printGender(section, dict, event.isFemale(), event.isChild(), false, lang);
 				}
 				if (doctype < 2) {
 					for (String gtype : genderTypes) {
-						PDFUtil.printGender(section, dict, gtype);
+						PDFUtil.printGender(section, dict, gtype, lang);
 					}
 
 //					if (32 == planet.getId() && 157 == house.getId())
 //						System.out.println(planet.getId() + " - " + house.getId());
 
-					PDFUtil.printGender(section, dict, event.isFemale() ? "woman" : "man");
-					PDFUtil.printGender(section, dict, "children");
+					PDFUtil.printGender(section, dict, event.isFemale() ? "woman" : "man", lang);
+					PDFUtil.printGender(section, dict, "children", lang);
 				}
 				List<Rule> rules = EventRules.ruleSynastryPlanetHouse(planet, house, event.isFemale());
 				for (Rule rule : rules) {
@@ -2407,7 +2421,7 @@ public class PDFExporter {
 			    			}
 							section.add(new Paragraph(PDFUtil.removeTags(rule.getText(), font)));
 			    			for (String gtype : genderTypes)
-			    				PDFUtil.printGender(section, rule, gtype);
+			    				PDFUtil.printGender(section, rule, gtype, lang);
 						}
 					}
 				}
@@ -2503,7 +2517,7 @@ public class PDFExporter {
 			for (String gtype : genderTypes) {
 				TextGender gender = dict.getGenderText(gtype);
 				if (gender != null) {
-					Paragraph p = new Paragraph(PDFUtil.getGenderHeader(gender.getType()), PDFUtil.getSubheaderFont());
+					Paragraph p = new Paragraph(PDFUtil.getGenderHeader(gender.getType(), lang), PDFUtil.getSubheaderFont());
 					p.setSpacingBefore(10);
 					section.add(p);
 					section.add(new Paragraph(PDFUtil.removeTags(gender.getText(), font)));
@@ -2606,11 +2620,11 @@ public class PDFExporter {
 		    	bar.setName(entry.getKey());
 		    	bar.setValue(entry.getValue());
 //				bar.setColor(mtype.getColor());
-				bar.setCategory(synastry.getEvent().getCallname());
+				bar.setCategory(synastry.getEvent().getCallname(lang));
 				bars[++i] = bar;
 		    }
 		    Map<String, Bar[]> pmap = new HashMap<String, Bar[]>();
-		    pmap.put(synastry.getEvent().getCallname(), bars);
+		    pmap.put(synastry.getEvent().getCallname(lang), bars);
 
 		    bars = new Bar[map2.size()];
 			iterator = map2.entrySet().iterator();
@@ -2621,10 +2635,10 @@ public class PDFExporter {
 		    	bar.setName(entry.getKey());
 		    	bar.setValue(entry.getValue());
 //				bar.setColor(mtype.getColor());
-				bar.setCategory(synastry.getPartner().getCallname());
+				bar.setCategory(synastry.getPartner().getCallname(lang));
 				bars[++i] = bar;
 		    }
-		    pmap.put(synastry.getPartner().getCallname(), bars);
+		    pmap.put(synastry.getPartner().getCallname(lang), bars);
 			section.add(PDFUtil.printMultiStackChart(writer, "Сферы совместимости", "Сферы совместимости", "Баллы", pmap, 550, 0, true));
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -2643,7 +2657,7 @@ public class PDFExporter {
 			phrase.add(new Chunk(DateUtil.formatDate(event.getBirth()) + "  ", font));
 
 			Font fonta = PDFUtil.getLinkFont();
-			Chunk chunk = new Chunk(event.getName(), fonta);
+			Chunk chunk = new Chunk(event.getName(lang), fonta);
 	        chunk.setAnchor(event.getUrl());
 	        phrase.add(chunk);
 	
@@ -2916,7 +2930,7 @@ public class PDFExporter {
 			Event[] events = new Event[] {event, partner};
 	
 			for (Event e : events) {
-				cell = new PdfPCell(new Phrase(e.getCallname(), font));
+				cell = new PdfPCell(new Phrase(e.getCallname(lang), font));
 				PDFUtil.setCellBorderWidths(cell, 0, 0, .5F, 0);
 				cell.setHorizontalAlignment(Element.ALIGN_CENTER);
 				table.addCell(cell);
@@ -3285,8 +3299,8 @@ public class PDFExporter {
 	        boolean reverse = conf.isImportable();
 	        Event event = synastry.getEvent();
 	        Event partner = synastry.getPartner();
-	        String name = reverse ? partner.getCallname() : event.getCallname();
-	        String name2 = reverse ? event.getCallname() : partner.getCallname();
+	        String name = reverse ? partner.getCallname(lang) : event.getCallname(lang);
+	        String name2 = reverse ? event.getCallname(lang) : partner.getCallname(lang);
 	        Map<Long, Planet> planets = event.getPlanets();
 	        Map<Long, Planet> planets2 = partner.getPlanets();
 
@@ -3408,8 +3422,8 @@ public class PDFExporter {
 	        boolean reverse = conf.isImportable();
 	        Event event = synastry.getEvent();
 	        Event partner = synastry.getPartner();
-	        String name = reverse ? partner.getCallname() : event.getCallname();
-	        String name2 = reverse ? event.getCallname() : partner.getCallname();
+	        String name = reverse ? partner.getCallname(lang) : event.getCallname(lang);
+	        String name2 = reverse ? event.getCallname(lang) : partner.getCallname(lang);
 	        Map<Long, Planet> planets = event.getPlanets();
 	        Map<Long, Planet> planets2 = partner.getPlanets();
 
@@ -3570,8 +3584,8 @@ public class PDFExporter {
 	        boolean reverse = conf.isImportable();
 	        Event event = synastry.getEvent();
 	        Event partner = synastry.getPartner();
-	        String name = reverse ? partner.getCallname() : event.getCallname();
-	        String name2 = reverse ? event.getCallname() : partner.getCallname();
+	        String name = reverse ? partner.getCallname(lang) : event.getCallname(lang);
+	        String name2 = reverse ? event.getCallname(lang) : partner.getCallname(lang);
 	        Map<Long, Planet> planets = event.getPlanets();
 	        Map<Long, Planet> planets2 = partner.getPlanets();
 

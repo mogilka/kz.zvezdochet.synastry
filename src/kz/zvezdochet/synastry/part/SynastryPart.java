@@ -133,9 +133,9 @@ public class SynastryPart extends ModelListView implements ICalculable {
 				Synastry model = (Synastry)element;
 				switch (columnIndex) {
 					case 0: return model.getId() != null ? model.getId().toString() : "";
-					case 1: return model.getEvent().getName();
+					case 1: return model.getEvent().getName("ru");
 					case 2: return DateUtil.formatDateTime(model.getEvent().getBirth());
-					case 3: return model.getPartner().getName();
+					case 3: return model.getPartner().getName("ru");
 					case 4: return DateUtil.formatDateTime(model.getPartner().getBirth());
 				}
 				return null;

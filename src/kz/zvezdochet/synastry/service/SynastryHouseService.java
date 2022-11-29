@@ -3,6 +3,7 @@ package kz.zvezdochet.synastry.service;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Locale;
 
 import kz.zvezdochet.analytics.service.PlanetHouseService;
 import kz.zvezdochet.bean.AspectType;
@@ -21,7 +22,8 @@ import kz.zvezdochet.synastry.bean.SynastryHouseText;
 public class SynastryHouseService extends PlanetHouseService {
 
 	public SynastryHouseService() {
-		tableName = "synastryhouses";
+		String lang = Locale.getDefault().getLanguage();
+		tableName = lang.equals("ru") ? "synastryhouses" : "us_synastryhouses";
 	}
 
 	@Override

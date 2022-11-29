@@ -100,8 +100,8 @@ public class AgeSaveHandler extends Handler {
 
 		Event event = agePart.getEvent();
 		Event partner = agePart.getPartner();
-		String name1 = event.getCallname();
-		String name2 = partner.getCallname();
+		String name1 = event.getCallname("ru");
+		String name2 = partner.getCallname("ru");
 
 		Document doc = new Document();
 		try {
@@ -111,7 +111,7 @@ public class AgeSaveHandler extends Handler {
 	        doc.open();
 
 	        //metadata
-	        PDFUtil.getMetaData(doc, "Парный прогноз");
+	        PDFUtil.getMetaData(doc, "Парный прогноз", "ru");
 
 	        //раздел
 			Chapter chapter = new ChapterAutoNumber(PDFUtil.printHeader(new Paragraph(), "Парный прогноз", null));
@@ -119,7 +119,7 @@ public class AgeSaveHandler extends Handler {
 
 			//шапка
 	        int ages = years;
-			String text = event.getCallname() + " – " + partner.getCallname();
+			String text = event.getCallname("ru") + " – " + partner.getCallname("ru");
 			text += ": прогноз на " + CoreUtil.getAgeString(ages);
 			Font font = PDFUtil.getRegularFont();
 			Paragraph p = new Paragraph(text, font);
@@ -141,8 +141,8 @@ public class AgeSaveHandler extends Handler {
 	        p.setAlignment(Element.ALIGN_CENTER);
 			p.setSpacingAfter(20);
 	        p.add(new Chunk("Автор: ", fontgray));
-	        Chunk chunk = new Chunk(PDFUtil.AUTHOR, new Font(baseFont, 10, Font.UNDERLINE, PDFUtil.FONTCOLOR));
-	        chunk.setAnchor(PDFUtil.WEBSITE);
+	        Chunk chunk = new Chunk(PDFUtil.getAuthor("ru"), new Font(baseFont, 10, Font.UNDERLINE, PDFUtil.FONTCOLOR));
+	        chunk.setAnchor(PDFUtil.getWebsite("ru"));
 	        p.add(chunk);
 	        chapter.add(p);
 
@@ -398,7 +398,7 @@ public class AgeSaveHandler extends Handler {
 		        chapter.add(list);
 				doc.add(chapter);
 			}
-	        doc.add(PDFUtil.printCopyright());
+	        doc.add(PDFUtil.printCopyright("ru"));
 	        updateStatus("Файл дирекций сформирован", false);
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -424,8 +424,8 @@ public class AgeSaveHandler extends Handler {
 			Font grayfont = PDFUtil.getAnnotationFont(false);
 			String header = "";
 
-			String name1 = event.getCallname();
-			String name2 = partner.getCallname();
+			String name1 = event.getCallname("ru");
+			String name2 = partner.getCallname("ru");
 
 			Paragraph p = null;
 			String agestr = CoreUtil.getAgeString(age);
@@ -473,7 +473,7 @@ public class AgeSaveHandler extends Handler {
 							: "к куспиду";
 
 						p = new Paragraph();
-	    				p.add(new Chunk(planet.getMark("house", term), grayfont));
+	    				p.add(new Chunk(planet.getMark("house", term, "ru"), grayfont));
 			    		p.add(new Chunk(spa.getAspect().getName() + " ", grayfont));
 	    				p.add(new Chunk(planet.getSymbol() + "d", PDFUtil.getHeaderAstroFont()));
 			    		p.add(new Chunk(" " + pretext + " " + house.getDesignation(), grayfont));
@@ -488,11 +488,11 @@ public class AgeSaveHandler extends Handler {
 							BaseColor color = PDFUtil.htmlColor2Base(typeColor);
 							section.add(new Paragraph(PDFUtil.removeTags(text, new Font(baseFont, 12, Font.NORMAL, color))));
 							section.add(Chunk.NEWLINE);
-							PDFUtil.printGender(section, dirText, female, false, true);
+							PDFUtil.printGender(section, dirText, female, false, true, "ru");
 							for (String gtype : genderTypes)
-								PDFUtil.printGender(section, dirText, gtype);
+								PDFUtil.printGender(section, dirText, gtype, "ru");
 							if (doctype < 1) {
-								PDFUtil.printGender(section, dirText, event.isFemale() ? "man" : "woman");
+								PDFUtil.printGender(section, dirText, event.isFemale() ? "man" : "woman", "ru");
 							}
 						}
 					}
@@ -555,9 +555,9 @@ public class AgeSaveHandler extends Handler {
 									BaseColor color = PDFUtil.htmlColor2Base(typeColor);
 									section.add(new Paragraph(PDFUtil.removeTags(text, new Font(baseFont, 12, Font.NORMAL, color))));
 									section.add(Chunk.NEWLINE);
-									PDFUtil.printGender(section, dirText, female, false, true);
+									PDFUtil.printGender(section, dirText, female, false, true, "ru");
 									for (String gtype : genderTypes)
-										PDFUtil.printGender(section, dirText, gtype);
+										PDFUtil.printGender(section, dirText, gtype, "ru");
 								}
 							}
 						}
