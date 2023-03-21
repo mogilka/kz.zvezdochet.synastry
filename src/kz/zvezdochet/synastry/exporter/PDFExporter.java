@@ -2060,6 +2060,8 @@ public class PDFExporter {
 				PDFUtil.setCellBorderWidths(cell, 0, 0, 0, 0);
 				table.addCell(cell);
 			}
+
+			//аспекты Венеры и Марса в гороскопах обоих
 			section.add(table);
 			section.add(Chunk.NEXTPAGE);
 
