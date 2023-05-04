@@ -1023,10 +1023,14 @@ public class PDFExporter {
 							section.add(p);
 						}
 
-						Rule rule = EventRules.ruleSynastryAspect(aspect, event, partner);
-						if (rule != null) {
-							section.add(Chunk.NEWLINE);
-							section.add(new Paragraph(PDFUtil.removeTags(rule.getText(), font)));
+						List<Rule> rules = EventRules.ruleSynastryAspect(aspect, event, partner);
+						if (rules != null && !rules.isEmpty()) {
+							for (Rule rule : rules) {
+								if (null == rule)
+									continue;
+								section.add(Chunk.NEWLINE);
+								section.add(new Paragraph(PDFUtil.removeTags(rule.getText(), font)));
+							}
 						}
 
 						if (doctype != 2) {
@@ -2210,18 +2214,6 @@ public class PDFExporter {
 					if (dict != null) {
 						section.add(new Paragraph(PDFUtil.removeTags(dict.getText(), font)));
 						printGender(section, dict);
-
-						List<Rule> rules = EventRules.ruleSynastryPlanetHouse(planet, house, synastry.getEvent().isFemale());
-						for (Rule rule : rules) {
-							section.add(new Paragraph(PDFUtil.removeTags(rule.getText(), font)));
-							section.add(Chunk.NEWLINE);
-						}
-
-						rules = EventRules.ruleSynastryPlanetHouse(planet, house, synastry.getPartner().isFemale());
-						for (Rule rule : rules) {
-							section.add(new Paragraph(PDFUtil.removeTags(rule.getText(), font)));
-							section.add(Chunk.NEWLINE);
-						}
 					}
 				}
 				section.add(Chunk.NEXTPAGE);
@@ -2312,11 +2304,6 @@ public class PDFExporter {
 
 					PDFUtil.printGender(section, dict, event.isFemale() ? "woman" : "man", lang);
 					PDFUtil.printGender(section, dict, "children", lang);
-				}
-				List<Rule> rules = EventRules.ruleSynastryPlanetHouse(planet, house, event.isFemale());
-				for (Rule rule : rules) {
-					section.add(new Paragraph(PDFUtil.removeTags(rule.getText(), font)));
-					section.add(Chunk.NEWLINE);
 				}
 
 				//правила домов
