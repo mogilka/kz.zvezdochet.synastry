@@ -101,6 +101,9 @@ public class Synastry extends Model {
 				return;
 
 			aspectList = new ArrayList<>();
+			aspectDirectList = new ArrayList<>();
+			aspectReverseList = new ArrayList<>();
+
 			event.initData(false);
 			partner.initData(false);
 			Collection<Planet> planets = event.getPlanets().values();
@@ -121,7 +124,15 @@ public class Synastry extends Model {
 							aspect.setAspect(a);
 							aspect.setExact(a.isExact(res));
 							aspect.setApplication(a.isApplication(res));
+							boolean reverse = planet2.getNumber() < planet.getNumber();
+							aspect.setReverse(reverse);
 							aspectList.add(aspect);
+
+							//разделяем основные аспекты для домов
+							if (a.isMajor()) {
+								aspectDirectList.add(aspect);
+								aspectReverseList.add(new SkyPointAspect(aspect, true));
+							}
 						}
 					}
 				}
@@ -229,5 +240,29 @@ public class Synastry extends Model {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Аспекты, где в качестве первой указана планета партнёра
+	 */
+	private	List<SkyPointAspect> aspectReverseList;
+
+	public List<SkyPointAspect> getAspectReverseList() {
+		return aspectReverseList;
+	}
+	public void setAspectReverseList(List<SkyPointAspect> aspectList) {
+		this.aspectReverseList = aspectList;
+	}
+
+	/**
+	 * Аспекты, где в качестве первой указана планета персоны
+	 */
+	private	List<SkyPointAspect> aspectDirectList;
+
+	public List<SkyPointAspect> getAspectDirectList() {
+		return aspectDirectList;
+	}
+	public void setAspectDirectList(List<SkyPointAspect> aspectList) {
+		this.aspectDirectList = aspectList;
 	}
 }
