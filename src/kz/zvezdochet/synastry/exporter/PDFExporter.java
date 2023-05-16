@@ -49,7 +49,6 @@ import kz.zvezdochet.analytics.bean.Category;
 import kz.zvezdochet.analytics.bean.HouseSignText;
 import kz.zvezdochet.analytics.bean.Numerology;
 import kz.zvezdochet.analytics.bean.PlanetHouseRule;
-import kz.zvezdochet.analytics.bean.PlanetHouseText;
 import kz.zvezdochet.analytics.bean.PlanetSignText;
 import kz.zvezdochet.analytics.bean.Rule;
 import kz.zvezdochet.analytics.exporter.EventRules;
@@ -1047,10 +1046,8 @@ public class PDFExporter {
 
 						if (doctype != 2) {
 							PDFUtil.printGender(section, dict,
-								reverse ? event.isFemale() : partner.isFemale(),
-								reverse ? event.isChild() : partner.isChild(), false, lang);
-
-							PDFUtil.printGender(section, dict, event.isFemale() ? "woman" : "man", lang);
+								reverse ? partner.isFemale() : event.isFemale(),
+								reverse ? partner.isChild() : event.isChild(), false, lang);
 						}
 						for (String gtype : genderTypes) {
 							PDFUtil.printGender(section, dict, gtype, lang);
@@ -2165,7 +2162,7 @@ public class PDFExporter {
 		List<Planet> hplanets2 = new ArrayList<>();
 		Map<Long, Planet> hplanets_1 = new HashMap<>();
 		Map<Long, Planet> hplanets_2 = new HashMap<>();
-		List<Planet> relative = new ArrayList<>();
+
 		try {
 			for (Planet planet : planets) {
 				House house = (House)planet.getData();
@@ -2182,53 +2179,10 @@ public class PDFExporter {
 				if (house != null) {
 					if (!isRelevant(house))
 						continue;
-					boolean rel = false;
-					for (Planet p : hplanets) {
-						if (planet.getId().equals(p.getId())
-								&& house.getId().equals(((House)p.getData()).getId())) {
-							relative.add(p);
-							hplanets.remove(p);
-							rel = true;
-							break;
-						}
-					}
-					if (!rel) {
-						planet.setData(house);
-						hplanets2.add(planet);
-						hplanets_2.put(planet.getId(), planet);
-					}
+					planet.setData(house);
+					hplanets2.add(planet);
+					hplanets_2.put(planet.getId(), planet);
 				}					
-			}
-
-			if (!relative.isEmpty()) {
-				Section section = PDFUtil.printSection(chapter, "Сходство во влиянии", null);
-//				System.out.println("section depth=" + section.getDepth() + " numberDepth=" + section.getNumberDepth());
-				section.add(new Paragraph("Здесь перечислены толкования, которые показывают, в чём вы относитесь к партнёру так же, как он к вам:", PDFUtil.getAnnotationFont(false)));
-				section.add(Chunk.NEWLINE);
-				SynastryHouseService service = new SynastryHouseService();
-				for (Planet planet : relative) {
-					House house = (House)planet.getData();
-
-					Paragraph p = new Paragraph("", fonth5);
-	    			if (term) {
-						String mark = planet.getMark("house", term, lang);
-						if (mark.length() > 0) {
-		    				p.add(new Chunk(mark + " ", fonth5));
-		    				p.add(new Chunk(planet.getSymbol() + " ", PDFUtil.getHeaderAstroFont()));
-						}
-	    				p.add(new Chunk(" " + planet.getName() + " в " + house.getDesignation() + " доме", fonth5));
-	    				p.add(Chunk.NEWLINE);
-	    			} else
-	    				p.add(new Chunk(house.getSynastry() + " + " + planet.getShortName(), fonth5));
-	    			section.addSection(p);
-
-					PlanetHouseText dict = (PlanetHouseText)service.find(planet, house, null);
-					if (dict != null) {
-						section.add(new Paragraph(PDFUtil.removeTags(dict.getText(), font)));
-						printGender(section, dict);
-					}
-				}
-				section.add(Chunk.NEXTPAGE);
 			}
 
 			Font wfont = PDFUtil.getWarningFont();
@@ -2316,7 +2270,6 @@ public class PDFExporter {
 //					if (32 == planet.getId() && 157 == house.getId())
 //						System.out.println(planet.getId() + " - " + house.getId());
 
-					PDFUtil.printGender(section, dict, event.isFemale() ? "woman" : "man", lang);
 					PDFUtil.printGender(section, dict, "children", lang);
 				}
 
@@ -2363,15 +2316,16 @@ public class PDFExporter {
 							if (rtype.getId().equals(tid)) {
 								SkyPoint sp = spa.getSkyPoint1();
 								SkyPoint sp2 = spa.getSkyPoint2();
-//								if (21 == sp.getId() && 23 == sp2.getId())
+//								if (24 == planet.getId() && 163 == house.getId() && 3 == tid)
 //									System.out.println(rule);
 
 								boolean match = planet.getId().equals(sp.getId()) && planet2.getId().equals(sp2.getId());
 								if (!match) continue;
 
 								if (house2 != null) {
-									match = (reverse && partner.isHousable() && house2.getId().equals(sp.getHouse().getId()))
-										|| (!reverse && event.isHousable() && house2.getId().equals(sp2.getHouse().getId()));
+									match = house2.getId().equals(sp2.getHouse().getId()) &&
+										((reverse && partner.isHousable()) 
+											|| (!reverse && event.isHousable()));
 									if (!match) continue;
 								}
 								section.add(Chunk.NEWLINE);
@@ -2477,6 +2431,7 @@ public class PDFExporter {
 	 * @throws IOException 
 	 * @throws DocumentException 
 	 */
+	@SuppressWarnings("unused")
 	private void printGender(Section section, ITextGender dict) throws DocumentException, IOException {
 		if (dict != null) {
 			for (String gtype : genderTypes) {
